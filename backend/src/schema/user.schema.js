@@ -84,11 +84,42 @@ const userAdministradorSchema = Joi.object({
     "any.required": "El nickname es obligatorio.",
     "string.base": "El nickname debe ser de tipo string.",
   }),
+  email: Joi.string().email().required().messages({
+    "string.empty": "El email no puede estar vacío.",
+    "any.required": "El email es obligatorio.",
+    "string.base": "El email debe ser de tipo string.",
+    "string.email": "El email debe tener un formato válido.",
+  }),
+  password: Joi.string().required().min(5).regex(/[0-9]/, "number").messages({
+    "string.empty": "La contraseña no puede estar vacía.",
+    "any.required": "La contraseña es obligatoria.",
+    "string.base": "La contraseña debe ser de tipo string.",
+    "string.min": "La contraseña debe tener al menos 5 caracteres.",
+    "string.pattern.base": "La contraseña debe tener al menos un número",
+  }),
+  state: Joi.string().required().messages({
+    "any.required": "El rol es obligatorio.",
+    "string.base": "El rol debe ser de tipo string.",
+  }),
+
 }).messages({
   "object.unknown": "No se permiten propiedades adicionales.",
 });
 
 const userClienteSchema = Joi.object({
+  email: Joi.string().email().required().messages({
+    "string.empty": "El email no puede estar vacío.",
+    "any.required": "El email es obligatorio.",
+    "string.base": "El email debe ser de tipo string.",
+    "string.email": "El email debe tener un formato válido.",
+  }),
+  password: Joi.string().required().min(5).regex(/[0-9]/, "number").messages({
+    "string.empty": "La contraseña no puede estar vacía.",
+    "any.required": "La contraseña es obligatoria.",
+    "string.base": "La contraseña debe ser de tipo string.",
+    "string.min": "La contraseña debe tener al menos 5 caracteres.",
+    "string.pattern.base": "La contraseña debe tener al menos un número",
+  }),
   nombre: Joi.string().required().messages({
     "string.empty": "El nombre no puede estar vacío.",
     "any.required": "El nombre es obligatorio.",
@@ -103,6 +134,10 @@ const userClienteSchema = Joi.object({
     "string.empty": "El telefono no puede estar vacío.",
     "any.required": "El telefono es obligatorio.",
     "string.base": "El telefono debe ser de tipo string.",
+  }),
+  state: Joi.string().required().messages({
+    "any.required": "El rol es obligatorio.",
+    "string.base": "El rol debe ser de tipo string.",
   }),
 }).messages({
   "object.unknown": "No se permiten propiedades adicionales.",
