@@ -1,3 +1,6 @@
+/* eslint-disable comma-spacing */
+/* eslint-disable no-multi-spaces */
+/* eslint-disable quotes */
 "use strict";
 // Import the 'mongoose' module to create the database connection
 
@@ -82,4 +85,4 @@ const Cliente = User.discriminator('Cliente', new mongoose.Schema({
 }, options));
 
 
-export default { User, Trabajador, Administrador, Cliente };
+export default { User, Trabajador, Administrador, Cliente }; 
