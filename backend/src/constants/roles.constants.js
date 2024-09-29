@@ -1,4 +1,4 @@
 /** Roles permitidos por la base de datos */
-const ROLES = ["user", "admin"];
+const ROLES = ["Admin_Micropyme", "Trabajador_Micropyme"];
 
 export default ROLES;

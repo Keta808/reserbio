@@ -8,6 +8,10 @@ import userRoutes from "./user.routes.js";
 /** Enrutador de autenticación */
 import authRoutes from "./auth.routes.js";
 
+/** Enrutador de enlaces */
+
+import enlaceRoutes from "./enlace.routes.js";
+
 /** Middleware de autenticación */
 import authenticationMiddleware from "../middlewares/authentication.middleware.js";
 
@@ -18,6 +22,9 @@ const router = Router();
 router.use("/users", authenticationMiddleware, userRoutes);
 // Define las rutas para la autenticación /api/auth
 router.use("/auth", authRoutes);
+
+// Define las rutas para los enlaces /api/enlaces
+router.use("/enlaces", authenticationMiddleware, enlaceRoutes);
 
 // Exporta el enrutador
 export default router;

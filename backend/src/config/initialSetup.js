@@ -4,6 +4,7 @@ import UserModels from "../models/user.model.js"; // Importas el objeto por defe
 
 const { Trabajador, Cliente, Administrador } = UserModels; 
 import State from "../models/state.model.js";
+import Role from "../models/role.model.js";
 
 /**
  * Crea los roles por defecto en la base de datos.
@@ -23,6 +24,28 @@ async function createState() {
       new State({ name: "inactivo" }).save(),
     ]);
     console.log("* => Estados creados exitosamente");
+  } catch (error) {
+    console.error(error);
+  }
+}
+
+/**
+ * Crea los roles en la base de datos
+ * 
+ * 
+ */
+async function createRoles() {
+  try {
+    // Busca todos los roles en la base de datos
+    const count = await Role.estimatedDocumentCount();
+    // Si no hay roles en la base de datos los crea
+    if (count > 0) return;
+
+    await Promise.all([
+      new Role({ name: "Admin_Micropyme" }).save(),
+      new Role({ name: "Trabajador_Micropyme" }).save(),
+    ]);
+    console.log("* => Roles creados exitosamente");
   } catch (error) {
     console.error(error);
   }
@@ -63,4 +86,4 @@ async function createUsers() {
   }
 }
 
-export { createUsers, createState };
+export { createUsers, createState, createRoles };

@@ -1,7 +1,6 @@
 "use strict";
 // Importa el objeto por defecto que contiene todos los modelos
 import UserModels from "../models/user.model.js";
-
 // Extrae el modelo 'User'
 const { User, Trabajador, Cliente, Administrador } = UserModels;
 
