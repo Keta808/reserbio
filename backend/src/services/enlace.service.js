@@ -4,6 +4,10 @@
 import EnlaceModels from "../models/enlace.model.js";
 const { Enlace } = EnlaceModels;
 
+//Importa el modelo de User
+import UserModels from "../models/user.model.js";
+const { Trabajador } = UserModels;
+
 import { handleError } from "../utils/errorHandler.js";
 
 async function getEnlaces() {
@@ -20,7 +24,19 @@ async function getEnlaces() {
 async function createEnlace(enlace) {
     try {
         const { id_trabajador, id_role, id_microempresa, fecha_inicio, estado } = enlace;
-    
+        
+        //Restricciones Enlace:
+        //1. Debe existir un trabajador en la base de datos
+        const enlaceTrabajador = await Trabajador.findById(id_trabajador).exec();
+        if (!enlaceTrabajador) return [null, "El trabajador no existe"];
+        //2. Debe existir un role en la base de datos
+        const enlaceRole = await Role.findById(id_role).exec();
+        if (!enlaceRole) return [null, "El role no existe"];
+        //3. Debe existir una microempresa en la base de datos
+        const enlaceMicroempresa = await Microempresa.findById(id_microempresa).exec();
+        if (!enlaceMicroempresa) return [null, "La microempresa no existe"];
+
+        //4. No puede haber dos enlaces con el mismo id_trabajador (Revisar mas adelante)
         const enlaceFound = await Enlace.findOne({ id_trabajador: enlace.id_trabajador });
         if (enlaceFound) return [null, "El enlace ya existe"];
     
