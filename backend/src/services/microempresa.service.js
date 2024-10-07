@@ -13,7 +13,9 @@ async function getMicroempresas() {
         const microempresas = await Microempresa.find().exec();
         if (!microempresas || microempresas.length === 0) return [null, "No hay microempresas"];
     
-        return [microempresas, null];
+        const shuffledMicroempresas = microempresas.sort(() => Math.random() - 0.5);
+        
+        return [shuffledMicroempresas, null];
     } catch (error) {
         handleError(error, "microempresa.service -> getMicroempresas");
     }
