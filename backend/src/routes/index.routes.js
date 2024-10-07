@@ -5,6 +5,9 @@ import { Router } from "express";
 /** Enrutador de usuarios  */
 import userRoutes from "./user.routes.js";
 
+/** Enrutador de microempresas */
+import microempresaRoutes from "./microempresa.routes.js";
+
 /** Enrutador de autenticación */
 import authRoutes from "./auth.routes.js";
 
@@ -25,6 +28,9 @@ router.use("/auth", authRoutes);
 
 // Define las rutas para los enlaces /api/enlaces
 router.use("/enlaces", authenticationMiddleware, enlaceRoutes);
+
+// Define las rutas para las microempresas /api/microempresas
+router.use("/microempresas", authenticationMiddleware, microempresaRoutes);
 
 // Exporta el enrutador
 export default router;

@@ -2,7 +2,7 @@
 
 import { respondSuccess, respondError } from "../utils/resHandler.js";
 import UserService from "../services/user.service.js";
-import {  userBodySchema, userIdSchema, userTrabajadorSchema, userAdministradorSchema, userClienteSchema } from "../schema/user.schema.js";
+import { userBodySchema, userIdSchema, userTrabajadorSchema, userAdministradorSchema, userClienteSchema } from "../schema/user.schema.js";
 import { handleError } from "../utils/errorHandler.js";
 
 
@@ -11,7 +11,6 @@ import { handleError } from "../utils/errorHandler.js";
  * 
  * 
  */
-
 async function getUsers(req, res) {
   try {
     const [usuarios, errorUsuarios] = await UserService.getUsers();
@@ -32,7 +31,6 @@ async function getUsers(req, res) {
  * @param {Object} req Objeto de solicitud
  * @param {Object} res Objeto de respuesta
  */
-
 async function createUser(req, res) {
   try {
     const { error } = userBodySchema.validate(req.body);
@@ -54,7 +52,6 @@ async function createUser(req, res) {
  * @param {Object} req Objeto de solicitud
  * @param {Object} res Objeto de respuesta
  */
-
 async function changePassword(req, res) {
   try {
     const { error } = userIdSchema.validate(req.params);
@@ -66,7 +63,7 @@ async function changePassword(req, res) {
     const [user, errorUser] = await UserService.changePassword(
       req.params.id,
       req.body.oldPassword,
-      req.body.newPassword
+      req.body.newPassword,
     );
     if (errorUser) return respondError(req, res, 404, errorUser);
 
@@ -75,7 +72,6 @@ async function changePassword(req, res) {
     handleError(error, "user.controller -> changePassword");
     respondError(req, res, 400, error.message);
   }
-
 }
 
 /**
@@ -83,7 +79,6 @@ async function changePassword(req, res) {
  * 
  * 
  */
-
 async function createTrabajador(req, res) {
   try {
     const { error } = userTrabajadorSchema.validate(req.body);
@@ -104,7 +99,6 @@ async function createTrabajador(req, res) {
  * 
  * 
  */
-
 async function createAdministrador(req, res) {
   try {
     const { error } = userAdministradorSchema.validate(req.body);
@@ -125,7 +119,6 @@ async function createAdministrador(req, res) {
  * 
  * 
  */
-
 async function createCliente(req, res) {
   try {
     const { error } = userClienteSchema.validate(req.body);
@@ -146,7 +139,6 @@ async function createCliente(req, res) {
  * 
  * 
  */
-
 async function getUserById(req, res) {
   try {
     const { error } = userIdSchema.validate(req.params);
@@ -167,7 +159,6 @@ async function getUserById(req, res) {
  * 
  * 
  */
-
 async function deleteUser(req, res) {
   try {
     const { error } = userIdSchema.validate(req.params);
