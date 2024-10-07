@@ -1,6 +1,6 @@
 /* eslint-disable require-jsdoc */
 /* eslint-disable no-unused-vars */
-import Servicio from "..model/servicio.model.js"; 
+import Servicio from "../models/servicio.model.js"; 
 
 
 import { handleError } from "../utils/errorHandler.js"; 
@@ -72,4 +72,4 @@ async function getServicioById(id) {
 
 // añadir get por reserva o microempresa posiblemente segun MER
 
-export { getServicios, createServicio, deleteServicio, updateServicio, getServicioById }; 
+export default { getServicios, createServicio, deleteServicio, updateServicio, getServicioById }; 

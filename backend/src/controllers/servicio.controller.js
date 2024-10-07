@@ -79,4 +79,4 @@ async function getServicioById(req, res) {
         respondError(req, res, 400, error.message); 
     } 
 } 
-export { getServicios, createServicio, deleteServicio, updateServicio, getServicioById }; 
+export default { getServicios, createServicio, deleteServicio, updateServicio, getServicioById }; 
