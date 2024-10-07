@@ -13,7 +13,10 @@ import authRoutes from "./auth.routes.js";
 
 /** Enrutador de enlaces */
 
-import enlaceRoutes from "./enlace.routes.js";
+import enlaceRoutes from "./enlace.routes.js"; 
+
+import reservaRoutes from "./reserva.routes.js"; 
+import servicioRoutes from "./servicio.routes.js";
 
 /** Middleware de autenticación */
 import authenticationMiddleware from "../middlewares/authentication.middleware.js";
@@ -28,9 +31,6 @@ router.use("/auth", authRoutes);
 
 // Define las rutas para los enlaces /api/enlaces
 router.use("/enlaces", authenticationMiddleware, enlaceRoutes);
-
-// Define las rutas para las microempresas /api/microempresas
-router.use("/microempresas", authenticationMiddleware, microempresaRoutes);
 
 // Exporta el enrutador
 export default router;
