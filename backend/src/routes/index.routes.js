@@ -35,5 +35,7 @@ router.use("/enlaces", authenticationMiddleware, enlaceRoutes);
 // Define las rutas para las microempresas /api/microempresas
 router.use("/microempresas", authenticationMiddleware, microempresaRoutes);
 
+router.use("/servicios", authenticationMiddleware, servicioRoutes);
+
 // Exporta el enrutador
 export default router;
