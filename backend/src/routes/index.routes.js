@@ -8,6 +8,9 @@ import userRoutes from "./user.routes.js";
 /** Enrutador de microempresas */
 import microempresaRoutes from "./microempresa.routes.js";
 
+/** Enrutador de imagenes */
+import imageRoutes from "./image.routes.js";
+
 /** Enrutador de autenticación */
 import authRoutes from "./auth.routes.js";
 
@@ -34,6 +37,9 @@ router.use("/enlaces", authenticationMiddleware, enlaceRoutes);
 
 // Define las rutas para las microempresas /api/microempresas
 router.use("/microempresas", authenticationMiddleware, microempresaRoutes);
+
+// Define las rutas para las imagenes /api/imagenes
+router.use("/imagenes", authenticationMiddleware, imageRoutes);
 
 // Exporta el enrutador
 export default router;
