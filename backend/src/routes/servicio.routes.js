@@ -3,8 +3,8 @@
 import { Router } from "express";
 
 import servicioController from "../controllers/servicio.controller.js"; 
-import { isAdmin } from "../middlewares/authorization.middleware.js";
-// importar middleware de autentificacion CLIENTE Y MICROEMPRESA 
+import { isAdmin, isCliente, isTrabajador } from "../middlewares/authorization.middleware.js";
+
 
 import authentificationMiddleware from "../middlewares/authentication.middleware.js"; 
 
@@ -17,5 +17,7 @@ router.post("/", isAdmin, servicioController.createServicio);
 router.delete("/:id", isAdmin, servicioController.deleteServicio);
 router.put("/:id", isAdmin, servicioController.updateServicio);
 router.get("/servicio/:id", isAdmin, servicioController.getServicioById); 
+
+
 export default router; 
 

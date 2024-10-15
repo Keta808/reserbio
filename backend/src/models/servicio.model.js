@@ -4,12 +4,11 @@
 import mongoose from "mongoose"; 
 
 const ServicioSchema = new mongoose.Schema({ 
-    idReserva: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "Reserva",
-        required: true,
+    idTrabajador: { 
+        type: mongoose.Schema.Types.ObjectId, 
+        ref: "User", 
+        required: true, 
     },
-    // añadir id Microempresa Posiblemente segun MER
     nombre: {
         type: String,
         required: true,
@@ -19,8 +18,10 @@ const ServicioSchema = new mongoose.Schema({
         required: true,
     },
     duracion: {
+        // en minutos
         type: Number,
         required: true,
+        min: 1,
     },
     descripcion: {
         type: String,

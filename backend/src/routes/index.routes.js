@@ -41,5 +41,7 @@ router.use("/microempresas", authenticationMiddleware, microempresaRoutes);
 // Define las rutas para las imagenes /api/imagenes
 router.use("/imagenes", authenticationMiddleware, imageRoutes);
 
+router.use("/servicios", authenticationMiddleware, servicioRoutes);
+
 // Exporta el enrutador
 export default router;

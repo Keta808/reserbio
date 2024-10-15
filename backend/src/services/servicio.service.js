@@ -18,9 +18,11 @@ async function getServicios() {
 
 async function createServicio(servicio) { 
     try { 
-        const { idReserva, nombre, precio, duracion, descripcion } = servicio; 
+        const { idTrabajador, nombre, precio, duracion, descripcion } = servicio; 
+       const servicioFound = await Servicio.findOne({ nombre: servicio.nombre });
+           if (servicioFound) return [null, "El servicio ya existe"]; 
         const newServicio = new Servicio({
-            idReserva, 
+            idTrabajador, 
             nombre, 
             precio, 
             duracion, 
@@ -45,9 +47,9 @@ async function deleteServicio(id) {
 
 async function updateServicio(id, servicio) { 
     try { 
-        const { idReserva, nombre, precio, duracion, descripcion } = servicio; 
+        const { idTrabajador, nombre, precio, duracion, descripcion } = servicio; 
         const updatedServicio = await Servicio.findByIdAndUpdate(id, { 
-            idReserva,
+            idTrabajador,
             nombre, 
             precio, 
             duracion, 
