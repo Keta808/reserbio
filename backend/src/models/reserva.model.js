@@ -1,4 +1,3 @@
-/* eslint-disable quotes */
 "use strict";
 
 import mongoose from "mongoose";
@@ -10,12 +9,12 @@ const ReservaSchema = new mongoose.Schema({
     },
     cliente: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: "Cliente", 
+        ref: "Users", 
         required: true,
     },
     trabajador: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: "Trabajador", 
+        ref: "User", 
         required: true,
     },
     servicio: {
@@ -25,7 +24,7 @@ const ReservaSchema = new mongoose.Schema({
     }, 
     estado: {
         type: String,
-        enum: ['disponible', 'cancelada', 'finalizada'], 
+        enum: ['Activa', 'Cancelada', 'Finalizada'], 
         required: true,
     }, 
 },

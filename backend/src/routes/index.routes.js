@@ -29,6 +29,8 @@ router.use("/users", authenticationMiddleware, userRoutes);
 // Define las rutas para la autenticación /api/auth
 router.use("/auth", authRoutes);
 
+router.use ("/reservas", authenticationMiddleware, reservaRoutes);
+
 // Define las rutas para los enlaces /api/enlaces
 router.use("/enlaces", authenticationMiddleware, enlaceRoutes);
 

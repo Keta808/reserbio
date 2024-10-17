@@ -1,12 +1,14 @@
 "use strict";
 
 //Importa el modelo de enlace
-import EnlaceModels from "../models/enlace.model.js";
-const { Enlace } = EnlaceModels;
+import Enlace from "../models/enlace.model.js";
 
 //Importa el modelo de User
 import UserModels from "../models/user.model.js";
 const { Trabajador } = UserModels;
+
+import Role from "../models/role.model.js";
+import Microempresa from "../models/microempresa.model.js";
 
 import { handleError } from "../utils/errorHandler.js";
 
@@ -29,9 +31,11 @@ async function createEnlace(enlace) {
         //1. Debe existir un trabajador en la base de datos
         const enlaceTrabajador = await Trabajador.findById(id_trabajador).exec();
         if (!enlaceTrabajador) return [null, "El trabajador no existe"];
+
         //2. Debe existir un role en la base de datos
         const enlaceRole = await Role.findById(id_role).exec();
         if (!enlaceRole) return [null, "El role no existe"];
+
         //3. Debe existir una microempresa en la base de datos
         const enlaceMicroempresa = await Microempresa.findById(id_microempresa).exec();
         if (!enlaceMicroempresa) return [null, "La microempresa no existe"];
