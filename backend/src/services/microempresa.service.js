@@ -37,6 +37,7 @@ async function createMicroempresa(microempresa) {
             categoria,
             idPlan,
             idTrabajador,
+            imagenes,
         } = microempresa;
 
         const microempresaFound = await Microempresa.findOne({ email: microempresa.email });
@@ -51,6 +52,7 @@ async function createMicroempresa(microempresa) {
             categoria,
             idPlan,
             idTrabajador,
+            imagenes,
         });
         await newMicroempresa.save();
 
@@ -90,6 +92,7 @@ async function updateMicroempresaById(id, microempresa) {
             categoria,
             idPlan,
             idTrabajador,
+            imagenes,
         } = microempresa;
         const microempresaFound = await Microempresa.findById(id).exec();
         if (!microempresaFound) return [null, "La microempresa no existe"];
@@ -102,6 +105,7 @@ async function updateMicroempresaById(id, microempresa) {
         microempresaFound.categoria = categoria;
         microempresaFound.idPlan = idPlan;
         microempresaFound.idTrabajador = idTrabajador;
+        microempresaFound.imagenes = imagenes;
 
         await microempresaFound.save();
         return [microempresaFound, null];

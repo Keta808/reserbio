@@ -40,6 +40,28 @@ const MicroempresaSchema = new mongoose.Schema({
         ref: "User",
         required: true,
     },
+    fotoPerfil: {
+        url: {
+            type: String,
+            required: true,
+        },
+        public_id: {
+            type: String,
+            required: true,
+        },
+    },
+    imagenes: [
+        {
+            url: {
+                type: String,
+                required: true,
+            },
+            public_id: {
+                type: String,
+                required: true,
+            },
+        },
+    ],
 });
 
 const Microempresa = mongoose.model("Microempresa", MicroempresaSchema);
