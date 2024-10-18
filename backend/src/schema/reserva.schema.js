@@ -1,6 +1,21 @@
-/* eslint-disable quotes */
-/* eslint-disable require-jsdoc */
 import joi from "joi"; 
+
+const fechaFormatoValido = (value, helpers) => {
+  const regex = /^(0[1-9]|[12][0-9]|3[01])-(0[1-9]|1[0-2])-(\d{4})$/; // Regex para DD-MM-YYYY
+  if (!regex.test(value)) {
+    return helpers.error("date.format", { message: "El campo día debe ser en formato DD-MM-YYYY." });
+  }
+  
+  const [day, month, year] = value.split("-");
+  const fecha = new Date(`${year}-${month}-${day}T00:00:00Z`);
+
+  // Verificar si la fecha es válida
+  if (isNaN(fecha.getTime())) {
+    return helpers.error("date.base", { message: "El campo día debe ser una fecha válida." });
+  }
+  
+  return fecha; // Retorna la fecha como un objeto Date
+};
 
 //schema para reserva.model.js
 const reservaBodySchema = joi.object({
@@ -9,6 +24,12 @@ const reservaBodySchema = joi.object({
       .messages({
         "date.base": "La hora de inicio debe ser de tipo Date.",
         "any.required": "La hora de inicio es obligatoria.",
+      }),
+    fecha: joi.string()
+      .required()
+      .custom(fechaFormatoValido)
+      .messages({
+        "any.required": "El día es obligatorio.",
       }),
     cliente: joi.string()
       .required()
@@ -45,7 +66,7 @@ const reservaBodySchema = joi.object({
       }),
   });
 
-  const reservaIdSchema = joi.object({
+const reservaIdSchema = joi.object({
     id: joi.string()
       .required()
       .pattern(/^(?:[0-9a-fA-F]{24}|[0-9a-fA-F]{12})$/)
@@ -58,4 +79,3 @@ const reservaBodySchema = joi.object({
   });
 
 export { reservaBodySchema, reservaIdSchema };
-
