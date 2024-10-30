@@ -10,7 +10,7 @@ import { handleError } from "../utils/errorHandler.js";
  */
 async function getMicroempresas() {
     try {
-        const microempresas = await Microempresa.find().exec();
+        const microempresas = await Microempresa.find().populate("trabajadores").exec();
         if (!microempresas || microempresas.length === 0) return [null, "No hay microempresas"];
     
         const shuffledMicroempresas = microempresas.sort(() => Math.random() - 0.5);

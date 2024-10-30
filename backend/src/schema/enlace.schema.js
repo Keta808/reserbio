@@ -41,4 +41,25 @@ const enlaceIdSchema = Joi.object({
     "object.unknown": "No se permiten propiedades adicionales.",
 });
 
-export { enlaceBodySchema, enlaceIdSchema };
+const enlacePartialUpdateSchema = Joi.object({
+    id_trabajador: Joi.string().optional().messages({
+        "string.base": "El id_trabajador debe ser de tipo string.",
+    }),
+    id_role: Joi.string().optional().messages({
+        "string.base": "El id_role debe ser de tipo string.",
+    }),
+    id_microempresa: Joi.string().optional().messages({
+        "string.base": "El id_microempresa debe ser de tipo string.",
+    }),
+    fecha_inicio: Joi.date().optional().messages({
+        "date.base": "La fecha de inicio debe ser de tipo date.",
+    }),
+    estado: Joi.boolean().optional().messages({
+        "boolean.base": "El estado debe ser de tipo boolean.",
+    }),
+}).messages({
+    "object.unknown": "No se permiten propiedades adicionales.",
+});
+
+
+export { enlaceBodySchema, enlaceIdSchema, enlacePartialUpdateSchema };

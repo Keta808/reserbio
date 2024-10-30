@@ -11,6 +11,7 @@ import { handleError } from "../utils/errorHandler.js";
 async function getMicroempresas(req, res) {
   try {
     const [microempresas, errorMicroempresas] = await MicroempresaService.getMicroempresas();
+    // populate para mostrar todos los datos de trabajadores
     if (errorMicroempresas) return respondError(req, res, 404, errorMicroempresas);
 
     microempresas.length === 0
