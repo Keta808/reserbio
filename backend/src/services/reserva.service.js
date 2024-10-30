@@ -91,24 +91,42 @@ async function createReserva(reserva) {
         const diaSemana = diasSemana[fechaReserva.getDay()];
 
         // Validación de que el trabajador esté disponible en ese día
-        const disponibilidad = await Disponibilidad.find({ trabajador: trabajador, dia: diaSemana });
+        const disponibilidad = await Disponibilidad.findOne({ trabajador: trabajador, dia: diaSemana });
         if (!disponibilidad || disponibilidad.length === 0) {
             return [null, "El trabajador no está disponible en este día"];
         }
        
-        
-         
-
         // Verificar si la hora de inicio está dentro del rango de disponibilidad
         const [inicioDisponible, finDisponible] = [
             new Date(`${fechaReserva.toDateString()} ${disponibilidad.hora_inicio}`),
             new Date(`${fechaReserva.toDateString()} ${disponibilidad.hora_fin}`)
         ];
 
-        if (horaInicioDate < inicioDisponible || horaInicioDate > finDisponible) {
-            return [null, "El trabajador no está disponible en este horario"];
-        }
 
+         // Verificar si la hora de inicio está dentro del rango de las excepciones
+         const excepciones = disponibilidad.excepciones; // Accede al array de excepciones
+         console.log(excepciones);
+         if (excepciones && excepciones.length > 0) {
+
+             for (let excepcion of excepciones) {
+                 const excepcionInicio = new Date(`${fechaReserva.toDateString()} ${excepcion.inicio_no_disponible}`);
+                 const excepcionFin = new Date(`${fechaReserva.toDateString()} ${excepcion.fin_no_disponible}`);
+ 
+                 // Comprobar si la hora de inicio de la reserva choca con las excepciones
+                 if (
+                    console.log(horaInicioDate),
+                        console.log(excepcionInicio),
+                        console.log(excepcionFin),
+                        
+                     (horaInicioDate >= excepcionInicio && horaInicioDate < excepcionFin) || 
+                     (horaFin > excepcionInicio && horaFin <= excepcionFin) ||
+                     (horaInicioDate <= excepcionInicio && horaFin >= excepcionFin)
+                 ) {
+                     return [null, "La hora ingresada choca con las excepciones del trabajador"];
+                 }
+             }
+         }
+         
         // Validación de que no exista una reserva con la misma hora de inicio y trabajador
         const reservaFound = await Reserva.findOne({ hora_inicio: horaInicioDate, trabajador });
         if (reservaFound) return [null, "Ya existe una reserva con la misma hora de inicio y trabajador"];
