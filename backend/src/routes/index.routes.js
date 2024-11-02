@@ -18,6 +18,7 @@ import enlaceRoutes from "./enlace.routes.js";
 import reservaRoutes from "./reserva.routes.js"; 
 import servicioRoutes from "./servicio.routes.js";
 
+
 /** Middleware de autenticación */
 import authenticationMiddleware from "../middlewares/authentication.middleware.js";
 
@@ -35,7 +36,14 @@ router.use("/enlaces", authenticationMiddleware, enlaceRoutes);
 // Define las rutas para las microempresas /api/microempresas
 router.use("/microempresas", authenticationMiddleware, microempresaRoutes);
 
-router.use("/servicios", authenticationMiddleware, servicioRoutes);
+router.use("/servicios", authenticationMiddleware, servicioRoutes); 
 
+
+import planRoutes from "./plan.routes.js";
+router.use("/planes", authenticationMiddleware, planRoutes);
+import SuscripcionRoutes from "./suscripcion.routes.js";
+router.use("/suscripcion", authenticationMiddleware, SuscripcionRoutes); 
+import Pagos from "./pago.routes.js";
+router.use("/pagos", authenticationMiddleware, Pagos);
 // Exporta el enrutador
 export default router;
