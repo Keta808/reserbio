@@ -15,5 +15,7 @@ router.get("/", isAdmin, enlaceController.getEnlaces);
 router.post("/", isAdmin, enlaceController.createEnlace);
 router.delete("/:id", isAdmin, enlaceController.deleteEnlace);
 router.put("/:id", isAdmin, enlaceController.updateEnlace);
+router.get("/microempresa/:id", isAdmin, enlaceController.getTrabajadoresPorMicroempresa);
+router.put("/update/:id", isAdmin, enlaceController.updateEnlaceParcial);
 
 export default router;

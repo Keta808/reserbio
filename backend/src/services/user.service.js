@@ -162,7 +162,7 @@ async function createAdministrador(administrador) {
 
 async function createCliente(cliente) {
   try {
-    const { nombre, apellido, email, password, state } = cliente;
+    const { nombre, apellido, email, password, state,telefono } = cliente;
 
     const userFound = await User .findOne({ email: cliente.email });
     if (userFound) return [null, "El usuario ya existe"];
@@ -175,6 +175,7 @@ async function createCliente(cliente) {
       nombre,
       apellido,
       email,
+      telefono,
       password: await User.encryptPassword(password),
       state: myState,
     });

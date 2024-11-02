@@ -1,9 +1,6 @@
 "use strict";
 
 import mongoose from "mongoose";
-// import UserModels from "../models/user.model.js";
-// Extrae el modelo 'User'
-// const { Trabajador } = UserModels;
 
 const MicroempresaSchema = new mongoose.Schema({
     nombre: {
@@ -40,6 +37,35 @@ const MicroempresaSchema = new mongoose.Schema({
         ref: "User",
         required: true,
     },
+    trabajadores: [
+        {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "User",
+            required: false,
+        },
+    ],
+    fotoPerfil: {
+        url: {
+            type: String,
+            required: false,
+        },
+        public_id: {
+            type: String,
+            required: false,
+        },
+    },
+    imagenes: [
+        {
+            url: {
+                type: String,
+                required: false,
+            },
+            public_id: {
+                type: String,
+                required: false,
+            },
+        },
+    ],
 });
 
 const Microempresa = mongoose.model("Microempresa", MicroempresaSchema);
