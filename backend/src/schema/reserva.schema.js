@@ -21,6 +21,7 @@ const fechaFormatoValido = (value, helpers) => {
 const reservaBodySchema = joi.object({
     hora_inicio: joi.string()
       .required()
+      .pattern(/^([01]\d|2[0-3]):([0-5]\d)$/)
       .messages({
         "date.base": "La hora de inicio debe ser de tipo Date.",
         "any.required": "La hora de inicio es obligatoria.",
