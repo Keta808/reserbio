@@ -14,30 +14,36 @@ const objectIdValidator = (value, helpers) => {
  */
 const microempresaBodySchema = joi.object({
     
-        nombre: joi.string().required().messages({
+        nombre: joi.string().max(50).required().messages({
             "string.empty": "El nombre no puede estar vacío.",
             "any.required": "El nombre es obligatorio.",
             "string.base": "El nombre debe ser de tipo string.",
+            "string.max": "El nombre no puede tener mas de 50 caracteres.",
         }),
-        descripcion: joi.string().required().messages({
+        descripcion: joi.string().max(200).required().messages({
             "string.empty": "La descripción no puede estar vacía.",
             "any.required": "La descripción es obligatoria.",
             "string.base": "La descripción debe ser de tipo string.",
+            "string.max": "La descripción no puede tener mas de 200 caracteres.",
         }),
-        telefono: joi.string().required().messages({
+        telefono: joi.string().length(9).pattern(/^[0-9]+$/).required().messages({
             "string.empty": "El teléfono no puede estar vacío.",
             "any.required": "El teléfono es obligatorio.",
             "string.base": "El teléfono debe ser de tipo string.",
+            "string.length": "El teléfono debe tener exactamente 9 dígitos.",
+            "string.pattern.base": "El teléfono solo debe contener dígitos numéricos.",
         }),
-        direccion: joi.string().required().messages({
+        direccion: joi.string().max(100).required().messages({
             "string.empty": "La dirección no puede estar vacía.",
             "any.required": "La dirección es obligatoria.",
             "string.base": "La dirección debe ser de tipo string.",
+            "string.max": "La dirección no puede tener mas de 100 caracteres.",
         }),
-        email: joi.string().required().messages({
+        email: joi.string().email().required().messages({
             "string.empty": "El email no puede estar vacío.",
             "any.required": "El email es obligatorio.",
             "string.base": "El email debe ser de tipo string.",
+            "string.email": "El email debe estar en un formato válido.",
         }),
         categoria: joi.string().required().messages({
             "string.empty": "La categoría no puede estar vacía.",
