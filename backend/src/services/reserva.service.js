@@ -77,6 +77,11 @@ async function createReserva(reserva) {
     try {
         const { hora_inicio, fecha, cliente, trabajador, servicio, estado } = reserva;
 
+        //Valida que la hora sea una hora valida
+        const horaInicio = hora_inicio.split(':');
+        if (horaInicio.length !== 2) return [null, "La hora de inicio no es válida"];
+        
+
         // Validaciones adicionales de existencia de trabajador y cliente
         const trabajadorFound = await Trabajador.findById(trabajador);
         if (!trabajadorFound) return [null, "El trabajador no existe"];
