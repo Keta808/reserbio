@@ -120,8 +120,8 @@ async function uploadImagenes(req, res) {
  */
 async function eliminarImagen(req, res) {
     try {
-        console.log("Archivos recibidos:", req.files);
-        console.log("Datos recibidos:", req.body);
+        // console.log("Archivos recibidos:", req.files);
+        // console.log("Datos recibidos:", req.body);
         const { public_id, microempresaId } = req.body;
 
         // Validar que se haya proporcionado el public_id y microempresaId
