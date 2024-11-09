@@ -13,18 +13,22 @@ const suscripcionSchema = new mongoose.Schema({
     },
     estado: {
         type: String,
-        enum: ["activa", "cancelada"],
+        enum: ["activa", "cancelada", "expirada"],
         default: "activa",
     },
     fecha_inicio: {
         type: Date,
+        default: Date.now,
         required: true,
     },
     fecha_fin: {
         type: Date,
         required: true,
     },
-    MercadoId: String, // ID de la suscripción generada por Mercado Pago
+    preapproval_id: {
+        type: String,
+        required: true,
+    },
 }, { timestamps: true });
 
 const Suscripcion = mongoose.model("Suscripcion", suscripcionSchema);

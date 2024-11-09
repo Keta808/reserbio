@@ -66,13 +66,33 @@ async function updatePlan(req, res) {
         respondError(req, res, 400, error.message);
     }
 }
-async function crearPlanes(req, res) {
+
+async function crearPlanBasico(req, res) {
     try {
-        const response = await planService.crearPlanes();
+        const response = await planService.crearPlanBasico();
         respondSuccess(req, res, 201, response);
     } catch (error) {
-        handleError(error, "plan.controller -> crearPlanes");
-        respondError(req, res, 500, "Error al crear planes de suscripción.");
+        handleError(error, "plan.controller -> crearPlanBasico");
+        respondError(req, res, 500, "Error al crear plan básico.");
     }
 }
-export default { getPlanes, createPlan, deletePlan, updatePlan, crearPlanes };
+async function crearPlanPremium(req, res) {
+    try {
+        const response = await planService.crearPlanPremium();
+        respondSuccess(req, res, 201, response);
+    } catch (error) {
+        handleError(error, "plan.controller -> crearPlanPremium");
+        respondError(req, res, 500, "Error al crear plan premium.");
+    }
+}
+
+async function crearPlanGratuito(req, res) {
+    try {
+        const response = await planService.crearPlanGratuito();
+        respondSuccess(req, res, 201, response);
+    } catch (error) {
+        handleError(error, "plan.controller -> crearPlanGratuito");
+        respondError(req, res, 500, "Error al crear plan gratuito.");
+    }
+}
+export default { getPlanes, createPlan, deletePlan, updatePlan, crearPlanBasico, crearPlanPremium, crearPlanGratuito };

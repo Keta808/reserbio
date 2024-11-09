@@ -1,29 +1,25 @@
 "use strict"; 
 
-
 import mongoose from "mongoose"; 
 
 
 const PlanSchema = new mongoose.Schema({
     tipo_plan: {
         type: String, 
-        enum: ["Basico", "Premium"],
         required: true, 
-        
     },
-    precio: {
-        type: Number,
-        required: true,
-    },
-    preapproval_plan_id: {
+    mercadoPagoId: {
         type: String, // ID del plan de suscripción en Mercado Pago
         required: true,
         unique: true,
     }, 
     estado: {
         type: String,
-        enum: ["activo", "inactivo"],
-        default: "activo",
+        required: true,
+    },
+    fecha_creacion: {
+        type: Date,
+        default: Date.now,
     },
 }, { timestamps: true });
 

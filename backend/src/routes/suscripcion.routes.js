@@ -5,7 +5,7 @@ import express from 'express';
 
 const router = express.Router(); 
 
-router.post('/iniciar-suscripcion', suscripcionController.iniciarSuscripcion);
-router.post('/cancelar-suscripcion', suscripcionController.cancelarSuscripcion);
+router.post('/suscripcion-basica', suscripcionController.crearSuscripcionBasica);
+
 
 export default router; 

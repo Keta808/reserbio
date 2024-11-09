@@ -4,27 +4,15 @@
 /* eslint-disable require-jsdoc */
 import suscripcionService from '../services/suscripcion.service.js';    
 
- async function iniciarSuscripcion(req, res) {
-    const { usuarioId, planId, cardTokenId } = req.body;
-
+ 
+async function crearSuscripcionBasica(req, res) {
     try {
-        const response = await suscripcionService.iniciarSuscripcion(usuarioId, planId, cardTokenId);
-        res.json(response);
+        const [suscripcion, error] = await suscripcionService.crearSuscripcionBasica(req.user, req.body.cardTokenId);
+        if (error) return res.status(400).json({ message: error });
+        return res.status(201).json(suscripcion);
     } catch (error) {
-        console.error("Error al iniciar suscripción:", error);
-        res.status(500).json({ success: false, message: error.message });
+        console.log(error);
+        return res.status(400).json({ message: error });
     }
 }
-
- async function cancelarSuscripcion(req, res) {
-    const { idSuscripcion } = req.body;
-
-    try {
-        const response = await suscripcionService.cancelarSuscripcion(idSuscripcion);
-        res.json(response);
-    } catch (error) {
-        console.error("Error al cancelar suscripción:", error);
-        res.status(500).json({ success: false, message: error.message });
-    }
-} 
-export default { iniciarSuscripcion, cancelarSuscripcion };
+export default { crearSuscripcionBasica };

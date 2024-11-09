@@ -1,3 +1,6 @@
+/* eslint-disable padded-blocks */
+/* eslint-disable no-console */
+/* eslint-disable max-len */
 /* eslint-disable comma-dangle */
 /* eslint-disable quote-props */
 /* eslint-disable quotes */
@@ -23,14 +26,14 @@ async function getPlanes() {
 
 async function createPlan(plan) {
     try { 
-        const { tipo_plan, precio, estado } = plan;
+        const { tipo_plan, mercadoPagoId, estado, fecha_creacion } = plan;
 
         // Crear un nuevo plan
         const newPlan = new Plan({
             tipo_plan,
-            precio,
-            preapproval_plan_id, 
+            mercadoPagoId,
             estado,
+            fecha_creacion,
         });
         
         // Guardar el plan en la base de datos
@@ -70,79 +73,151 @@ async function updatePlan(id, plan) {
 import axios from 'axios';
 import { ACCESS_TOKEN } from '../config/configEnv.js';
 
-async function crearPlanSuscripcion(data) {
-    try {
-        const response = await axios.post('https://api.mercadopago.com/preapproval_plan', data, {
-            headers: {
-                Authorization: `Bearer ${ACCESS_TOKEN}`,
-                'Content-Type': 'application/json'
-            }
-        });
-        return response.data.id; // Retorna el ID del plan creado en MercadoPago
-    } catch (error) {
-        handleError(error, "plan.service -> crearPlanSuscripcion");
-        throw new Error("Error al crear el plan en MercadoPago");
-    }
-}
-
 
 // Endpoint para crear planes de suscripción
-async function crearPlanes() {
+async function crearPlanBasico() {
+    const plan = {
+        reason: 'Plan Basico',
+        auto_recurring: {
+          frequency: 1,
+          frequency_type: 'months',
+          repetitions: 12,
+          billing_day: 10,
+          billing_day_proportional: true,
+          free_trial: {
+            frequency: 1,
+            frequency_type: 'months',
+          },
+          transaction_amount: 3000,
+          currency_id: 'CLP',
+          payment_methods_allowed: {
+            payment_types: [
+              { id: 'credit_card' },
+              { id: 'debit_card' },
+            ],
+          },
+        },
+        back_url: 'https://www.mercadopago.com',
+    };
+      
+    
     try {
-        const planesData = [
-            {
-                reason: "Suscripción Básica",
-                auto_recurring: {
-                    frequency: 1,
-                    frequency_type: "months",
-                    repetitions: 12,
-                    transaction_amount: 3000,
-                    currency_id: "CLP",
-                    billing_day: 10,
-                    free_trial: {
-                        frequency: 1,
-                        frequency_type: "months"
-                    },
-                    back_url: 'http://localhost:3000/api/pagos/pago-exitoso'
-                },
-                
-            },
-            {
-                reason: "Suscripción Premium",
-                auto_recurring: {
-                    frequency: 1,
-                    frequency_type: "months",
-                    repetitions: 12,
-                    transaction_amount: 5000,
-                    currency_id: "CLP",
-                    billing_day: 10,
-                    free_trial: {
-                        frequency: 1,
-                        frequency_type: "months"
-                    },
-                    back_url: 'http://localhost:3000/api/pagos/pago-exitoso'
-                },
-            }
-        ];
+            const response = await axios.post(
+              'https://api.mercadopago.com/preapproval_plan',
+              plan,
+              {
+                headers: {
+                  'Content-Type': 'application/json',
+                  'Authorization': `Bearer ${ACCESS_TOKEN}`
+                }
+              }
+            );
 
-        for (const planData of planesData) {
-            const preapprovalPlanId = await crearPlanSuscripcion(planData);
-
-            await Plan.create({
-                tipo_plan: planData.reason.split(' ')[1], // "Básica" o "Premium"
-                precio: planData.auto_recurring.transaction_amount,
-                preapproval_plan_id: preapprovalPlanId,
-                estado: 'activo'
-            });
+        console.log(response.data); 
+        console.log(`Plan creado: ${plan.reason}`, response.data);  
+        
+        const existingPlan = await Plan.findOne({ mercadoPagoId: response.data.id }).exec();
+        if (existingPlan) {
+            return { message: "El plan ya existe.", plan: existingPlan };
         }
+        // Guardar el plan en la base de datos
+        const newPlan = new Plan({
+            tipo_plan: 'Plan Basico',
+            mercadoPagoId: response.data.id,
+            estado: response.data.status,
+            fecha_creacion: response.data.date_created,
+        });
 
-        return { message: "Planes creados exitosamente." };
-    } catch (error) {
-        handleError(error, "plan.service -> crearPlanes");
-        throw new Error("Error al crear planes en la base de datos.");
+        await newPlan.save(); // Guardar en MongoDB
+
+        return { message: "Plan basico creado exitosamente.", plan: newPlan };
+    } catch (error) { 
+        console.error(`Error al crear el plan ${plan.reason}:`, error.response?.data || error.message);
+        handleError(error, "plan.service -> crearPlanBasico");
+        throw new Error("Error al crear plan en la base de datos.");
     }
+} 
+
+async function crearPlanPremium(){ 
+    const planP = {
+        reason: 'Plan Premium',
+        auto_recurring: {
+          frequency: 1,
+          frequency_type: 'months',
+          repetitions: 12,
+          billing_day: 10,
+          billing_day_proportional: true,
+          free_trial: {
+            frequency: 1,
+            frequency_type: 'months',
+          },
+          transaction_amount: 5000,
+          currency_id: 'CLP',
+          payment_methods_allowed: {
+            payment_types: [
+              { id: 'credit_card' },
+              { id: 'debit_card' },
+            ],
+          },
+        },
+        back_url: 'https://www.mercadopago.com',
+      }; 
+    
+    try {
+        const response = await axios.post(
+          'https://api.mercadopago.com/preapproval_plan',
+          planP,
+          {
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${ACCESS_TOKEN}`
+            }
+          }
+        );
+
+    console.log(response.data); 
+    console.log(`Plan creado: ${planP.reason}`, response.data); 
+    
+
+    // Guardar el plan en la base de datos
+    const newPlan = new Plan({
+        tipo_plan: 'Plan Premium',
+        mercadoPagoId: response.data.id,
+        estado: response.data.status,
+        fecha_creacion: response.data.date_created,
+    });
+
+    await newPlan.save(); // Guardar en MongoDB
+
+    return { message: "Plan premium creado exitosamente.", plan: newPlan };
+} catch (error) { 
+    console.error(`Error al crear el plan ${planP.reason}:`, error.response?.data || error.message);
+    handleError(error, "plan.service -> crearPlanPremium");
+    throw new Error("Error al crear plan en la base de datos.");  
+}  
+
+} 
+
+async function crearPlanGratuito() {
+  try {
+      // Crear y guardar el plan gratuito en MongoDB
+      const newPlan = new Plan({
+          tipo_plan: 'Plan Gratuito',
+          mercadoPagoId: 'GRATIS', // ID específico para el plan gratuito
+          estado: 'active', // Estado puede ser "active" o cualquier valor que prefieras
+          fecha_creacion: new Date(),
+      });
+
+      await newPlan.save(); // Guardar en MongoDB
+
+      console.log("Plan gratuito creado exitosamente:", newPlan);
+      return { message: "Plan gratuito creado exitosamente.", plan: newPlan };
+  } catch (error) {
+      console.error("Error al crear el plan gratuito:", error.message);
+      handleError(error, "plan.service -> crearPlanGratuito");
+      throw new Error("Error al crear plan gratuito en la base de datos.");
+  }
 }
 
-
-export default { getPlanes, createPlan, deletePlan, updatePlan, crearPlanes }; 
+export default { getPlanes, createPlan, deletePlan, updatePlan, crearPlanBasico, crearPlanPremium, crearPlanGratuito }; 
 

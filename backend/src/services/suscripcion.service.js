@@ -4,81 +4,63 @@
 /* eslint-disable quotes */
 /* eslint-disable comma-dangle */
 /* eslint-disable require-jsdoc */
+import axios from 'axios';
 import Suscripcion from '../models/suscripcion.model.js';
-import Plan from '../models/plan.model.js'; 
-import User from "../models/user.model.js";
+// import Plan from '../models/plan.model.js'; 
+// import User from "../models/user.model.js"; 
+import { handleError } from "../utils/errorHandler.js";
 import { ACCESS_TOKEN } from '../config/configEnv.js';
- async function iniciarSuscripcion(req, res) {
-    const { usuarioId, planId, cardTokenId } = req.body;
 
+async function crearSuscripcionBasica(user, cardTokenId) { 
+    const startDate = new Date(); // Fecha actual
+    const endDate = new Date();
+    endDate.setMonth(startDate.getMonth() + 1); // Un mes después de la fecha de inicio
+    const suscripcionBasica = {
+        preapproval_plan_id: "2c93808492f5938b0192fea4195b0466",
+        reason: "Suscripción básica", 
+        external_reference: `USER-${user._id}`,
+        payer_email: user.email,
+        card_token_id: cardTokenId,
+        auto_recurring: {
+            frequency: 1,
+            frequency_type: "months",
+            start_date: startDate.toISOString(),
+            end_date: endDate.toISOString(),
+            transaction_amount: 3000,
+            currency_id: "CLP",
+            
+        },
+        back_url: "https://www.mercadopago.com",
+        status: "authorized"
+    }; 
     try {
-        const plan = await Plan.findById(planId);
-        const usuario = await User.findById(usuarioId).exec();
-        const payerEmail = usuario.email;
-
-        const suscripcionData = {
-            preapproval_plan_id: plan.preapproval_plan_id,
-            reason: `Suscripción a ${plan.tipo_plan}`,
-            external_reference: `SUB-${usuarioId}-${planId}`,
-            payer_email: payerEmail, // Cambia esto por el email real del cliente
-            card_token_id: cardTokenId,
-            auto_recurring: {
-                frequency: 1,
-                frequency_type: 'months',
-                start_date: new Date().toISOString(),
-                end_date: new Date(Date.now() + 12 * 30 * 24 * 60 * 60 * 1000).toISOString(), // 12 meses
-                transaction_amount: plan.precio,
-                currency_id: 'CLP',
-                back_url: 'http://localhost:3000/api/pagos/pago-exitoso',
-                status: 'authorized'
+        const response = await axios.post(
+            "https://api.mercadopago.com/preapproval",
+            suscripcionBasica,
+            {
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${ACCESS_TOKEN}`,
+                },
             }
-        };
-
-        const response = await axios.post('https://api.mercadopago.com/preapproval', suscripcionData, {
-            headers: {
-                Authorization: `Bearer ${ACCESS_TOKEN}`,
-                'Content-Type': 'application/json'
-            }
-        });
-
-        // Guardar la suscripción en la base de datos
-        const nuevaSuscripcion = await Suscripcion.create({
-            idUsuario: usuarioId,
-            idPlan: planId,
-            estado: 'activa',
+        );
+        console.log("Respuesta mercado pago:", response.data);
+        const preapprovalId = response.data.id; 
+        const planBasico = await Plan.findOne({ tipo_plan: "Plan Basico" });
+        const suscripcion = new Suscripcion({
+            idUsuario: user._id,
+            idPlan: planBasico._id,
+            estado: "active",
             fecha_inicio: new Date(),
-            fecha_fin: new Date(Date.now() + 12 * 30 * 24 * 60 * 60 * 1000), // Fecha de finalización
-            MercadoId: response.data.id, // ID de la suscripción generada
+            fecha_fin: new Date(new Date().setMonth(new Date().getMonth() + 1)),
+            preapproval_id: preapprovalId,
         });
-
-        res.json({ success: true, subscription: nuevaSuscripcion });
-    } catch (error) {
-        console.error("Error al iniciar suscripción:", error);
-        res.status(500).json({ success: false, message: error.message });
-    }
-}
- async function cancelarSuscripcion(req, res) {
-    const { idSuscripcion } = req.body;
-
-    try {
-        const suscripcion = await Suscripcion.findById(idSuscripcion);
-
-        // Llama a la API de Mercado Pago para cancelar la suscripción
-        await axios.put(`https://api.mercadopago.com/preapproval/${suscripcion.MercadoId}`, { status: 'cancelled' }, {
-            headers: {
-                Authorization: `Bearer ${ACCESS_TOKEN}`,
-                'Content-Type': 'application/json'
-            }
-        });
-
-        // Actualiza el estado de la suscripción en la base de datos
-        suscripcion.estado = 'cancelada';
         await suscripcion.save();
-
-        res.json({ success: true, message: "Suscripción cancelada." });
+        return { message: "Suscripcion basica creada exitosamente.", suscripcion }; 
     } catch (error) {
-        console.error("Error al cancelar suscripción:", error);
-        res.status(500).json({ success: false, message: error.message });
-    }
-} 
-export default { iniciarSuscripcion, cancelarSuscripcion }; 
+        console.error(`Error al crear el suscripcion ${suscripcionBasica.reason}:`, error.response?.data || error.message);
+        handleError(error, "suscripcion.service -> crearSuscripcionBasica");
+}
+}
+ 
+export default { crearSuscripcionBasica }; 

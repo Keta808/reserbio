@@ -47,8 +47,7 @@ import planRoutes from "./plan.routes.js";
 router.use("/planes", authenticationMiddleware, planRoutes);
 import SuscripcionRoutes from "./suscripcion.routes.js";
 router.use("/suscripcion", authenticationMiddleware, SuscripcionRoutes); 
-import Pagos from "./pago.routes.js";
-router.use("/pagos", authenticationMiddleware, Pagos);
+
 // Define las rutas para las imagenes /api/imagenes
 router.use("/imagenes", authenticationMiddleware, imageRoutes);
 
