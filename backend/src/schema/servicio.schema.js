@@ -4,10 +4,10 @@ import Joi from "joi";
 
 const servicioBodySchema = Joi.object({
     
-        idTrabajador: Joi.string().required().messages({
-            "string.empty": "El idTrabajador no puede estar vacío.",
-            "any.required": "El idTrabajador es obligatorio.",
-            "string.base": "El idTrabajador debe ser de tipo string.",
+        idMicroempresa: Joi.string().required().messages({
+            "string.empty": "El idMicroempresa no puede estar vacío.",
+            "any.required": "El idMicroempresa es obligatorio.",
+            "string.base": "El idMicroempresa debe ser de tipo string.",
         }),
         nombre: Joi.string().required().messages({
             "string.empty": "El nombre no puede estar vacío.",
