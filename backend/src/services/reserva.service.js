@@ -77,6 +77,9 @@ async function createReserva(reserva) {
     try {
         const { hora_inicio, fecha, cliente, trabajador, servicio, estado } = reserva;
 
+        
+
+      
         //Valida que la hora sea una hora valida
         const horaInicio = hora_inicio.split(':');
         if (horaInicio.length !== 2) return [null, "La hora de inicio no es válida"];
@@ -110,7 +113,7 @@ async function createReserva(reserva) {
 
          // Verificar si la hora de inicio está dentro del rango de las excepciones
          const excepciones = disponibilidad.excepciones; // Accede al array de excepciones
-         console.log(excepciones);
+         //console.log(excepciones);
          if (excepciones && excepciones.length > 0) {
 
              for (let excepcion of excepciones) {
@@ -139,6 +142,7 @@ async function createReserva(reserva) {
         // Validación de que no exista otra reserva que sume la duración del servicio
         const servicioFound = await Servicio.findById(servicio);
         if (!servicioFound) return [null, "El servicio no existe"];
+        //Saca la duracion del servicio
 
         const duracion = servicioFound.duracion;
         const horaFin = new Date(horaInicioDate);
@@ -163,7 +167,7 @@ async function createReserva(reserva) {
         }
 
         
-
+        console.log("¿lleggo");
         // Crear la nueva reserva
         const newReserva = new Reserva({
             hora_inicio: horaInicioDate,  // Guardamos el Date de la hora
@@ -171,8 +175,10 @@ async function createReserva(reserva) {
             cliente,
             trabajador,
             servicio,
+            duracion,
             estado
         });
+        console.log(newReserva);
         await newReserva.save();
 
         return [newReserva, null];

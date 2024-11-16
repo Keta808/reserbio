@@ -14,5 +14,5 @@ router.get("/:id", disponibilidadController.getDisponibilidadByTrabajador);
 router.post("/", disponibilidadController.createDisponibilidad);
 router.put("/:id", disponibilidadController.updateDisponibilidad);
 router.delete("/:id", disponibilidadController.deleteDisponibilidad);
-
+router.post('/horarios-disponibles', disponibilidadController.getHorariosDisponibles);
 export default router;

@@ -26,6 +26,10 @@ const ReservaSchema = new mongoose.Schema({
         ref: "Servicio", // Referencia al modelo de servicio
         required: true,
     },
+    duracion: {
+        type: Number,
+        required: true,
+    },
     estado: {
         type: String,
         enum: ['Activa', 'Cancelada', 'Finalizada'],

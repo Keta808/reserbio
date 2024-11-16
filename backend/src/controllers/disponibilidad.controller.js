@@ -96,10 +96,22 @@ async function deleteDisponibilidad(req, res) {
   }
 }
 
+const getHorariosDisponibles = async (req, res) => {
+  const { workerId, date } = req.body;
+  try {
+    const availableSlots = await DisponibilidadService.getAvailableSlots(workerId, date);
+    res.status(200).json({ availableSlots });
+  } catch (error) {
+    res.status(500).json({ message: 'Error al obtener los horarios disponibles', error });
+  }
+};
+
 
 export default { 
     getDisponibilidadByTrabajador, 
     createDisponibilidad, 
     updateDisponibilidad, 
     deleteDisponibilidad,
+    getHorariosDisponibles
+    
  };

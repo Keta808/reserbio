@@ -25,6 +25,8 @@ const reservaBodySchema = joi.object({
       .messages({
         "date.base": "La hora de inicio debe ser de tipo Date.",
         "any.required": "La hora de inicio es obligatoria.",
+        "string.pattern.base": "La hora de inicio debe estar en el formato HH:MM (por ejemplo, 08:00 o 15:00).",
+
       }),
     fecha: joi.string()
       .required()
@@ -59,6 +61,7 @@ const reservaBodySchema = joi.object({
         "string.base": "El id del servicio debe ser de tipo string.",
         "string.pattern.base": "El id del servicio proporcionado no es un ObjectId válido.",
       }),
+    
     estado: joi.string()
       .required()
       .messages({
