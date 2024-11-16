@@ -1,5 +1,5 @@
 "use strict";
-
+import mongoose from "mongoose";
 // Importa el modelo de enlace
 import Enlace from "../models/enlace.model.js";
 
@@ -30,25 +30,23 @@ async function getEnlaces() {
  * @returns 
  */
 async function createEnlace(enlace) {
+    const session = await mongoose.startSession();
+    session.startTransaction(); // Inicia la transacción explícitamente
     try {
         const { id_trabajador, id_role, id_microempresa, fecha_inicio, estado } = enlace;
         
         // Restricciones Enlace:
-        // 1. Debe existir un trabajador en la base de datos
         const enlaceTrabajador = await Trabajador.findById(id_trabajador).exec();
-        if (!enlaceTrabajador) return [null, "El trabajador no existe"];
+        if (!enlaceTrabajador) throw new Error("El trabajador no existe");
 
-        // 2. Debe existir un role en la base de datos
         const enlaceRole = await Role.findById(id_role).exec();
-        if (!enlaceRole) return [null, "El role no existe"];
+        if (!enlaceRole) throw new Error("El role no existe");
 
-        // 3. Debe existir una microempresa en la base de datos
         const enlaceMicroempresa = await Microempresa.findById(id_microempresa).exec();
-        if (!enlaceMicroempresa) return [null, "La microempresa no existe"];
+        if (!enlaceMicroempresa) throw new Error("La microempresa no existe");
 
-        // 4. No puede haber dos enlaces con el mismo id_role con estado activo
-        const enlaceFound = await Enlace.findOne({ id_role: enlace.id_role, estado: true });
-        if (enlaceFound) return [null, "El enlace ya existe"];
+        const enlaceFound = await Enlace.findOne({ id_role, id_trabajador, estado: true });
+        if (enlaceFound) throw new Error("Ya existe un enlace activo para este trabajador y rol");
 
         const newEnlace = new Enlace({
             id_trabajador,
@@ -57,17 +55,27 @@ async function createEnlace(enlace) {
             fecha_inicio,
             estado,
         });
-        await newEnlace.save();
 
-        // Actualizar la microempresa con el nuevo trabajador
-        enlaceMicroempresa.trabajadores.addToSet(id_trabajador); // addToSet evita duplicados
-        await enlaceMicroempresa.save();
-    
+        // Guardar el nuevo enlace y actualizar la microempresa en la misma transacción
+        await newEnlace.save({ session });
+        enlaceMicroempresa.trabajadores.addToSet(newEnlace._id);
+        await enlaceMicroempresa.save({ session });
+
+        // Confirmar la transacción
+        await session.commitTransaction();
+        
         return [newEnlace, null];
     } catch (error) {
+        // Abortar la transacción en caso de error
+        await session.abortTransaction();
         handleError(error, "enlace.service -> createEnlace");
+        return [null, error.message];
+    } finally {
+        // Finalizar la sesión independientemente del resultado
+        session.endSession();
     }
 }
+
 
 /** */
 async function deleteEnlace(id) {
@@ -81,21 +89,28 @@ async function deleteEnlace(id) {
     }
 }
 
-/** */
+/** servicio de updateEnlace */
 async function updateEnlace(id, enlace) {
     try {
-        const { id_trabajador, id_role, id_microempresa, fecha_inicio, estado } = enlace;
+        const { id_trabajador, id_microempresa, estado } = enlace;
     
         const enlaceFound = await Enlace.findById(id);
         if (!enlaceFound) return [null, "El enlace no existe"];
+
+        const estadoOriginal = enlaceFound.estado;
     
         enlaceFound.id_trabajador = id_trabajador;
-        enlaceFound.id_role = id_role;
         enlaceFound.id_microempresa = id_microempresa;
-        enlaceFound.fecha_inicio = fecha_inicio;
         enlaceFound.estado = estado;
     
         await enlaceFound.save();
+
+         // Si el estado cambió a false, se elimina al trabajador del arreglo de la microempresa
+         if (estadoOriginal !== false && estado === false) {
+            await Microempresa.findByIdAndUpdate(id_microempresa, {
+                $pull: { trabajadores: enlaceFound.id_trabajador },
+            });
+        }
     
         return [enlaceFound, null];
     } catch (error) {
@@ -122,11 +137,17 @@ async function getTrabajadoresPorMicroempresa(id_microempresa) {
     }
 }
 
-/** Actualizar parcialmente el enlace */
+/** servicio para actualizar parcialmente el enlace */
 async function updateEnlaceParcial(id, fieldsToUpdate) {
     try {
         const enlaceFound = await Enlace.findById(id);
         if (!enlaceFound) return [null, "El enlace no existe"];
+
+        const estadoOriginal = enlaceFound.estado;
+
+        // Mostrar los valores para confirmar la entrada
+        console.log("Estado original:", estadoOriginal);
+        console.log("Estado en fieldsToUpdate:", fieldsToUpdate.estado);
         
         // Actualiza solo los campos proporcionados
         Object.keys(fieldsToUpdate).forEach((key) => {
@@ -134,12 +155,54 @@ async function updateEnlaceParcial(id, fieldsToUpdate) {
         });
 
         await enlaceFound.save();
+
+        // Si el estado cambió a false, eliminamos al trabajador del arreglo de la microempresa
+        if (estadoOriginal !== false && fieldsToUpdate.estado === false) {
+            console.log("El estado cambió a false. Eliminando trabajador de la microempresa...");
+        
+            // Intentar eliminar el trabajador directamente usando `$pull` y comprobar el resultado
+            const trabajadorId = enlaceFound.id_trabajador.toString();
+            const result = await Microempresa.findByIdAndUpdate(
+                enlaceFound.id_microempresa,
+                { $pull: { trabajadores: enlaceFound._id } },
+                { new: true }
+            );
+        
+            console.log("Resultado de la actualización de microempresa:", result);
+        
+            if (!result) {
+                console.log("Error: No se pudo actualizar la microempresa o eliminar el trabajador.");
+            } else {
+                console.log("Trabajador eliminado correctamente del arreglo trabajadores.");
+            }
+        }
+        
+        // **Nuevo bloque**: Si el estado cambió a true, agregamos al trabajador al arreglo de la microempresa
+        if (estadoOriginal !== true && fieldsToUpdate.estado === true) { 
+            console.log("El estado cambió a true. Agregando trabajador a la microempresa...");
+            
+            const result = await Microempresa.findByIdAndUpdate( 
+                enlaceFound.id_microempresa,
+                { $addToSet: { trabajadores: enlaceFound._id } }, // Agregar sin duplicados
+                { new: true }
+            );
+
+            console.log("Resultado de la actualización de microempresa:", result);
+            
+            if (!result) {
+                console.log("Error: No se pudo actualizar la microempresa o agregar el trabajador.");
+            } else {
+                console.log("Trabajador agregado correctamente al arreglo trabajadores.");
+            }
+        } // <-- Línea agregada
+
         return [enlaceFound, null];
     } catch (error) {
         handleError(error, "enlace.service -> updateEnlaceParcial");
         return [null, error.message];
     }
 }
+
 
 
 export default {

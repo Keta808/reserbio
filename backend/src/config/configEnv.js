@@ -22,3 +22,7 @@ export const DB_URL = process.env.DB_URL;
 export const ACCESS_JWT_SECRET = process.env.ACCESS_JWT_SECRET;
 /** Refresh token secret */
 export const REFRESH_JWT_SECRET = process.env.REFRESH_JWT_SECRET;
+
+// MercadoPago API credentials
+export const ACCESS_TOKEN = process.env.ACCESS_TOKEN; 
+

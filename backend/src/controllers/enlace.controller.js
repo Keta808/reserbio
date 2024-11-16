@@ -87,7 +87,6 @@ async function updateEnlace(req, res) {
         handleError(error, "enlace.controller -> updateEnlace");
         respondError(req, res, 400, error.message);
     }
-
 }
 
 /** controlador para obtener trabajadores por microempresa */
@@ -126,7 +125,6 @@ async function updateEnlaceParcial(req, res) {
         respondError(req, res, 400, error.message);
     }
 }
-
 
 export default {
     getEnlaces,

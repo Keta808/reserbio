@@ -4,9 +4,9 @@
 import mongoose from "mongoose"; 
 
 const ServicioSchema = new mongoose.Schema({ 
-    idTrabajador: { 
+    idMicroempresa: { 
         type: mongoose.Schema.Types.ObjectId, 
-        ref: "User", 
+        ref: "Microempresa", 
         required: true, 
     },
     nombre: {

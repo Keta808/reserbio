@@ -1,40 +1,27 @@
 "use strict"; 
 
-
 import mongoose from "mongoose"; 
 
 
-import planes from "../constants/planes.constants.js";
 const PlanSchema = new mongoose.Schema({
     tipo_plan: {
         type: String, 
-        enum: planes,
+        required: true, 
+    },
+    mercadoPagoId: {
+        type: String, // ID del plan de suscripción en Mercado Pago
         required: true,
+        unique: true,
     }, 
-    // QUIZAS AGREGAR CONSTANTE PRECIO PLAN
-    idTrabajador: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "User",
-        required: true,
-    },
     estado: {
-        type: String, 
-        enum: ["Vigente", "No vigente"],
+        type: String,
         required: true,
     },
-    fecha_fin: {
+    fecha_creacion: {
         type: Date,
-        required: true,
+        default: Date.now,
     },
-
-},
-
-    {
-        timestamps: true, 
-        versionKey: false,
-    },
-    
-);
+}, { timestamps: true });
 
 const Plan = mongoose.model("Plan", PlanSchema);
 export default Plan;
