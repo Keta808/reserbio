@@ -23,6 +23,7 @@ router.use(authenticationMiddleware);
 router.post("/fotoPerfil", isAdmin, upload.single("fotoPerfil"), imageController.uploadFotoPerfil);
 router.post("/portafolio", isAdmin, upload.array("imagenes", 5), imageController.uploadImagenes);
 router.post("/eliminar", isAdmin, imageController.eliminarImagen);
+router.post("/eliminarFotoPerfil", isAdmin, imageController.deleteFotoPerfil);
 
 // router.delete("eliminar", isAdmin, imageController.eliminarImagen);
 

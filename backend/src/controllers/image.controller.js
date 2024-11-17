@@ -4,7 +4,7 @@ import Microempresa from "../models/microempresa.model.js";
 import upload from "../middlewares/upload.middleware.js";
 
 /**
- * Maneja la subida de una imagen a Cloudinary
+ * Maneja la subida de una foto de perfil a Cloudinary
  */
 async function uploadFotoPerfil(req, res) {
     try {
@@ -50,7 +50,58 @@ async function uploadFotoPerfil(req, res) {
 }
 
 /**
- * Maneja la subida de imágenes adicionales
+ * Maneja la eliminación de la foto de perfil de Cloudinary
+ */
+async function deleteFotoPerfil(req, res) {
+    try {
+        const { public_id, microempresaId } = req.body;
+
+        // Validar que se hayan proporcionado los datos requeridos
+        if (!public_id || !microempresaId) {
+            console.error("Datos recibidos en req.body:", req.body);
+            return respondError(req, res, 400, "Falta el public_id o el microempresaId");
+        }
+
+        // Eliminar la imagen de Cloudinary
+        const result = await cloudinary.uploader.destroy(public_id);
+        if (result.result !== "ok") {
+            console.error("Error en la respuesta de Cloudinary:", result);
+            return respondError(req, res, 500, "Error al eliminar la imagen de Cloudinary");
+        }
+
+        // Buscar la microempresa en la base de datos
+        const microempresa = await Microempresa.findById(microempresaId);
+        if (!microempresa) {
+            return respondError(req, res, 404, "Microempresa no encontrada");
+        }
+
+        console.log("Valor almacenado de public_id en la base de datos:", microempresa.fotoPerfil?.public_id);
+        console.log("Valor recibido en la solicitud:", public_id);
+
+        // Validar si el public_id proporcionado coincide con el almacenado en fotoPerfil
+        if (microempresa.fotoPerfil?.public_id !== public_id) {
+            console.warn("El public_id no coincide con la foto de perfil actual");
+            return respondError(req, res, 400, "La foto de perfil no coincide con el public_id proporcionado");
+        }
+
+        // Eliminar la referencia a la foto de perfil
+        microempresa.fotoPerfil = { url: null, public_id: null };
+
+        // Guardar los cambios
+        await microempresa.save();
+
+        // Responder con éxito
+        return respondSuccess(req, res, 200, "Foto de perfil eliminada correctamente");
+    } catch (error) {
+        console.error(error);
+        return respondError(req, res, 500, "Error al eliminar la foto de perfil");
+    }
+}
+
+
+
+/**
+ * Maneja la subida de imágenes adicionales a galeria de Cloudinary
  */
 async function uploadImagenes(req, res) {
     try {
@@ -66,6 +117,7 @@ async function uploadImagenes(req, res) {
         if (!microempresa) {
             return respondError(req, res, 404, "Microempresa no encontrada");
         }
+
 
         // Limitar el número de imágenes
         if (microempresa.imagenes.length + req.files.length > 5) { // Límite de 5 imágenes
@@ -158,6 +210,7 @@ async function eliminarImagen(req, res) {
 
 export default {
     uploadFotoPerfil,
+    deleteFotoPerfil,
     uploadImagenes,
     eliminarImagen,
 };
