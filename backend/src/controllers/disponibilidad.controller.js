@@ -107,11 +107,56 @@ const getHorariosDisponibles = async (req, res) => {
 };
 
 
+/**
+ * Obtiene los horarios disponibles de una microempresa
+ */
+
+const getHorariosDisponiblesMicroEmpresa = async (req, res) => {
+  const { serviceId, date } = req.body;
+  try {
+    const availableSlots = await DisponibilidadService.getHorariosDisponiblesMicroEmpresa(serviceId, date);
+    res.status(200).json({ availableSlots });
+  } catch (error) {
+    res.status(500).json({ message: 'Error al obtener los horarios disponibles', error });
+  }
+
+  
+}
+
+const getTrabajadoresDisponiblesPorHora = async (req, res) => {
+  const { serviceId, date, hora } = req.body;
+
+  try {
+    // Validación inicial
+    if (!serviceId || !date || !hora) {
+      return res.status(400).json({ 
+        message: "Todos los campos (serviceId, date, hora) son requeridos." 
+      });
+    }
+
+    // Llamar al servicio para obtener los trabajadores disponibles
+    const [trabajadoresDisponibles, error] = await DisponibilidadService.getTrabajadoresDisponiblesPorHora(serviceId, date, hora);
+
+    if (error) {
+      return res.status(404).json({ message: error });
+    }
+
+    res.status(200).json({ trabajadoresDisponibles });
+  } catch (error) {
+    console.error("Error en obtenerTrabajadoresDisponibles:", error);
+    res.status(500).json({ message: "Error al obtener los trabajadores disponibles", error });
+  }
+};
+
 export default { 
     getDisponibilidadByTrabajador, 
     createDisponibilidad, 
     updateDisponibilidad, 
     deleteDisponibilidad,
-    getHorariosDisponibles
+    getHorariosDisponibles,
+    getHorariosDisponiblesMicroEmpresa,
+    getTrabajadoresDisponiblesPorHora
+    
+
     
  };

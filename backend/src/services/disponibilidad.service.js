@@ -6,6 +6,12 @@ const { Trabajador, Cliente, User } = UserModels;
 
 import Reserva from "../models/reserva.model.js";
 
+import Servicio from "../models/servicio.model.js";
+
+import Enlace from "../models/enlace.model.js";
+
+
+
 /**
  * Obtiene la disponibilidad de un trabajador por su id
  * 
@@ -200,9 +206,176 @@ function formatTimeToString(time) {
     }
 }
 
+function normalizeString(str) {
+    return str.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+}
 
 
 
+async function getHorariosDisponiblesMicroEmpresa(serviceId, date) {
+    try {
+        const fechaConsulta = stringToDateOnly(date);
+        const diasSemana = ["domingo", "lunes", "martes", "miércoles", "jueves", "viernes", "sábado"];
+        const diaSemana = normalizeString(diasSemana[fechaConsulta.getDay()]);
+
+        // 1. Obtén el servicio y su duración
+        //console.log("Fecha de consulta:", fechaConsulta);
+        //console.log("ID del servicio:", serviceId);
+        const servicio = await Servicio.findById(serviceId);
+        //console.log("Servicio encontrado:", servicio);
+        if (!servicio) {
+            return [null, "El servicio no existe"];
+        }
+        const duracionServicio = servicio.duracion;
+        
+        //console.log("Duración del servicio:", duracionServicio);
+
+        // 2. Encuentra los trabajadores de la microempresa
+        const trabajadores = await Enlace.find({ 
+            id_microempresa: servicio.idMicroempresa, 
+            
+            estado: true
+        }).populate('id_trabajador');
+        
+        if (!trabajadores.length) {
+            return [null, "No hay trabajadores activos en esta microempresa"];
+        }
+
+        //console.log("Trabajadores encontrados:", trabajadores);
+
+        
+        let disponibilidadGlobal = [];
+
+        // 3. Itera sobre cada trabajador
+        for (const enlace of trabajadores) {
+            const trabajador = enlace.id_trabajador;
+            //console.log("Trabajador encontrado:", trabajador);
+            //console.log("ID del trabajador:", trabajador._id);
+            //console.log("diaSemana:", diaSemana);
+            // a) Obtén disponibilidad del trabajador para el día
+            const disponibilidad = await Disponibilidad.findOne({
+                trabajador: trabajador._id,
+                dia: diaSemana
+            });
+
+            //console.log("Disponibilidad encontrada:", disponibilidad);
+            if (!disponibilidad) continue; // Si no hay disponibilidad, pasa al siguiente trabajador
+
+            const horaInicioDisponible = disponibilidad.hora_inicio;
+            const horaFinDisponible = disponibilidad.hora_fin;
+
+            // b) Obtén reservas del trabajador para la fecha
+            const reservas = await Reserva.find({
+                trabajador: trabajador._id,
+                fecha: fechaConsulta
+            }).sort({ hora_inicio: 1 });
+
+            // c) Calcular intervalos disponibles
+            let slotsDisponibles = [];
+            let tiempoLibre = horaInicioDisponible;
+
+            for (let i = 0; i < reservas.length; i++) {
+                const reserva = reservas[i];
+                const horaInicioReserva = new Date(reserva.hora_inicio);
+                const horaInicioStr = formatTimeToString(horaInicioReserva);
+                const horaFinReserva = calcularHoraFin(horaInicioStr, reserva.duracion);
+
+                // Verifica si hay espacio suficiente para el servicio antes de la reserva
+                if (
+                    timeToMinutes(horaInicioStr) - timeToMinutes(tiempoLibre) >= duracionServicio
+                ) {
+                    slotsDisponibles.push({
+                        inicio: tiempoLibre,
+                        fin: horaInicioStr
+                    });
+                }
+
+                // Actualiza el próximo intervalo libre
+                tiempoLibre = horaFinReserva;
+            }
+
+            // Verifica si hay espacio suficiente después de la última reserva
+            if (
+                timeToMinutes(horaFinDisponible) - timeToMinutes(tiempoLibre) >= duracionServicio
+            ) {
+                slotsDisponibles.push({
+                    inicio: tiempoLibre,
+                    fin: horaFinDisponible
+                });
+            }
+
+            // d) Agrega los intervalos disponibles del trabajador
+            if (slotsDisponibles.length > 0) {
+                disponibilidadGlobal.push({
+                    trabajador: {
+                        id: trabajador._id,
+                        nombre: `${trabajador.nombre} ${trabajador.apellido}`
+                    },
+                    slots: slotsDisponibles
+                });
+            }
+        }
+
+        // 4. Verifica si hay disponibilidad global
+        if (disponibilidadGlobal.length === 0) {
+            return [null, "No hay disponibilidad para este servicio en la fecha seleccionada"];
+        }
+
+        return [disponibilidadGlobal, null];
+
+    } catch (error) {
+        console.error("Error al obtener los horarios disponibles:", error);
+        return [null, "Ocurrió un error al calcular los horarios disponibles"];
+    }
+}
+
+async function getTrabajadoresDisponiblesPorHora(serviceId, date, hora) {
+    try {
+        // Usa la función para obtener los horarios disponibles
+        const [availableSlots, error] = await getHorariosDisponiblesMicroEmpresa(serviceId, date);
+
+        if (error) {
+            return [null, error];
+        }
+
+        // Convierte la hora proporcionada a minutos
+        const horaEnMinutos = timeToMinutes(hora);
+
+        // Filtra los trabajadores disponibles en la hora específica
+        const trabajadoresDisponibles = [];
+        
+        for (const grupo of availableSlots) {
+           // for (const trabajador of grupo) {
+                const trabajador = grupo;
+                console.log("Trabajador:", trabajador);
+                
+                const { slots, trabajador: datosTrabajador } = trabajador;
+                console.log("Trabajador:", datosTrabajador);
+                console.log("Slots:", slots);
+                // Verifica si la hora cae dentro de algún intervalo
+                const estaDisponible = slots.some(slot => {
+                    const inicio = timeToMinutes(slot.inicio);
+                    const fin = timeToMinutes(slot.fin);
+                    return horaEnMinutos >= inicio && horaEnMinutos < fin; // Hora debe estar dentro del intervalo
+                });
+
+                // Si está disponible, agrega al trabajador a la lista
+                if (estaDisponible) {
+                    trabajadoresDisponibles.push({
+                        id: datosTrabajador.id,
+                        nombre: datosTrabajador.nombre
+                    });
+                }
+            //}
+        }
+
+        return [trabajadoresDisponibles, null];
+
+    } catch (error) {
+        console.error("Error en getTrabajadoresDisponiblesPorHora:", error);
+        return [null, "Ocurrió un error al procesar la disponibilidad de trabajadores."];
+    }
+}
 
 
 
@@ -212,5 +385,7 @@ export default {
     updateDisponibilidad,
     deleteDisponibilidad,
     getAvailableSlots,
+    getHorariosDisponiblesMicroEmpresa,
+    getTrabajadoresDisponiblesPorHora,
 
 };
