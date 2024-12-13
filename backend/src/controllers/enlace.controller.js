@@ -79,6 +79,12 @@ async function updateEnlace(req, res) {
         const { error: errorBody } = enlaceBodySchema.validate(req.body);
         if (errorBody) return respondError(req, res, 400, errorBody.message);
 
+        if (req.body.estado === false) {
+            const fechaActual = new Date();
+            const fechaLocal = new Date(fechaActual.getTime() - fechaActual.getTimezoneOffset() * 60000);
+            req.body.fecha_termino = fechaLocal;
+        }
+        
         const [enlace, errorEnlace] = await EnlaceService.updateEnlace(req.params.id, req.body);
         if (errorEnlace) return respondError(req, res, 404, errorEnlace);
 
@@ -114,6 +120,13 @@ async function updateEnlaceParcial(req, res) {
         const { error: errorBody } = enlacePartialUpdateSchema
         .validate(req.body, { allowUnknown: true, abortEarly: false });
         if (errorBody) return respondError(req, res, 400, errorBody.message);
+
+        if (req.body.estado === false) {
+            const fechaActual = new Date();
+            const fechaLocal = new Date(fechaActual.getTime() - fechaActual.getTimezoneOffset() * 60000);
+            req.body.fecha_termino = fechaLocal;
+        }
+        
 
         const [enlace, errorEnlace] = await EnlaceService
         .updateEnlaceParcial(req.params.id, req.body); // Aquí está el llamado correcto

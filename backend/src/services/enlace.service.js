@@ -6,10 +6,8 @@ import Enlace from "../models/enlace.model.js";
 // Importa el modelo de User
 import UserModels from "../models/user.model.js";
 const { Trabajador } = UserModels;
-
 import Role from "../models/role.model.js";
 import Microempresa from "../models/microempresa.model.js";
-
 import { handleError } from "../utils/errorHandler.js";
 
 /** */
@@ -21,6 +19,7 @@ async function getEnlaces() {
         return [enlaces, null];
     } catch (error) {
         handleError(error, "enlace.service -> getEnlaces");
+        return [null, error.message];
     }
 }
 
@@ -86,6 +85,7 @@ async function deleteEnlace(id) {
         return [enlace, null];
     } catch (error) {
         handleError(error, "enlace.service -> deleteEnlace");
+        return [null, error.message];
     }
 }
 
@@ -115,6 +115,7 @@ async function updateEnlace(id, enlace) {
         return [enlaceFound, null];
     } catch (error) {
         handleError(error, "enlace.service -> updateEnlace");
+        return [null, error.message];
     }
 }
 
@@ -122,7 +123,7 @@ async function updateEnlace(id, enlace) {
 async function getTrabajadoresPorMicroempresa(id_microempresa) {
     try {
         // Buscar todos los enlaces asociados a la microempresa
-        const enlaces = await Enlace.find({ id_microempresa }).populate("id_trabajador").exec();
+        const enlaces = await Enlace.find({ id_microempresa, estado: true }).populate("id_trabajador").exec();
         if (!enlaces || enlaces.length === 0) {
             return [null, "No se encontraron trabajadores para esta microempresa."];
         }   
@@ -165,7 +166,7 @@ async function updateEnlaceParcial(id, fieldsToUpdate) {
             const result = await Microempresa.findByIdAndUpdate(
                 enlaceFound.id_microempresa,
                 { $pull: { trabajadores: enlaceFound._id } },
-                { new: true }
+                { new: true },
             );
         
             console.log("Resultado de la actualización de microempresa:", result);
@@ -202,8 +203,6 @@ async function updateEnlaceParcial(id, fieldsToUpdate) {
         return [null, error.message];
     }
 }
-
-
 
 export default {
     getEnlaces,
