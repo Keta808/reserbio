@@ -220,7 +220,26 @@ async function updateReserva(id, estado) {
 
 }
 
-export default { getReservas, getReservasByTrabajador, createReserva, deleteReserva, updateReserva };
+
+/**
+ * Cambia el estado de una reserva a Cancelado
+ * 
+ */
+
+async function cancelReserva(id) {
+    try {
+        return await Reserva.findByIdAndUpdate(id
+            , { estado: "Cancelado" }
+            , { new: true });
+    }
+    catch (error) {
+        handleError(error, "reserva.service -> cancelReserva");
+    }
+
+}
+
+
+export default { getReservas, getReservasByTrabajador, createReserva, deleteReserva, updateReserva, cancelReserva };
 
 
 

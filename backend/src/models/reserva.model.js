@@ -12,7 +12,7 @@ const ReservaSchema = new mongoose.Schema({
         required: true,
     },
     cliente: {
-        type: mongoose.Schema.Types.ObjectId,
+        type: mongoose.Schema.Types.ObjectId, 
         ref: "Users",
         required: true,
     },

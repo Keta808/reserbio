@@ -105,5 +105,27 @@ async function deleteReserva(req, res) {
     }
 }
 
-export default { getReservas, getReservasByTrabajador, createReserva ,deleteReserva ,updateReserva};
+/**
+ * Cambia el estado de una reserva a Cancelado
+ * 
+ * 
+ */
+
+async function cancelReserva(req, res) {
+    try {
+        const { error } = reservaIdSchema.validate(req.params);
+        if (error) return respondError(req, res, 400, error.message);
+
+        const [reserva, errorReserva] = await ReservaService.cancelReserva(req.params.id);
+        if (errorReserva) return respondError(req, res, 400, errorReserva);
+
+        respondSuccess(req, res, 200, reserva);
+    } catch (error) {
+        handleError(error, "reserva.controller -> cancelReserva");
+        respondError(req, res, 400, error.message);
+    }
+}
+
+
+export default { getReservas, getReservasByTrabajador, createReserva ,deleteReserva ,updateReserva, cancelReserva };
 
