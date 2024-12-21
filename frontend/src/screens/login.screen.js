@@ -20,7 +20,7 @@ export default function LoginScreen() {
         
           Alert.alert('Inicio de sesión exitoso', `Bienvenido, ${email}`);
           
-          navigation.navigate('Home');  
+         
         
       } catch (error) {
         Alert.alert('Error', 'El usuario o la contraseña son incorrectos');

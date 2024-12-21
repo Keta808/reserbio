@@ -22,7 +22,6 @@ export const login = async (dataUser)=> {
             return userInfo;
         }
     
-
     }catch(error){
         console.log("Error en Login", error);
         throw error.response ? error.response.data : new Error("Error en Inicio de sesion");
