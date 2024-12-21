@@ -74,4 +74,4 @@ async function getServicioById(id) {
 
 // añadir get por reserva o microempresa posiblemente segun MER
 
-export default { getServicios, createServicio, deleteServicio, updateServicio, getServicioById }; 
+export default { getServicios, createServicio, deleteServicio, updateServicio, getServicioById };

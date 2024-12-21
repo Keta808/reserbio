@@ -7,7 +7,7 @@ const enlaceBodySchema = Joi.object({
     id_trabajador: Joi.string().required().messages({
         "string.empty": "El id_trabajador no puede estar vacío.",
         "any.required": "El id_trabajador es obligatorio.",
-        "string.base": "El id_trabajador debe ser de tipo string.",
+        "string.base": "El id_trabajador debe ser una cadena de texto válida.",
     }),
     id_role: Joi.string().required().messages({
         "string.empty": "El id_role no puede estar vacío.",

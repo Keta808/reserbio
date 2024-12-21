@@ -23,6 +23,7 @@ router.get("/trabajador/:id", isAdmin, reservaController.getReservasByTrabajador
 router.post("/", isAdmin, reservaController.createReserva);
 router.delete("/:id", isAdmin, reservaController.deleteReserva);
 router.put("/:id", isAdmin, reservaController.updateReserva);
+router.put("/cancelar/:id", isAdmin, reservaController.cancelReserva);
 
 // Exporta el enrutador
 

@@ -156,7 +156,7 @@ function formatTimeToString(time) {
 
 
         // Obtener las reservas del trabajador en la fecha consultada
-        const reservas = await Reserva.find({ trabajador: workerId, fecha: fechaConsulta }).sort({ "hora_inicio": 1 });
+        const reservas = await Reserva.find({ trabajador: workerId, fecha: fechaConsulta,estado: 'Activa' }).sort({ "hora_inicio": 1 });
         //console.log("Reservas encontradas:", reservas);
 
         let slotsDisponibles = [];
@@ -268,7 +268,8 @@ async function getHorariosDisponiblesMicroEmpresa(serviceId, date) {
             // b) Obtén reservas del trabajador para la fecha
             const reservas = await Reserva.find({
                 trabajador: trabajador._id,
-                fecha: fechaConsulta
+                fecha: fechaConsulta,
+                estado: 'Activa'
             }).sort({ hora_inicio: 1 });
 
             // c) Calcular intervalos disponibles
@@ -348,11 +349,11 @@ async function getTrabajadoresDisponiblesPorHora(serviceId, date, hora) {
         for (const grupo of availableSlots) {
            // for (const trabajador of grupo) {
                 const trabajador = grupo;
-                console.log("Trabajador:", trabajador);
+                //console.log("Trabajador:", trabajador);
                 
                 const { slots, trabajador: datosTrabajador } = trabajador;
-                console.log("Trabajador:", datosTrabajador);
-                console.log("Slots:", slots);
+               // console.log("Trabajador:", datosTrabajador);
+               // console.log("Slots:", slots);
                 // Verifica si la hora cae dentro de algún intervalo
                 const estaDisponible = slots.some(slot => {
                     const inicio = timeToMinutes(slot.inicio);
