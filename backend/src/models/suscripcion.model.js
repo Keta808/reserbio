@@ -1,9 +1,9 @@
 import mongoose from "mongoose";
 
 const suscripcionSchema = new mongoose.Schema({
-    idUsuario: {
+    idMicroempresa: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: "User", 
+        ref: "Microempresa", 
         required: true,
     },
     idPlan: {
@@ -13,8 +13,8 @@ const suscripcionSchema = new mongoose.Schema({
     },
     estado: {
         type: String,
-        enum: ["activa", "cancelada", "expirada"],
-        default: "activa",
+        enum: ["pendiente", "activo", "cancelado", "expirado"],
+        default: "pendiente",
     },
     fecha_inicio: {
         type: Date,

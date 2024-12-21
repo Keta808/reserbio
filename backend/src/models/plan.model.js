@@ -8,6 +8,10 @@ const PlanSchema = new mongoose.Schema({
         type: String, 
         required: true, 
     },
+    precio: {
+        type: Number, 
+        required: true, 
+    },
     mercadoPagoId: {
         type: String, // ID del plan de suscripción en Mercado Pago
         required: true,

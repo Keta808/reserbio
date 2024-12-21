@@ -8,6 +8,11 @@ const planBodySchema = Joi.object({
         "any.required": "El tipo_plan es obligatorio.",
         "string.base": "El tipo_plan debe ser de tipo string.",
     }),
+    precio: Joi.number().required().messages({
+        "number.empty": "El precio no puede estar vacío.",
+        "any.required": "El precio es obligatorio.",
+        "number.base": "El precio debe ser de tipo number.",
+    }),
     mercadoPagoId: Joi.string().required().messages({   
         "string.empty": "El mercadoPagoId no puede estar vacío.",
         "any.required": "El mercadoPagoId es obligatorio.",

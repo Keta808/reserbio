@@ -23,6 +23,7 @@ router.get("/:id", isAdmin, microempresaController.getMicroempresaById);
 router.post("/", isAdmin, microempresaController.createMicroempresa);
 router.put("/:id", isAdmin, microempresaController.updateMicroempresaById);
 router.delete("/:id", isAdmin, microempresaController.deleteMicroempresaById);
+router.get("/categoria/:categoria", isAdmin, microempresaController.getMicroempresasPorCategoria);
 
 // Exporta el enrutador
 export default router;

@@ -1,5 +1,6 @@
 import joi from "joi";
 import mongoose from "mongoose";
+import CATEGORIA from "../constants/categoria.constants.js";
 
 /** sdf */
 const objectIdValidator = (value, helpers) => {
@@ -45,12 +46,12 @@ const microempresaBodySchema = joi.object({
             "string.base": "El email debe ser de tipo string.",
             "string.email": "El email debe estar en un formato válido.",
         }),
-        categoria: joi.string().required().messages({
+        categoria: joi.string().valid(...CATEGORIA).required().messages({
             "string.empty": "La categoría no puede estar vacía.",
             "any.required": "La categoría es obligatoria.",
             "string.base": "La categoría debe ser de tipo string.",
         }),
-        idPlan: joi.string().custom(objectIdValidator).messages({
+        idSuscripcion: joi.string().custom(objectIdValidator).messages({
             "string.empty": "El idPlan no puede estar vacío.",
             // "any.required": "El idPlan es obligatorio.",
             "string.base": "El idPlan debe ser de tipo string.",

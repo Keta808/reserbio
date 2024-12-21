@@ -1,5 +1,5 @@
 "use strict";
-
+import CATEGORIA from "../constants/categoria.constants.js";
 import mongoose from "mongoose";
 
 const MicroempresaSchema = new mongoose.Schema({
@@ -25,12 +25,13 @@ const MicroempresaSchema = new mongoose.Schema({
     },
     categoria: {
         type: String,
+        enum: CATEGORIA,
         required: true,
     },
-    idPlan: {
+    idSuscripcion: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: "Plan",
-        required: false,
+        ref: "Suscripcion",
+        required: false, // Cambiar a true (cuando este listo)
     },
     idTrabajador: {
         type: mongoose.Schema.Types.ObjectId,

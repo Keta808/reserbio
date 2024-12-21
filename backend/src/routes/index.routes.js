@@ -23,7 +23,6 @@ import servicioRoutes from "./servicio.routes.js";
 import disponibilidadRoutes from "./disponibilidad.routes.js";
 
 
-
 /** Middleware de autenticación */
 import authenticationMiddleware from "../middlewares/authentication.middleware.js";
 

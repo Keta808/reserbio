@@ -1,3 +1,4 @@
+/* eslint-disable require-jsdoc */
 import Disponibilidad from "../models/disponibilidad.model.js";
 import { handleError } from "../utils/errorHandler.js";
 

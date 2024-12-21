@@ -26,11 +26,12 @@ async function getPlanes() {
 
 async function createPlan(plan) {
     try { 
-        const { tipo_plan, mercadoPagoId, estado, fecha_creacion } = plan;
+        const { tipo_plan, precio, mercadoPagoId, estado, fecha_creacion } = plan;
 
         // Crear un nuevo plan
         const newPlan = new Plan({
             tipo_plan,
+            precio,
             mercadoPagoId,
             estado,
             fecha_creacion,
@@ -57,18 +58,23 @@ async function deletePlan(id) {
 
 async function updatePlan(id, plan) {
     try {
-        const { tipo_plan, precio, estado } = plan;
-        const updatedPlan = await Plan.findByIdAndUpdate(id, {
-            tipo_plan,
-            precio,
-            estado,
-        }, { new: true }).exec();
-        if (!updatedPlan) return [null, "El plan no existe"];
-        return [updatedPlan, null];
+        const existingPlan = await Plan.findById(id).exec();
+        if (!existingPlan) return [null, "El plan no existe"];
+
+        const { tipo_plan, precio, mercadoPagoId, estado, fecha_creacion } = plan;
+        existingPlan.tipo_plan = tipo_plan;
+        existingPlan.precio = precio;
+        existingPlan.mercadoPagoId = mercadoPagoId;
+        existingPlan.estado = estado;
+        existingPlan.fecha_creacion = fecha_creacion;
+
+        await existingPlan.save();
+        return [existingPlan, null];
+
     } catch (error) {
         handleError(error, "plan.service -> updatePlan");
     }
-} 
+}     
 
 import axios from 'axios';
 import { ACCESS_TOKEN } from '../config/configEnv.js';
@@ -88,7 +94,7 @@ async function crearPlanBasico() {
             frequency: 1,
             frequency_type: 'months',
           },
-          transaction_amount: 3000,
+          transaction_amount: 3990,
           currency_id: 'CLP',
           payment_methods_allowed: {
             payment_types: [
@@ -123,6 +129,7 @@ async function crearPlanBasico() {
         // Guardar el plan en la base de datos
         const newPlan = new Plan({
             tipo_plan: 'Plan Basico',
+            precio: 3990,
             mercadoPagoId: response.data.id,
             estado: response.data.status,
             fecha_creacion: response.data.date_created,
@@ -151,7 +158,7 @@ async function crearPlanPremium(){
             frequency: 1,
             frequency_type: 'months',
           },
-          transaction_amount: 5000,
+          transaction_amount: 11990,
           currency_id: 'CLP',
           payment_methods_allowed: {
             payment_types: [
@@ -182,6 +189,7 @@ async function crearPlanPremium(){
     // Guardar el plan en la base de datos
     const newPlan = new Plan({
         tipo_plan: 'Plan Premium',
+        precio: 11990,
         mercadoPagoId: response.data.id,
         estado: response.data.status,
         fecha_creacion: response.data.date_created,
@@ -203,6 +211,7 @@ async function crearPlanGratuito() {
       // Crear y guardar el plan gratuito en MongoDB
       const newPlan = new Plan({
           tipo_plan: 'Plan Gratuito',
+          precio: 0,
           mercadoPagoId: 'GRATIS', // ID específico para el plan gratuito
           estado: 'active', // Estado puede ser "active" o cualquier valor que prefieras
           fecha_creacion: new Date(),

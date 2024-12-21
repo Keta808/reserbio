@@ -1,3 +1,4 @@
+/* eslint-disable require-jsdoc */
 "use strict";
 
 import Microempresa from "../models/microempresa.model.js";
@@ -129,13 +130,58 @@ async function deleteMicroempresaById(id) {
         handleError(error, "microempresa.service -> deleteMicroempresaById");
         return [null, "Error al eliminar la microempresa"];
     }
-}
+} 
 
+// eslint-disable-next-line require-jsdoc
+async function getMicroempresasPorCategoria(categoria) {
+    try {
+        if (!categoria) {
+            return [null, "La categoría es invalida."];
+        }
+        // eslint-disable-next-line max-len
+        const microempresas = await Microempresa.find({ categoria: new RegExp(`^${categoria}$`, "i") }).exec(); 
+        if (microempresas.length === 0) {
+            return [null, "No hay microempresas disponibles para esta categoría."];
+        }
+
+        if (!microempresas) return [null, "No hay microempresas de esta categoria"]; 
+        const shuffledMicroempresa = microempresas.sort(() => Math.random() - 0.5);
+    
+        return [shuffledMicroempresa, null];
+    } catch (error) {
+        handleError(error, "microempresa.service -> getCategoria");
+    }
+} 
+
+
+// getMicromempresaPorNombre  
+
+async function getMicromempresaPorNombre(nombre) { 
+    try {
+        if (!nombre) {
+            return [null, "El nombre es invalido."];
+        }
+        // eslint-disable-next-line max-len
+        const microempresas = await Microempresa.find({ nombre: new RegExp(`^${nombre}$`, "i") }).exec(); 
+        if (microempresas.length === 0) {
+            return [null, "No hay microempresas disponibles para este nombre."];
+        }
+
+        if (!microempresas) return [null, "No hay microempresas de este nombre"]; 
+        const shuffledMicroempresa = microempresas.sort(() => Math.random() - 0.5);
+    
+        return [shuffledMicroempresa, null];
+    } catch (error) {
+        handleError(error, "microempresa.service -> getNombre");
+    }
+}
 export default {
     getMicroempresas,
     createMicroempresa,
     getMicroempresaById,
     updateMicroempresaById,
     deleteMicroempresaById,
+    getMicroempresasPorCategoria, 
+    getMicromempresaPorNombre,
 };
 

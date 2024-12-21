@@ -1,3 +1,6 @@
+/* eslint-disable space-before-blocks */
+/* eslint-disable require-jsdoc */
+/* eslint-disable no-unused-vars */
 "use strict";
 
 import { respondSuccess, respondError } from "../utils/resHandler.js";
@@ -103,10 +106,43 @@ async function deleteMicroempresaById(req, res) {
     }
 }
 
+// eslint-disable-next-line require-jsdoc, space-before-blocks
+async function getMicroempresasPorCategoria(req, res){
+    try {
+        const { categoria } = req.params;
+        // eslint-disable-next-line max-len
+        const [microempresas, errorMicroempresas] = await MicroempresaService.getMicroempresasPorCategoria(categoria);
+        if (errorMicroempresas) return respondError(req, res, 404, errorMicroempresas);
+
+        microempresas.length === 0
+          ? respondSuccess(req, res, 204)
+          : respondSuccess(req, res, 200, microempresas);
+      } catch (error) {
+        handleError(error, "microempresa.controller -> getMicroempresasPorCategoria");
+        respondError(req, res, 400, error.message);
+      }
+}
+async function getMicromempresaPorNombre(req, res){
+    try {
+        const { nombre } = req.params;
+        // eslint-disable-next-line max-len
+        const [microempresas, errorMicroempresas] = await MicroempresaService.getMicroempresasPorNombre(nombre);
+        if (errorMicroempresas) return respondError(req, res, 404, errorMicroempresas);
+
+        microempresas.length === 0
+          ? respondSuccess(req, res, 204)
+          : respondSuccess(req, res, 200, microempresas);
+      } catch (error) {
+        handleError(error, "microempresa.controller -> getMicroempresasPorNombre");
+        respondError(req, res, 400, error.message);
+      }
+}
 export default {
     getMicroempresas,
     createMicroempresa,
     getMicroempresaById,
     updateMicroempresaById,
     deleteMicroempresaById,
+    getMicroempresasPorCategoria,
+    getMicromempresaPorNombre,
 };
