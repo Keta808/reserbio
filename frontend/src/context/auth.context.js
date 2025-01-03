@@ -31,10 +31,13 @@ export const AuthProvider = ({ children }) => {
     
 
     const login = async (dataUser) => {
+        //console.log('Data user: context', dataUser);
         const userInfo = await loginService(dataUser);
+        //console.log('User info: context dsp del service', userInfo);
         setUser(userInfo);
         setIsAuthenticated(true); 
-        console.log('User logged in:', userInfo);
+        return userInfo;
+        //console.log('User logged in:', userInfo);
     };
 
     const logout = async () => {
