@@ -4,6 +4,7 @@ import { View, Text, TextInput, Button, StyleSheet, Alert } from 'react-native';
 import { AuthContext } from '../context/auth.context';
 
 
+
 export default function LoginScreen() {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
@@ -16,9 +17,12 @@ export default function LoginScreen() {
         return;
       }
       try {
-          console.log('Datos para login:', email, password);
+          //console.log(' 1 Datos para login:', email, password);
           const dataUser = {email, password}; 
+  
           const userInfo = await login(dataUser); 
+          //console.log("userInfo", userInfo);
+        
           console.log('Usuario autenticado:', userInfo);
           
         

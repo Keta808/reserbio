@@ -31,16 +31,13 @@ export const AuthProvider = ({ children }) => {
     
 
     const login = async (dataUser) => {
-        try {
-            const userInfo = await loginService(dataUser);
-            setUser(userInfo);
-            setIsAuthenticated(true);
-            console.log('Usuario inició sesión:', userInfo); 
-            return userInfo;
-          } catch (error) {
-            console.error('Error durante el inicio de sesión:', error);
-            throw error; 
-          }
+        //console.log('Data user: context', dataUser);
+        const userInfo = await loginService(dataUser);
+        //console.log('User info: context dsp del service', userInfo);
+        setUser(userInfo);
+        setIsAuthenticated(true); 
+        return userInfo;
+        //console.log('User logged in:', userInfo);
     };
 
     const logout = async () => {

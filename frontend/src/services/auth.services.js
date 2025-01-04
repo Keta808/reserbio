@@ -7,17 +7,21 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export const login = async (dataUser)=> {
     try { 
-        console.log('Datos recibidos: ', dataUser );
+        //console.log('Datos recibidos: ', dataUser );
         const response = await axios.post('/auth/login', { email :  dataUser.email, password: dataUser.password });
         
         const {status, data} = response;
         if (status === 200) { 
-            const { accessToken, user } = data.data;
-            await AsyncStorage.setItem('user', JSON.stringify(user)); 
-            axios.defaults.headers.common[
-                'Authorization'
-              ] = `Bearer ${accessToken}`;
-            return user;
+            const { accessToken } = data.data;
+            const decodedToken = jwtDecode(accessToken);
+
+            const userInfo = { email: decodedToken.email , kind: decodedToken.kind };
+            //console.log('Datos de usuario: ', userInfo);
+            
+            await AsyncStorage.setItem('user', JSON.stringify(userInfo)); // Guardar sin `{userInfo}`
+            axios.defaults.headers.common['Authorization'] = `Bearer ${accessToken}`;
+            console.log('Usuario autenticado login service:', userInfo);
+            return userInfo;
         }
     
     }catch(error){

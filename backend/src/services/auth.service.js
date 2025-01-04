@@ -37,11 +37,14 @@ async function login(user) {
     }
 
     const accessToken = jwt.sign(
-      { _id: userFound._id, email: userFound.email, roles: userFound.roles },
+      { email: userFound.email, kind: userFound.kind },
       ACCESS_JWT_SECRET,
       {
         expiresIn: "1d",
       },
+      //console.log( email + " ha iniciado sesión" ),
+      //console.log( "kind: " + userFound.kind ),
+
     );
 
     const refreshToken = jwt.sign(
@@ -50,14 +53,9 @@ async function login(user) {
       {
         expiresIn: "7d", // 7 días
       },
-    ); 
-    const userInfo = {
-      _id: userFound._id,
-      email: userFound.email,
-      roles: userFound.roles,
-  };
-
-    return [accessToken, refreshToken, null, userInfo];
+    );
+    
+    return [accessToken, refreshToken, null];
   } catch (error) {
     handleError(error, "auth.service -> signIn");
   }
