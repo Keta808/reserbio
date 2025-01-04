@@ -47,4 +47,4 @@ const suscripcionIdSchema = Joi.object({
     "object.unknown": "No se permiten propiedades adicionales.",
 }); 
 
-export { suscripcionBodySchema, suscripcionIdSchema };
+export { suscripcionBodySchema, suscripcionIdSchema }; 

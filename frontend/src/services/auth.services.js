@@ -1,7 +1,7 @@
 import axios from './root.services.js'; 
 
 
-import { jwtDecode } from 'jwt-decode'; 
+
 import cookies from 'js-cookie'; 
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
@@ -9,17 +9,15 @@ export const login = async (dataUser)=> {
     try { 
         console.log('Datos recibidos: ', dataUser );
         const response = await axios.post('/auth/login', { email :  dataUser.email, password: dataUser.password });
+        
         const {status, data} = response;
         if (status === 200) { 
-            const { accessToken } = data.data;
-            const decodedToken = jwtDecode(accessToken);
-            const userInfo = { email: decodedToken.email };
-            
-            await AsyncStorage.setItem('user', JSON.stringify({userInfo})); 
+            const { accessToken, user } = data.data;
+            await AsyncStorage.setItem('user', JSON.stringify(user)); 
             axios.defaults.headers.common[
                 'Authorization'
               ] = `Bearer ${accessToken}`;
-            return userInfo;
+            return user;
         }
     
     }catch(error){
@@ -31,5 +29,6 @@ export const login = async (dataUser)=> {
 export const logout = async () => {
     await AsyncStorage.removeItem('user');
     delete axios.defaults.headers.common['Authorization'];
-    cookies.remove('jwt');
-};
+    cookies.remove('jwt'); 
+    console.log('Cierre de sesión exitoso');
+}; 

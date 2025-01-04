@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import { View, Text, Button, ScrollView, StyleSheet } from 'react-native';
 import { obtenerPlanes } from '../services/suscripcion.service.js'; // Asegúrate de que el import sea correcto
 import { useNavigation } from '@react-navigation/native';
-
+import { AuthContext } from '../context/auth.context';
 // Descripciones de los planes
 const planDescriptions = {
   "Plan Gratuito": "Este plan es gratuito y permite acceder a las funciones básicas del sistema por un plazo de tiempo determinado.",
@@ -14,7 +14,7 @@ const SuscripcionScreen = () => {
   const [planes, setPlanes] = useState([]); // Estado para almacenar los planes
   const [loading, setLoading] = useState(true); // Estado para manejar la carga de datos
   const navigation = useNavigation(); // Para navegar a otras pantallas
-
+  const { user } = useContext(AuthContext); // Obtener el usuario autenticado
   useEffect(() => {
     // Obtener los planes desde el backend
     const fetchPlanes = async () => {
@@ -54,7 +54,7 @@ const SuscripcionScreen = () => {
                 <Text style={styles.planPrice}>${plan.precio}</Text> {/* Precio del plan */}
                 <Button
                   title="Obtener"
-                  onPress={() => navigation.navigate('Pago', { planId: plan._id })} // Navegar a la pantalla de pago
+                  onPress={() => navigation.navigate('Pago', {selectedPlan: plan, user })} // Navegar a la pantalla de pago
                 />
               </View>
             );

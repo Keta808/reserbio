@@ -1,18 +1,18 @@
-import React, { useContext, useEffect} from 'react';
+import React, { useContext } from 'react';
 
 import { createStackNavigator } from '@react-navigation/stack'; 
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import LoginScreen from '../screens/login.screen.js'; 
 import HomeScreen from '../screens/home.screen.js';
 import SuscripcionScreen from '../screens/suscripcion.screen.js';
-
+import PaymentScreen from '../screens/pago.screen.js';
 import { AuthContext } from '../context/auth.context';
 
 const Stack = createStackNavigator(); 
 const Tab = createBottomTabNavigator();
 
 const HomeNavigator = () => {
-  const { isAuthenticated } = useContext(AuthContext);
+  
 
   return (
     <Tab.Navigator>
@@ -24,7 +24,7 @@ const HomeNavigator = () => {
 };
 
 const AppNavigator = () => {
-  const { isAuthenticated } = useContext(AuthContext);
+  const { isAuthenticated, user } = useContext(AuthContext);
 
 
   return (
@@ -33,7 +33,7 @@ const AppNavigator = () => {
         {isAuthenticated ? (
           <>
           <Stack.Screen name="HomeNavigator" component={HomeNavigator} /> 
-          
+          <Stack.Screen name="Pago" component={PaymentScreen} initialParams={{ user }} />
           
           </>
           

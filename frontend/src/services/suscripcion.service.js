@@ -1,10 +1,10 @@
 import instance from './root.services.js'; 
 
-async function crearSuscripcion(tipoPlan, idMicroempresa, cardTokenId){
+async function crearSuscripcion(tipoPlan, user, cardTokenId){
    try{
     const response = await instance.post('/suscripcion/obtener-suscripcion',{
         tipoPlan,
-        idMicroempresa,
+        user,
         cardTokenId,
     });
     return response.data;
@@ -59,6 +59,8 @@ async function cancelarSuscripcion(id) {
       console.error(`Error al cancelar la suscripción con ID ${id}:`, error.response?.data || error.message);
       throw error;
     }
-  }
+}
+
+
 
 export {crearSuscripcion, obtenerPlanes, cancelarSuscripcion, obtenerSuscripciones, obtenerSuscripcion, actualizarSuscripcion};

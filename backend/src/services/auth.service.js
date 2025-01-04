@@ -37,7 +37,7 @@ async function login(user) {
     }
 
     const accessToken = jwt.sign(
-      { email: userFound.email, roles: userFound.roles },
+      { _id: userFound._id, email: userFound.email, roles: userFound.roles },
       ACCESS_JWT_SECRET,
       {
         expiresIn: "1d",
@@ -50,9 +50,14 @@ async function login(user) {
       {
         expiresIn: "7d", // 7 días
       },
-    );
+    ); 
+    const userInfo = {
+      _id: userFound._id,
+      email: userFound.email,
+      roles: userFound.roles,
+  };
 
-    return [accessToken, refreshToken, null];
+    return [accessToken, refreshToken, null, userInfo];
   } catch (error) {
     handleError(error, "auth.service -> signIn");
   }

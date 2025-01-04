@@ -11,7 +11,7 @@
 import axios from 'axios';
 import Suscripcion from '../models/suscripcion.model.js';
 import Plan from '../models/plan.model.js';  
-import Microempresa from '../models/microempresa.model.js';
+
 import { handleError } from "../utils/errorHandler.js";
 import { ACCESS_TOKEN } from '../config/configEnv.js'; 
 
@@ -58,11 +58,11 @@ async function updateSuscripcion(id, suscripcion) {
         const existingSuscripcion = await Suscripcion.findById(id).exec();
         if (!existingSuscripcion) return [null, "La suscripción no existe."];
 
-        const { idMicroempresa, idPlan, estado, fecha_inicio, fecha_fin, preapproval_id } = suscripcion;
+        const { idUser, idPlan, estado, fecha_inicio, fecha_fin, preapproval_id } = suscripcion;
 
         const updatedSuscripcion = await Suscripcion.findByIdAndUpdate(
             id,
-            { idMicroempresa, idPlan, estado, fecha_inicio, fecha_fin, preapproval_id },
+            { idUser, idPlan, estado, fecha_inicio, fecha_fin, preapproval_id },
             { new: true }
         ).exec();
 
@@ -73,17 +73,13 @@ async function updateSuscripcion(id, suscripcion) {
 }
 
 
-async function crearSuscripcion(tipoPlan, user, idMicroempresa, cardTokenId){
+async function crearSuscripcion(tipoPlan, user, cardTokenId){
     try {
-        const microempresa = await Microempresa.findById(idMicroempresa); 
-        if (!microempresa || String(microempresa.idTrabajador) !== String(user._id)) {
-            throw new Error("La microempresa no pertenece al usuario autenticado.");
-        } 
-        // Buscar plan según el tipo
         const plan = await Plan.findOne({ tipo_plan: tipoPlan });
         if (!plan) {
             throw new Error(`No se encontró el plan: ${tipoPlan}`);
-        } 
+        }
+        
         // Configurar fechas de la suscripción
         const startDate = new Date(); // Fecha actual
         const endDate = new Date();
@@ -91,7 +87,6 @@ async function crearSuscripcion(tipoPlan, user, idMicroempresa, cardTokenId){
         const preapprovalData = {
             preapproval_plan_id: plan.preapproval_plan_id,
             reason: `Suscripción ${tipoPlan}`,
-            external_reference: `MICROEMPRESA-${microempresa._id}`,
             payer_email: user.email,
             card_token_id: cardTokenId,
             auto_recurring: {
@@ -119,7 +114,7 @@ async function crearSuscripcion(tipoPlan, user, idMicroempresa, cardTokenId){
         const preapprovalId = response.data.id; 
 
         const nuevaSuscripcion = new Suscripcion({  
-            idMicroempresa: microempresa._id,
+            idUser: user._id,
             idPlan: plan._id,
             estado: "activo",
             fecha_inicio: startDate,
@@ -138,24 +133,21 @@ async function crearSuscripcion(tipoPlan, user, idMicroempresa, cardTokenId){
     }
 }
 
-async function cancelarSuscripcion(idMicroempresa, user) {
+async function cancelarSuscripcion(user, preapprovalId) {
     try {
-        if (!idMicroempresa) throw new Error("ID de microempresa no proporcionado.");
+        if (!preapprovalId) throw new Error("ID de preaprobación no proporcionado.");
 
-        const suscripcion = await Suscripcion.findOne({ idMicroempresa, estado: "activo" }).exec();
+        const suscripcion = await Suscripcion.findOne({ preapproval_id: preapprovalId, estado: "activo" }).exec();
         if (!suscripcion) {
-            return [null, "No se encontró una suscripción activa para esta microempresa."];
+            return [null, "No se encontró una suscripción activa con este ID."];
         }
 
-        // Verificar que el usuario sea el propietario de la microempresa
-        const microempresa = await Microempresa.findById(idMicroempresa).exec();
-        if (!microempresa || String(microempresa.idTrabajador) !== String(user._id)) {
+        if (String(suscripcion.idUser) !== String(user._id)) {
             throw new Error("No tienes permiso para cancelar esta suscripción.");
         }
 
-        // Cancelar la suscripción en Mercado Pago
         await axios.put(
-            `https://api.mercadopago.com/preapproval/${suscripcion.preapproval_id}`,
+            `https://api.mercadopago.com/preapproval/${preapprovalId}`,
             { status: "cancelled" },
             {
                 headers: {
@@ -165,16 +157,57 @@ async function cancelarSuscripcion(idMicroempresa, user) {
             }
         );
 
-        // Actualizar el estado de la suscripción en la base de datos
         suscripcion.estado = "cancelado";
         await suscripcion.save();
 
-        console.log(`Suscripción con ID ${suscripcion.preapproval_id} cancelada en Mercado Pago.`);
         return [{ message: "Suscripción cancelada exitosamente." }, null];
     } catch (error) {
         console.error(`Error al cancelar la suscripción:`, error.response?.data || error.message);
         handleError(error, "suscripcion.service -> cancelarSuscripcion");
     }
+} 
+async function sincronizarEstados() {
+    try {
+        const suscripcionesActivas = await Suscripcion.find({ estado: "activo" }).exec();
+        if (suscripcionesActivas.length === 0) {
+            console.log("No hay suscripciones activas para sincronizar.");
+            return;
+        }
+
+        for (const suscripcion of suscripcionesActivas) {
+            const response = await axios.get(
+                `https://api.mercadopago.com/preapproval/${suscripcion.preapproval_id}`,
+                {
+                    headers: {
+                        'Authorization': `Bearer ${ACCESS_TOKEN}`,
+                    }
+                }
+            );
+
+            const estadoMP = response.data.status;
+            const fechaFinMP = new Date(response.data.auto_recurring.end_date);
+
+            if (estadoMP === "cancelled") {
+                suscripcion.estado = "cancelado";
+            } else if (estadoMP === "paused") {
+                suscripcion.estado = "pausado";
+            } else if (new Date() > fechaFinMP) {
+                suscripcion.estado = "expirado";
+            }
+
+            // Sincronizar fecha_fin si es diferente
+            if (suscripcion.fecha_fin.getTime() !== fechaFinMP.getTime()) {
+                suscripcion.fecha_fin = fechaFinMP;
+            }
+
+            await suscripcion.save();
+        }
+
+        console.log("Sincronización de estados completada.");
+    } catch (error) {
+        console.error("Error al sincronizar estados:", error.response?.data || error.message);
+        handleError(error, "suscripcion.service -> sincronizarEstados");
+    }
 }
  
-export default { crearSuscripcion, cancelarSuscripcion, getSuscripciones, getSuscripcion, deleteSuscripcion, updateSuscripcion }; 
+export default { crearSuscripcion, cancelarSuscripcion, getSuscripciones, getSuscripcion, deleteSuscripcion, updateSuscripcion, sincronizarEstados }; 

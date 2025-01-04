@@ -2,15 +2,19 @@ import React, { useState, useContext } from 'react';
 import { View, Text, TextInput, Button, StyleSheet, Alert } from 'react-native';
 
 import { AuthContext } from '../context/auth.context';
-import { useNavigation } from '@react-navigation/native';
+
 
 export default function LoginScreen() {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const { login } = useContext(AuthContext);
-    const navigation = useNavigation(); 
+    
   
     const handleLogin = async () => {
+      if (!email || !password) {
+        Alert.alert('Error', 'Por favor, complete todos los campos');
+        return;
+      }
       try {
           console.log('Datos para login:', email, password);
           const dataUser = {email, password}; 

@@ -31,16 +31,27 @@ export const AuthProvider = ({ children }) => {
     
 
     const login = async (dataUser) => {
-        const userInfo = await loginService(dataUser);
-        setUser(userInfo);
-        setIsAuthenticated(true); 
-        console.log('User logged in:', userInfo);
+        try {
+            const userInfo = await loginService(dataUser);
+            setUser(userInfo);
+            setIsAuthenticated(true);
+            console.log('Usuario inició sesión:', userInfo); 
+            return userInfo;
+          } catch (error) {
+            console.error('Error durante el inicio de sesión:', error);
+            throw error; 
+          }
     };
 
     const logout = async () => {
-        await logoutService();
-        setUser(null);
-        setIsAuthenticated(false);
+        try {
+            await logoutService();
+            setUser(null);
+            setIsAuthenticated(false);
+            console.log('Usuario cerró sesión correctamente');
+          } catch (error) {
+            console.error('Error durante el cierre de sesión:', error);
+          }
     };
 
     return (

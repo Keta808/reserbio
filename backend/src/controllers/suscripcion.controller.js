@@ -1,3 +1,4 @@
+/* eslint-disable space-before-blocks */
 /* eslint-disable no-console */
 /* eslint-disable max-len */
 /* eslint-disable quotes */
@@ -87,11 +88,20 @@ async function updateSuscripcion(req, res) {
         return respondError(res, "Error al actualizar la suscripción.", 500);
     }
 }
-
+// eslint-disable-next-line no-unused-vars
+async function sincronizarEstados(){
+    try {
+        await suscripcionService.sincronizarEstados();
+    // eslint-disable-next-line keyword-spacing
+    }catch(error){
+        handleError(error, "suscripcion.controller -> sincronizarEstados");
+    }
+}
 export default { 
     crearSuscripcion, 
     getSuscripciones, 
     getSuscripcion, 
     deleteSuscripcion, 
     updateSuscripcion, 
+    sincronizarEstados,
 };
