@@ -29,7 +29,7 @@ const HomeNavigator = () => {
 };
 
 const AppNavigator = () => {
-  const { isAuthenticated, user } = useContext(AuthContext);
+  const { isAuthenticated } = useContext(AuthContext);
 
 
   return (
@@ -38,7 +38,7 @@ const AppNavigator = () => {
         {isAuthenticated ? (
           <>
           <Stack.Screen name="HomeNavigator" component={HomeNavigator} /> 
-          <Stack.Screen name="Pago" component={PaymentScreen} initialParams={{ user }} />
+          <Stack.Screen name="Pago" component={PaymentScreen}  />
           
           </>
           

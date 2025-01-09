@@ -1,85 +1,78 @@
-import React, { useState, useEffect } from 'react'; 
-import { View, Text, Button, ActivityIndicator, Alert } from 'react-native';
-import MercadoPagoCheckout from '@mercadopago/sdk-js'; 
+import React, { useState, useEffect } from 'react';
+import { View, Text, Button, Alert, StyleSheet } from 'react-native';
+import { MercadoPagoCheckout } from 'react-native-mercadopago-px';
+import { useRoute, useNavigation } from '@react-navigation/native';
+import { crearSuscripcion } from '../services/suscripcion.service.js';
 
-// import MercadoPagoCheckout from '@mercadopago/sdk-js';
-import { crearSuscripcion } from '../services/suscripcion.service'; 
-import { useNavigation } from '@react-navigation/native'; 
-// Context:
-import { useContext } from 'react';
-import { AuthContext } from '../context/auth.context';
+const PaymentScreen = () => {
+  const { params } = useRoute(); // Para acceder a los parámetros enviados desde la pantalla de suscripción
+  const { selectedPlan, user } = params; // Información del plan y el usuario
+  const navigation = useNavigation();
+  const [cardTokenId, setCardTokenId] = useState(null); // Estado para el cardTokenId
+  const [loading, setLoading] = useState(false); // Estado de carga
 
-const PaymentScreen = ({ route }) => {
-    const { selectedPlan } = route.params; // Obtenemos el usuario y el plan seleccionado
-    const { user } = useContext(AuthContext); 
-    const navigation = useNavigation();
+  useEffect(() => {
+    // Configuración inicial de Mercado Pago (puedes obtener tu publicKey desde Mercado Pago)
+    MercadoPagoCheckout.setPublicKey('TEST-e049e8d4-7a1d-4a6e-933e-52ff9ece02e3'); // Cambia esto por tu clave pública
+  }, []);
 
-    const [loading, setLoading] = useState(false);
-    const [cardToken, setCardTokenId] = useState('');
+  const handlePayment = async () => {
+    if (!cardTokenId) {
+      Alert.alert('Error', 'Por favor, ingrese los datos de la tarjeta correctamente');
+      return;
+    }
+    setLoading(true);
+    try {
+      // Crear la suscripción enviando el cardTokenId, la información del usuario y el plan seleccionado
+      const response = await crearSuscripcion(selectedPlan.tipo_plan, user, cardTokenId);
+      if (response.state === 'Success') {
+        console.log('Suscripción realizada con éxito');
+        console.log(response.data);
+        Alert.alert('Exito', 'Suscripción realizada con éxito');
+        navigation.navigate('Home'); // Redirigir a la pantalla de inicio
+      } else {
+        Alert.alert('Error', 'Hubo un problema al procesar el pago');
+      }
+    } catch (error) {
+      Alert.alert('Error', 'Hubo un problema al procesar el pago');
+    } finally {
+      setLoading(false);
+    }
+  };
 
-    // Inicializamos MercadoPago con la clave pública
-    useEffect(() => {
-        try {
-            MercadoPagoCheckout.setPublicKey('TEST-e049e8d4-7a1d-4a6e-933e-52ff9ece02e3'); // Cambiar por la Real
-        } catch (error) {
-            console.error('Error inicializando MercadoPago:', error.message);
-            Alert.alert('Error', 'No se pudo inicializar MercadoPago. Intenta de nuevo más tarde.');
-        }
-    }, []);
-
-    // Función para procesar el pago
-    const handlePayment = async () => {
-        if (!cardToken) {
-            Alert.alert('Error', 'Por favor ingresa los datos de la tarjeta.');
-            return;
-        }
-    
-        setLoading(true);
-    
-        try {
-            const response = await crearSuscripcion(selectedPlan.tipo_plan, user, cardToken); // Envía el token, usuario y plan
-            if (response.state === 'Success') {
-                Alert.alert('Éxito', 'Tu suscripción ha sido activada correctamente.');
-                navigation.navigate('Home');
-            } else {
-                Alert.alert('Error', response.message || 'Hubo un problema al procesar el pago.');
-            }
-        } catch (error) {
-            console.error('Error al procesar el pago:', error);
-            Alert.alert('Error', 'Hubo un problema al procesar el pago. Intenta de nuevo.');
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    const handleCardFormSubmit = (cardFormData) => {
-        const { token } = cardFormData || {};
-        if (token) {
-            setCardTokenId(token);
-        } else {
-            Alert.alert('Error', 'No se pudo generar el token. Verifica los datos de tu tarjeta.');
-        }
-    };
-
-    return (
-        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', padding: 20 }}>
-            <Text style={{ fontSize: 20, marginBottom: 20 }}>Detalles de pago para {selectedPlan.tipo_plan}</Text>
-
-            {/* Formulario de pago con CardForm */}
-            <MercadoPagoCheckout.CardForm
-                style={{ width: '100%' }}
-                onSubmit={handleCardFormSubmit}
-            />
-
-            <Button
-                title="Pagar"
-                onPress={handlePayment}
-                disabled={loading || !cardToken}
-            />
-
-            {loading && <ActivityIndicator size="large" />}
-        </View>
-    );
+  return (
+    <View style={styles.container}>
+      <Text style={styles.title}>Formulario de Pago</Text>
+      <MercadoPagoCheckout
+        onCardTokenReceived={(token) => {
+          setCardTokenId(token.id); // Obtener el cardTokenId
+        }}
+        onError={(error) => {
+          console.error(error);
+          Alert.alert('Error', 'Hubo un problema con los datos de la tarjeta');
+        }}
+      />
+      <Button
+        title={loading ? 'Procesando pago...' : 'Confirmar pago'}
+        onPress={handlePayment}
+        disabled={loading}
+      />
+    </View>
+  );
 };
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    padding: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  title: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    marginBottom: 20,
+  },
+});
 
 export default PaymentScreen;

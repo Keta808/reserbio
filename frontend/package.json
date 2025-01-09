@@ -9,6 +9,7 @@
     "web": "expo start --web"
   },
   "dependencies": {
+    "@blackbox-vision/react-native-mercadopago-px": "^0.8.0",
     "@expo/metro-runtime": "~3.2.3",
     "@mercadopago/sdk-js": "^0.0.3",
     "@react-native-async-storage/async-storage": "^2.0.0",

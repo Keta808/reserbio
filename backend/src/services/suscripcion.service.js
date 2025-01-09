@@ -10,7 +10,7 @@
 /* eslint-disable require-jsdoc */
 import axios from 'axios';
 import Suscripcion from '../models/suscripcion.model.js';
-import Plan from '../models/plan.model.js';  
+  
 
 import { handleError } from "../utils/errorHandler.js";
 import { ACCESS_TOKEN } from '../config/configEnv.js'; 
@@ -75,9 +75,9 @@ async function updateSuscripcion(id, suscripcion) {
 
 async function crearSuscripcion(tipoPlan, user, cardTokenId){
     try {
-        const plan = await Plan.findOne({ tipo_plan: tipoPlan });
+        const plan = tipoPlan;
         if (!plan) {
-            throw new Error(`No se encontró el plan: ${tipoPlan}`);
+            throw new Error("No se encontró el plan.");
         }
         
         // Configurar fechas de la suscripción
@@ -85,8 +85,8 @@ async function crearSuscripcion(tipoPlan, user, cardTokenId){
         const endDate = new Date();
         endDate.setMonth(startDate.getMonth() + 1); // Duración: 1 mes 
         const preapprovalData = {
-            preapproval_plan_id: plan.preapproval_plan_id,
-            reason: `Suscripción ${tipoPlan}`,
+            preapproval_plan_id: plan.mercadoPagoId,
+            reason: `Suscripción ${plan.tipo_plan}`,
             payer_email: user.email,
             card_token_id: cardTokenId,
             auto_recurring: {
