@@ -15,6 +15,7 @@ import Suscripcion from '../models/suscripcion.model.js';
 import { handleError } from "../utils/errorHandler.js";
 import { ACCESS_TOKEN } from '../config/configEnv.js'; 
 
+
 async function getSuscripciones() {
     try {
         const suscripciones = await Suscripcion.find().populate("idPlan idMicroempresa").exec();
@@ -70,8 +71,66 @@ async function updateSuscripcion(id, suscripcion) {
     } catch (error) {
         handleError(error, "suscripcion.service -> updateSuscripcion");
     }
+} 
+// Funciones para obtener datos dinámicos de Mercado Pago
+// funcion para obtener issuers (bancos emisores)
+async function getIssuers(paymentMethodId){
+    try { 
+        
+    const response = await axios.get(
+        `https://api.mercadopago.com/v1/payment_methods/card_issuers?payment_method_id=${paymentMethodId}`,
+        {
+            headers: {
+                Authorization: `Bearer ${ACCESS_TOKEN}`,
+            },
+        }
+    );
+
+    return response.data; // Devuelve la lista de emisores
+} catch (error) {
+    console.error(`Error al obtener emisores:`, error.response?.data || error.message);
+    handleError(error, "suscripcion.service -> getIssuers");
+}
+}  
+// Funcion para obtener tipos de identificacion
+async function getIdentificationTypes(){
+    try {
+        const response = await axios.get(
+            "https://api.mercadopago.com/v1/identification_types",
+            {
+                headers: {
+                    Authorization: `Bearer ${ACCESS_TOKEN}`,
+                },
+            }
+        );
+
+        return response.data; // Devuelve los tipos de identificación
+    } catch (error) {
+        console.error(`Error al obtener tipos de identificación:`, error.response?.data || error.message);
+        handleError(error, "suscripcion.service -> getIdentificationTypes");
+    }
 }
 
+// Funcion para generar cardTokenId
+async function cardForm(paymentData){
+    try {
+        const response = await axios.post(
+            "https://api.mercadopago.com/v1/card_tokens",
+            paymentData,
+            {
+                headers: {
+                    Authorization: `Bearer ${ACCESS_TOKEN}`,
+                    "Content-Type": "application/json",
+                },
+            }
+        );
+
+        return response.data.id; // Devuelve el cardTokenId
+    } catch (error) {
+        console.error(`Error al generar cardTokenId:`, error.response?.data || error.message);
+        handleError(error, "suscripcion.service -> cardForm");
+    }
+}
 
 async function crearSuscripcion(tipoPlan, user, cardTokenId){
     try {
@@ -210,4 +269,4 @@ async function sincronizarEstados() {
     }
 }
  
-export default { crearSuscripcion, cancelarSuscripcion, getSuscripciones, getSuscripcion, deleteSuscripcion, updateSuscripcion, sincronizarEstados }; 
+export default { crearSuscripcion, cancelarSuscripcion, getSuscripciones, getSuscripcion, deleteSuscripcion, updateSuscripcion, sincronizarEstados, getIssuers, getIdentificationTypes, cardForm }; 

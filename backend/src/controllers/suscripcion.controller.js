@@ -96,6 +96,46 @@ async function sincronizarEstados(){
     }catch(error){
         handleError(error, "suscripcion.controller -> sincronizarEstados");
     }
+} 
+
+async function getIssuers(req, res) {
+    try {
+        const paymentMethodId = "visa";  
+        // Llamada al servicio para obtener emisores
+        const emisores = await suscripcionService.getIssuers(paymentMethodId);
+        if (!emisores || emisores.length === 0) {
+            return res.status(404).json({ error: "No se encontraron emisores disponibles" });
+        } 
+        return res.status(200).json(emisores); 
+    } catch (error) {
+        console.error(`Error en obtenerEmisores:`, error.message);
+        return res.status(500).json({ error: "Error al obtener emisores" });
+    }
+}
+async function getIdentificationTypes(req, res) {
+    try {
+        // Llamada al servicio para obtener tipos de identificación
+        const identificationTypes = await suscripcionService.getIdentificationTypes();
+        if (!identificationTypes || identificationTypes.length === 0) {
+            return res.status(404).json({ error: "No se encontraron tipos de identificación disponibles" });
+        } 
+        return res.status(200).json(identificationTypes); 
+    } catch (error) {
+        console.error(`Error en obtenerTiposIdentificacion:`, error.message);
+        return res.status(500).json({ error: "Error al obtener tipos de identificación" });
+    }
+} 
+
+async function cardForm(req, res) {
+    try {
+        const paymentData = req.body;
+        // Llamada al servicio para generar cardTokenId
+        const cardTokenId = await suscripcionService.cardForm(paymentData);
+        return res.status(200).json({ cardTokenId }); 
+    } catch (error) {
+        console.error(`Error en generarCardTokenId:`, error.message);
+        return res.status(500).json({ error: "Error al generar cardTokenId" });
+    }
 }
 export default { 
     crearSuscripcion, 
@@ -104,4 +144,7 @@ export default {
     deleteSuscripcion, 
     updateSuscripcion, 
     sincronizarEstados,
+    getIssuers,
+    getIdentificationTypes,
+    cardForm,
 };
