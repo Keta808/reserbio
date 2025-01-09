@@ -13,7 +13,7 @@ export const login = async (dataUser)=> {
             const { accessToken } = data.data;
             const decodedToken = jwtDecode(accessToken);
 
-            const userInfo = { email: decodedToken.email , kind: decodedToken.kind };
+            const userInfo = { email: decodedToken.email , kind: decodedToken.kind, id: decodedToken.id };
             //console.log('Datos de usuario: ', userInfo);
             
             await AsyncStorage.setItem('user', JSON.stringify(userInfo)); // Guardar sin `{userInfo}`
