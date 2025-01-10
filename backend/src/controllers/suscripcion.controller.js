@@ -12,10 +12,15 @@ async function crearSuscripcion(req, res) {
     try {
         // Validar el cuerpo de la solicitud
         const { error } = suscripcionBodySchema.validate(req.body);
-        if (error) return respondError(res, error.message, 400);
+        if (error) return respondError(res, error.message, 400); 
+        const { tipoPlan, cardTokenId } = req.body;
+        const user = req.user;
+        console.log("User:", user);
+        console.log("Plan:", tipoPlan);
+        console.log("Card Token ID:", cardTokenId);
 
         // Crear suscripción
-        const [suscripcion, errorSuscripcion] = await suscripcionService.crearSuscripcion(req.body);
+        const [suscripcion, errorSuscripcion] = await suscripcionService.crearSuscripcion(tipoPlan, user, cardTokenId);
         if (errorSuscripcion) return respondError(res, errorSuscripcion, 400);
 
         return respondSuccess(res, suscripcion, 201);
@@ -128,7 +133,8 @@ async function getIdentificationTypes(req, res) {
 
 async function cardForm(req, res) {
     try {
-        const paymentData = req.body;
+        const paymentData = req.body; 
+        console.log("Datos recibidos en el controller:", paymentData);
         // Llamada al servicio para generar cardTokenId
         const cardTokenId = await suscripcionService.cardForm(paymentData);
         return res.status(200).json({ cardTokenId }); 

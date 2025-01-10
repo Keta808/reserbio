@@ -83,7 +83,7 @@ async function getIdentificationTypes() {
 async function cardForm(paymentData) {
     try {
       const response = await instance.post('/suscripcion/cardForm', paymentData);
-      return response;
+      return response.data;
     } catch (error) {
       console.error('Error al generar el cardTokenId:', error.response?.data || error.message);
       throw error;

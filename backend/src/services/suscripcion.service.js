@@ -113,7 +113,9 @@ async function getIdentificationTypes(){
 
 // Funcion para generar cardTokenId
 async function cardForm(paymentData){
-    try {
+    try { 
+        // DEPURACION: Mostrar datos recibidos
+        console.log("Datos recibidos para generar cardTokenId:", paymentData);
         const response = await axios.post(
             "https://api.mercadopago.com/v1/card_tokens",
             paymentData,
@@ -124,8 +126,13 @@ async function cardForm(paymentData){
                 },
             }
         );
-
-        return response.data.id; // Devuelve el cardTokenId
+        console.log("Respuesta de Mercado Pago:", response.data);
+        if (response.data.id) {
+            return response.data.id; // Devuelve el cardTokenId
+        } else {
+            console.error("No se generó un cardToken válido:", response.data);
+            return null;
+        }
     } catch (error) {
         console.error(`Error al generar cardTokenId:`, error.response?.data || error.message);
         handleError(error, "suscripcion.service -> cardForm");
@@ -136,7 +143,7 @@ async function crearSuscripcion(tipoPlan, user, cardTokenId){
     try {
         const plan = tipoPlan;
         if (!plan) {
-            throw new Error("No se encontró el plan.");
+            return [null, "No se encontró el plan."];
         }
         
         // Configurar fechas de la suscripción
@@ -181,14 +188,16 @@ async function crearSuscripcion(tipoPlan, user, cardTokenId){
             preapproval_id: preapprovalId,
         }); 
         await nuevaSuscripcion.save(); 
-        return { message: `Suscripción ${tipoPlan} creada exitosamente.`, 
-        preapprovalId, 
-        };
+        return [{
+            message: `Suscripción al plan ${plan.tipo_plan} creada exitosamente.`,
+            preapprovalId,
+        }, null];
 
 
     } catch (error){
-        console.error(`Error al crear la suscripcion:`, error.response?.data || error.message);
+        console.error(`Error al crear la suscripción:`, error.response?.data || error.message);
         handleError(error, "suscripcion.service -> crearSuscripcion");
+        return [null, error.response?.data || error.message];
     }
 }
 

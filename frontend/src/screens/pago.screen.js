@@ -8,13 +8,15 @@ const PaymentScreen = ({ route, navigation }) => {
   const { selectedPlan, user } = route.params;
 
   const handlePayment = async (paymentData) => {
-    try {
+    try { 
+      console.log("Datos enviados al backend para generar cardTokenId:", paymentData);
       // Llama al servicio de backend para generar el `cardTokenId`
       const cardTokenId = await cardForm(paymentData);
+      console.log("Card Token ID:", cardTokenId);
 
       if (cardTokenId) {
         const suscripcionResponse = await crearSuscripcion(
-          selectedPlan.tipo_plan,
+          selectedPlan,
           user,
           cardTokenId
         );
