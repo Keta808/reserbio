@@ -11,6 +11,9 @@ export default function LoginScreen() {
     const { login } = useContext(AuthContext);
     const navigation = useNavigation(); 
   
+    const email_prueba = 'trabajador@email.com';
+    const password_prueba = 'trabajador123';
+
     const handleLogin = async () => {
       try {
           //console.log(' 1 Datos para login:', email, password);
@@ -30,6 +33,21 @@ export default function LoginScreen() {
         Alert.alert('Error', 'El usuario o la contraseña son incorrectos');
       }
     };
+
+    //logeo temporal para no escribir todo el rato
+
+    const handleLoginPrueba = async () => {
+      try {
+          const dataUser = {email: email_prueba, password: password_prueba};
+          const userInfo = await login(dataUser);
+          console.log('Usuario autenticado:', userInfo);
+          Alert.alert('Inicio de sesión exitoso', `Bienvenido, ${email_prueba}`);
+      } catch (error) {
+        Alert.alert('Error', 'El usuario o la contraseña son incorrectos');
+      }
+    }
+
+
     console.log('LoginScreen - Rendering');
     return (
       <View style={styles.container}>
@@ -49,6 +67,7 @@ export default function LoginScreen() {
           secureTextEntry
         />
         <Button title="Ingresar" onPress={handleLogin} />
+        <Button title ='logeo rapido con trabajador' onPress={ handleLoginPrueba} />
       </View>
     );
   }

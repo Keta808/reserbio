@@ -37,6 +37,7 @@ Obtiene todas las reservas de la base de datos por id del trabajador
 
 async function getReservasByTrabajador(id) {
     try {
+        console.log("id", id);
         const reservas = await Reserva.find({ trabajador: id })
             .populate('cliente')
             .populate('trabajador')
