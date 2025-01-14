@@ -41,9 +41,14 @@ export const AuthProvider = ({ children }) => {
     };
 
     const logout = async () => {
-        await logoutService();
-        setUser(null);
-        setIsAuthenticated(false);
+        try {
+            await logoutService();
+            setUser(null);
+            setIsAuthenticated(false);
+            console.log('Usuario cerró sesión correctamente');
+          } catch (error) {
+            console.error('Error durante el cierre de sesión:', error);
+          }
     };
 
     return (

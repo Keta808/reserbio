@@ -42,8 +42,8 @@ async function login(user) {
       {
         expiresIn: "1d",
       },
-      //console.log( email + " ha iniciado sesión" ),
-      //console.log( "kind: " + userFound.kind ),
+      // console.log( email + " ha iniciado sesión" ),
+      // console.log( "kind: " + userFound.kind ),
 
     );
 

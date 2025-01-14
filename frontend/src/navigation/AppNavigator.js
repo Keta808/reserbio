@@ -1,4 +1,5 @@
 import React, { useContext } from 'react';
+
 import { createStackNavigator } from '@react-navigation/stack'; 
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import LoginScreen from '../screens/login.screen.js'; 
@@ -9,12 +10,15 @@ import FormularioMicroempresa from '../screens/formularioMicroempresa.screen.js'
 import DisponibilidadScreen from '../screens/disponibilidad.screen.js';
 import FormularioCreacionHorasScreen from '../screens/formularioCreacionHorario.screen.js'; // Corregido
 
+import PaymentScreen from '../screens/pago.screen.js';
 import { AuthContext } from '../context/auth.context';
 
 const Stack = createStackNavigator(); 
 const Tab = createBottomTabNavigator();
 
 const HomeNavigator = () => {
+  
+
   return (
     <Tab.Navigator>
       <Tab.Screen name="Home" component={HomeScreen} />
@@ -30,14 +34,17 @@ const AppNavigator = () => {
   const { isAuthenticated } = useContext(AuthContext);
 
   return (
-    <Stack.Navigator screenOptions={{ headerShown: false }}>
-      {isAuthenticated ? (
-        <>
-          <Stack.Screen name="HomeNavigator" component={HomeNavigator} />
+    
+      <Stack.Navigator screenOptions={{ headerShown: false }}>
+        {isAuthenticated ? (
+          <>
+          <Stack.Screen name="HomeNavigator" component={HomeNavigator} /> 
+          <Stack.Screen name="Pago" component={PaymentScreen}  />
           <Stack.Screen name="FormularioCreacionHoras" component={FormularioCreacionHorasScreen} />
+          </>
+          
           
 
-        </>
       ) : (
         <Stack.Screen name="Login" component={LoginScreen} />
       )}

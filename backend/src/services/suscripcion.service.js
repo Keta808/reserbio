@@ -10,10 +10,11 @@
 /* eslint-disable require-jsdoc */
 import axios from 'axios';
 import Suscripcion from '../models/suscripcion.model.js';
-import Plan from '../models/plan.model.js';  
-import Microempresa from '../models/microempresa.model.js';
+  
+
 import { handleError } from "../utils/errorHandler.js";
 import { ACCESS_TOKEN } from '../config/configEnv.js'; 
+
 
 async function getSuscripciones() {
     try {
@@ -58,11 +59,11 @@ async function updateSuscripcion(id, suscripcion) {
         const existingSuscripcion = await Suscripcion.findById(id).exec();
         if (!existingSuscripcion) return [null, "La suscripción no existe."];
 
-        const { idMicroempresa, idPlan, estado, fecha_inicio, fecha_fin, preapproval_id } = suscripcion;
+        const { idUser, idPlan, estado, fecha_inicio, fecha_fin, preapproval_id } = suscripcion;
 
         const updatedSuscripcion = await Suscripcion.findByIdAndUpdate(
             id,
-            { idMicroempresa, idPlan, estado, fecha_inicio, fecha_fin, preapproval_id },
+            { idUser, idPlan, estado, fecha_inicio, fecha_fin, preapproval_id },
             { new: true }
         ).exec();
 
@@ -70,28 +71,88 @@ async function updateSuscripcion(id, suscripcion) {
     } catch (error) {
         handleError(error, "suscripcion.service -> updateSuscripcion");
     }
+} 
+// Funciones para obtener datos dinámicos de Mercado Pago
+// funcion para obtener issuers (bancos emisores)
+async function getIssuers(paymentMethodId){
+    try { 
+        
+    const response = await axios.get(
+        `https://api.mercadopago.com/v1/payment_methods/card_issuers?payment_method_id=${paymentMethodId}`,
+        {
+            headers: {
+                Authorization: `Bearer ${ACCESS_TOKEN}`,
+            },
+        }
+    );
+
+    return response.data; // Devuelve la lista de emisores
+} catch (error) {
+    console.error(`Error al obtener emisores:`, error.response?.data || error.message);
+    handleError(error, "suscripcion.service -> getIssuers");
+}
+}  
+// Funcion para obtener tipos de identificacion
+async function getIdentificationTypes(){
+    try {
+        const response = await axios.get(
+            "https://api.mercadopago.com/v1/identification_types",
+            {
+                headers: {
+                    Authorization: `Bearer ${ACCESS_TOKEN}`,
+                },
+            }
+        );
+
+        return response.data; // Devuelve los tipos de identificación
+    } catch (error) {
+        console.error(`Error al obtener tipos de identificación:`, error.response?.data || error.message);
+        handleError(error, "suscripcion.service -> getIdentificationTypes");
+    }
 }
 
+// Funcion para generar cardTokenId
+async function cardForm(paymentData){
+    try { 
+        // DEPURACION: Mostrar datos recibidos
+        console.log("Datos recibidos para generar cardTokenId:", paymentData);
+        const response = await axios.post(
+            "https://api.mercadopago.com/v1/card_tokens",
+            paymentData,
+            {
+                headers: {
+                    Authorization: `Bearer ${ACCESS_TOKEN}`,
+                    "Content-Type": "application/json",
+                },
+            }
+        );
+        console.log("Respuesta de Mercado Pago:", response.data);
+        if (response.data.id) {
+            return response.data.id; // Devuelve el cardTokenId
+        } else {
+            console.error("No se generó un cardToken válido:", response.data);
+            return null;
+        }
+    } catch (error) {
+        console.error(`Error al generar cardTokenId:`, error.response?.data || error.message);
+        handleError(error, "suscripcion.service -> cardForm");
+    }
+}
 
-async function crearSuscripcion(tipoPlan, user, idMicroempresa, cardTokenId){
+async function crearSuscripcion(tipoPlan, user, cardTokenId){
     try {
-        const microempresa = await Microempresa.findById(idMicroempresa); 
-        if (!microempresa || String(microempresa.idTrabajador) !== String(user._id)) {
-            throw new Error("La microempresa no pertenece al usuario autenticado.");
-        } 
-        // Buscar plan según el tipo
-        const plan = await Plan.findOne({ tipo_plan: tipoPlan });
+        const plan = tipoPlan;
         if (!plan) {
-            throw new Error(`No se encontró el plan: ${tipoPlan}`);
-        } 
+            return [null, "No se encontró el plan."];
+        }
+        
         // Configurar fechas de la suscripción
         const startDate = new Date(); // Fecha actual
         const endDate = new Date();
         endDate.setMonth(startDate.getMonth() + 1); // Duración: 1 mes 
         const preapprovalData = {
-            preapproval_plan_id: plan.preapproval_plan_id,
-            reason: `Suscripción ${tipoPlan}`,
-            external_reference: `MICROEMPRESA-${microempresa._id}`,
+            preapproval_plan_id: plan.mercadoPagoId,
+            reason: `Suscripción ${plan.tipo_plan}`,
             payer_email: user.email,
             card_token_id: cardTokenId,
             auto_recurring: {
@@ -119,7 +180,7 @@ async function crearSuscripcion(tipoPlan, user, idMicroempresa, cardTokenId){
         const preapprovalId = response.data.id; 
 
         const nuevaSuscripcion = new Suscripcion({  
-            idMicroempresa: microempresa._id,
+            idUser: user._id,
             idPlan: plan._id,
             estado: "activo",
             fecha_inicio: startDate,
@@ -127,35 +188,34 @@ async function crearSuscripcion(tipoPlan, user, idMicroempresa, cardTokenId){
             preapproval_id: preapprovalId,
         }); 
         await nuevaSuscripcion.save(); 
-        return { message: `Suscripción ${tipoPlan} creada exitosamente.`, 
-        preapprovalId, 
-        };
+        return [{
+            message: `Suscripción al plan ${plan.tipo_plan} creada exitosamente.`,
+            preapprovalId,
+        }, null];
 
 
     } catch (error){
-        console.error(`Error al crear la suscripcion:`, error.response?.data || error.message);
+        console.error(`Error al crear la suscripción:`, error.response?.data || error.message);
         handleError(error, "suscripcion.service -> crearSuscripcion");
+        return [null, error.response?.data || error.message];
     }
 }
 
-async function cancelarSuscripcion(idMicroempresa, user) {
+async function cancelarSuscripcion(user, preapprovalId) {
     try {
-        if (!idMicroempresa) throw new Error("ID de microempresa no proporcionado.");
+        if (!preapprovalId) throw new Error("ID de preaprobación no proporcionado.");
 
-        const suscripcion = await Suscripcion.findOne({ idMicroempresa, estado: "activo" }).exec();
+        const suscripcion = await Suscripcion.findOne({ preapproval_id: preapprovalId, estado: "activo" }).exec();
         if (!suscripcion) {
-            return [null, "No se encontró una suscripción activa para esta microempresa."];
+            return [null, "No se encontró una suscripción activa con este ID."];
         }
 
-        // Verificar que el usuario sea el propietario de la microempresa
-        const microempresa = await Microempresa.findById(idMicroempresa).exec();
-        if (!microempresa || String(microempresa.idTrabajador) !== String(user._id)) {
+        if (String(suscripcion.idUser) !== String(user._id)) {
             throw new Error("No tienes permiso para cancelar esta suscripción.");
         }
 
-        // Cancelar la suscripción en Mercado Pago
         await axios.put(
-            `https://api.mercadopago.com/preapproval/${suscripcion.preapproval_id}`,
+            `https://api.mercadopago.com/preapproval/${preapprovalId}`,
             { status: "cancelled" },
             {
                 headers: {
@@ -165,16 +225,57 @@ async function cancelarSuscripcion(idMicroempresa, user) {
             }
         );
 
-        // Actualizar el estado de la suscripción en la base de datos
         suscripcion.estado = "cancelado";
         await suscripcion.save();
 
-        console.log(`Suscripción con ID ${suscripcion.preapproval_id} cancelada en Mercado Pago.`);
         return [{ message: "Suscripción cancelada exitosamente." }, null];
     } catch (error) {
         console.error(`Error al cancelar la suscripción:`, error.response?.data || error.message);
         handleError(error, "suscripcion.service -> cancelarSuscripcion");
     }
+} 
+async function sincronizarEstados() {
+    try {
+        const suscripcionesActivas = await Suscripcion.find({ estado: "activo" }).exec();
+        if (suscripcionesActivas.length === 0) {
+            console.log("No hay suscripciones activas para sincronizar.");
+            return;
+        }
+
+        for (const suscripcion of suscripcionesActivas) {
+            const response = await axios.get(
+                `https://api.mercadopago.com/preapproval/${suscripcion.preapproval_id}`,
+                {
+                    headers: {
+                        'Authorization': `Bearer ${ACCESS_TOKEN}`,
+                    }
+                }
+            );
+
+            const estadoMP = response.data.status;
+            const fechaFinMP = new Date(response.data.auto_recurring.end_date);
+
+            if (estadoMP === "cancelled") {
+                suscripcion.estado = "cancelado";
+            } else if (estadoMP === "paused") {
+                suscripcion.estado = "pausado";
+            } else if (new Date() > fechaFinMP) {
+                suscripcion.estado = "expirado";
+            }
+
+            // Sincronizar fecha_fin si es diferente
+            if (suscripcion.fecha_fin.getTime() !== fechaFinMP.getTime()) {
+                suscripcion.fecha_fin = fechaFinMP;
+            }
+
+            await suscripcion.save();
+        }
+
+        console.log("Sincronización de estados completada.");
+    } catch (error) {
+        console.error("Error al sincronizar estados:", error.response?.data || error.message);
+        handleError(error, "suscripcion.service -> sincronizarEstados");
+    }
 }
  
-export default { crearSuscripcion, cancelarSuscripcion, getSuscripciones, getSuscripcion, deleteSuscripcion, updateSuscripcion }; 
+export default { crearSuscripcion, cancelarSuscripcion, getSuscripciones, getSuscripcion, deleteSuscripcion, updateSuscripcion, sincronizarEstados, getIssuers, getIdentificationTypes, cardForm }; 
