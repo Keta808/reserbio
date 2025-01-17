@@ -17,4 +17,5 @@ router.delete("/:id", disponibilidadController.deleteDisponibilidad);
 router.post('/horarios-disponibles', disponibilidadController.getHorariosDisponibles);
 router.post('/horarios-microempresa', disponibilidadController.getHorariosDisponiblesMicroEmpresa);
 router.post("/disponibilidad/por-hora", disponibilidadController.getTrabajadoresDisponiblesPorHora);
+router.post("/disponibilidad/por-dia", disponibilidadController.getDiasSinHorario);
 export default router;

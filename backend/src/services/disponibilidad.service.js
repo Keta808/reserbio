@@ -39,6 +39,7 @@ async function createDisponibilidad(disponibilidadData) {
     try {
 
         const { trabajador, dia, hora_inicio, hora_fin, excepciones } = disponibilidadData;
+        
 
         //Valida si el trabajador existe
         const trabajadorFound = await Trabajador.findById(trabajador);
@@ -73,7 +74,9 @@ async function createDisponibilidad(disponibilidadData) {
 
 async function updateDisponibilidad(id, disponibilidad) {
     try {
+
         const { dia, hora_inicio, hora_fin, excepciones } = disponibilidad;
+       
 
         const disponibilidadFound = await Disponibilidad.findById(id);
         if (!disponibilidadFound) return [null, "La disponibilidad no existe"];
@@ -84,7 +87,7 @@ async function updateDisponibilidad(id, disponibilidad) {
         disponibilidadFound.excepciones = excepciones;
 
         await disponibilidadFound.save();
-
+        console.log(disponibilidad)
         return [disponibilidadFound, null];
     } catch (error) {
         handleError(error, "disponibilidad.service -> updateDisponibilidad");
@@ -98,12 +101,17 @@ async function updateDisponibilidad(id, disponibilidad) {
 
 async function deleteDisponibilidad(id) {
     try {
-        return await Disponibilidad.findByIdAndDelete(id);
+      const deleted = await Disponibilidad.findByIdAndDelete(id);
+      if (!deleted) {
+        throw new Error("Disponibilidad no encontrada");
+      }
+      return [deleted, null];
     } catch (error) {
-        handleError(error, "disponibilidad.service -> deleteDisponibilidad");
+      handleError(error, "disponibilidad.service -> deleteDisponibilidad");
+      return [null, error.message]; // Devuelve el error al controlador
     }
-}
-
+  }
+  
 // Función para convertir la fecha de formato DD-MM-YYYY a Date
 function stringToDateOnly(fecha) {
     const [dia, mes, año] = fecha.split("-");
@@ -380,6 +388,19 @@ async function getTrabajadoresDisponiblesPorHora(serviceId, date, hora) {
 }
 
 
+// funcion para obtener los dias en los que no tiene horario un trabajador
+
+async function getDiasSinHorario(trabajadorId) {
+    try {
+        const diasSemana = ["domingo", "lunes", "martes", "miércoles", "jueves", "viernes", "sábado"];
+        const diasTrabajador = await Disponibilidad.find({ trabajador: trabajadorId }).select('dia').exec();
+        const diasOcupados = diasTrabajador.map(dia => dia.dia);
+        const diasLibres = diasSemana.filter(dia => !diasOcupados.includes(dia));
+        return [diasLibres, null];
+    } catch (error) {
+        handleError(error, "disponibilidad.service -> getDiasSinHorario");
+    }
+}
 
 export default { 
     getDisponibilidadByTrabajador, 
@@ -389,5 +410,6 @@ export default {
     getAvailableSlots,
     getHorariosDisponiblesMicroEmpresa,
     getTrabajadoresDisponiblesPorHora,
+    getDiasSinHorario,
 
 };

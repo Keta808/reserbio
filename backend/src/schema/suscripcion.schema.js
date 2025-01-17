@@ -4,10 +4,10 @@
 import Joi from "joi";
 
 const suscripcionBodySchema = Joi.object({
-    idMicroempresa: Joi.string().required().messages({
-        "string.empty": "El idMicroempresa no puede estar vacío.",
-        "any.required": "El idMicroempresa es obligatorio.",
-        "string.base": "El idMicroempresa debe ser de tipo string.",
+    idUser: Joi.string().required().messages({
+        "string.empty": "El idUser no puede estar vacío.",
+        "any.required": "El idUser es obligatorio.",
+        "string.base": "El idUser debe ser de tipo string.",
     }),
     idPlan: Joi.string().required().messages({
         "string.empty": "El idPlan no puede estar vacío.",
@@ -47,4 +47,4 @@ const suscripcionIdSchema = Joi.object({
     "object.unknown": "No se permiten propiedades adicionales.",
 }); 
 
-export { suscripcionBodySchema, suscripcionIdSchema };
+export { suscripcionBodySchema, suscripcionIdSchema }; 

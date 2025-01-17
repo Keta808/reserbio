@@ -1,9 +1,9 @@
 import mongoose from "mongoose";
 
 const suscripcionSchema = new mongoose.Schema({
-    idMicroempresa: {
+    idUser: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: "Microempresa", 
+        ref: "User", 
         required: true,
     },
     idPlan: {

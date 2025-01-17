@@ -36,6 +36,7 @@ async function getDisponibilidadByTrabajador(req, res) {
 
 async function createDisponibilidad(req, res) {
   try {
+
     const { error } = disponibilidadBodySchema.validate(req.body);
     if (error) return respondError(req, res, 400, error.message);
 
@@ -60,8 +61,8 @@ async function updateDisponibilidad(req, res) {
     const { error } = disponibilidadIdSchema.validate(req.params);
     if (error) return respondError(req, res, 400, error.message);
 
-    const { error: errorBody } = disponibilidadBodySchema.validate(req.body);
-    if (errorBody) return respondError(req, res, 400, errorBody.message);
+    //const { error: errorBody } = disponibilidadBodySchema.validate(req.body);
+    //if (errorBody) return respondError(req, res, 400, errorBody.message);
 
     const [updatedDisponibilidad, errorDisponibilidad] = await DisponibilidadService.updateDisponibilidad(
       req.params.id,
@@ -84,17 +85,18 @@ async function updateDisponibilidad(req, res) {
 async function deleteDisponibilidad(req, res) {
   try {
     const { error } = disponibilidadIdSchema.validate(req.params);
-    if (error) return respondError(req, res, 400, error.message);
+    if (error) return respondError(req, res, 400, `Error de validación: ${error.message}`);
 
     const [disponibilidad, errorDisponibilidad] = await DisponibilidadService.deleteDisponibilidad(req.params.id);
     if (errorDisponibilidad) return respondError(req, res, 404, errorDisponibilidad);
 
-    respondSuccess(req, res, 200, disponibilidad);
+    respondSuccess(req, res, 200, { message: "Disponibilidad eliminada correctamente", disponibilidad });
   } catch (error) {
     handleError(error, "disponibilidad.controller -> deleteDisponibilidad");
-    respondError(req, res, 400, error.message);
+    respondError(req, res, 500, "Error interno del servidor");
   }
 }
+
 
 const getHorariosDisponibles = async (req, res) => {
   const { workerId, date } = req.body;
@@ -148,6 +150,23 @@ const getTrabajadoresDisponiblesPorHora = async (req, res) => {
   }
 };
 
+// funcion para obtener los dias en los que no tiene horario un trabajador
+
+const getDiasSinHorario = async (req, res) => {
+  
+  console.log('req.body', req.body);
+
+  const { workerId } = req.body;
+  console.log('workerId', workerId);
+
+  try {
+    const availableDays = await DisponibilidadService.getDiasSinHorario(workerId);
+    res.status(200).json({ availableDays });
+  } catch (error) {
+    res.status(500).json({ message: 'Error al obtener los dias disponibles', error });
+  }
+}
+
 export default { 
     getDisponibilidadByTrabajador, 
     createDisponibilidad, 
@@ -155,8 +174,10 @@ export default {
     deleteDisponibilidad,
     getHorariosDisponibles,
     getHorariosDisponiblesMicroEmpresa,
-    getTrabajadoresDisponiblesPorHora
-    
+    getTrabajadoresDisponiblesPorHora,
+    getDiasSinHorario
+
+
 
     
  };
