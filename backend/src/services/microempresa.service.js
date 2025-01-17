@@ -2,7 +2,7 @@
 "use strict";
 
 import Microempresa from "../models/microempresa.model.js";
-
+import Enlace from "../models/enlace.model.js";
 import { handleError } from "../utils/errorHandler.js";
 
 /**
@@ -68,14 +68,29 @@ async function createMicroempresa(microempresa) {
  */
 async function getMicroempresaById(id) {
     try {
+        // 1️⃣ Buscar la microempresa por ID
         const microempresa = await Microempresa.findById(id).exec();
         if (!microempresa) return [null, "La microempresa no existe"];
+
+        // 2️⃣ Buscar los enlaces activos asociados a la microempresa
+        const enlaces = await Enlace.find({ id_microempresa: id, estado: true })
+            .populate("id_trabajador", "nombre apellido email telefono")
+            .exec();
+
+        // 3️⃣ Extraer los trabajadores desde los enlaces
+        const trabajadores = enlaces.map((enlace) => enlace.id_trabajador);
+
+        // 4️⃣ Añadir los trabajadores a la microempresa
+        microempresa.trabajadores = trabajadores;
+
+        console.log("getMicroempresaById en backend", microempresa);
 
         return [microempresa, null];
     } catch (error) {
         handleError(error, "microempresa.service -> getMicroempresaById");
     }
 }
+
 
 /**
  * Actualiza una microempresa por su id de la base de datos
@@ -175,6 +190,17 @@ async function getMicromempresaPorNombre(nombre) {
         handleError(error, "microempresa.service -> getNombre");
     }
 }
+
+// Servicio para obtener microempresas por trabajador
+async function getMicroempresasByUser(trabajadorId) {
+    try {
+      const microempresas = await Microempresa.find({ idTrabajador: trabajadorId });
+      return microempresas;
+    } catch (error) {
+      throw new Error("Error al obtener microempresas del trabajador");
+    }
+}
+
 export default {
     getMicroempresas,
     createMicroempresa,
@@ -183,5 +209,6 @@ export default {
     deleteMicroempresaById,
     getMicroempresasPorCategoria, 
     getMicromempresaPorNombre,
+    getMicroempresasByUser,
 };
 

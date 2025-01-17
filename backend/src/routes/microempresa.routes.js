@@ -18,12 +18,13 @@ const router = Router();
 router.use(authenticationMiddleware);
 // Define las rutas para las microempresas
 router.get("/", isAdmin, microempresaController.getMicroempresas);
-router.get("/:id", isAdmin, microempresaController.getMicroempresaById);
+router.get("/:id", isTrabajador, microempresaController.getMicroempresaById);
 // router.get("/nombre/:nombre", isAdmin, microempresaController.getMicroempresaByNombre);
-router.post("/", isAdmin, microempresaController.createMicroempresa);
+router.post("/", isTrabajador, microempresaController.createMicroempresa);
 router.put("/:id", isAdmin, microempresaController.updateMicroempresaById);
 router.delete("/:id", isAdmin, microempresaController.deleteMicroempresaById);
 router.get("/categoria/:categoria", isAdmin, microempresaController.getMicroempresasPorCategoria);
+router.get("/user/:trabajadorId", microempresaController.getMicroempresasByUser);
 
 // Exporta el enrutador
 export default router;

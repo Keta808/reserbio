@@ -33,17 +33,29 @@ async function getMicroempresas(req, res) {
  */
 async function createMicroempresa(req, res) {
   try {
+    // Validación de los datos del esquema
     const { error } = microempresaBodySchema.validate(req.body);
     if (error) return respondError(req, res, 400, error.message);
 
+    console.log("Datos recibidos en el backend:", req.body);
+
+    // Llamada al servicio para crear la microempresa
     const [newMicroempresa, errorMicroempresa] = await MicroempresaService
     .createMicroempresa(req.body);
-    if (errorMicroempresa) return respondError(req, res, 400, errorMicroempresa);
 
-    respondSuccess(req, res, 201, newMicroempresa);
+    // Manejar errores del servicio
+    if (errorMicroempresa) {
+      console.error("Error al crear la microempresa:", errorMicroempresa);
+      return respondError(req, res, 400, "No se pudo crear la microempresa.");
+    }
+
+    // Responder con la nueva microempresa creada
+    respondSuccess(req, res, 201, { _id: newMicroempresa._id, ...newMicroempresa.toObject() });
+
   } catch (error) {
+    // Manejar errores generales
     handleError(error, "microempresa.controller -> createMicroempresa");
-    respondError(req, res, 400, error.message);
+    return respondError(req, res, 500, "Error interno del servidor.");
   }
 }
 
@@ -137,6 +149,22 @@ async function getMicromempresaPorNombre(req, res){
         respondError(req, res, 400, error.message);
       }
 }
+
+async function getMicroempresasByUser(req, res) {
+  try {
+    const { trabajadorId } = req.params;
+    const microempresas = await MicroempresaService.getMicroempresasByUser(trabajadorId);
+
+    if (!microempresas || microempresas.length === 0) {
+      return res.status(404).json({ state: 'Error', message: 'No se encontraron microempresas para este trabajador' });
+    }
+
+    res.status(200).json({ state: "Success", data: microempresas });
+  } catch (error) {
+    res.status(500).json({ state: "Error", message: error.message });
+  }
+}
+
 export default {
     getMicroempresas,
     createMicroempresa,
@@ -145,4 +173,5 @@ export default {
     deleteMicroempresaById,
     getMicroempresasPorCategoria,
     getMicromempresaPorNombre,
+    getMicroempresasByUser,
 };

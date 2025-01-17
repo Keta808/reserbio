@@ -31,7 +31,6 @@ export default function InicioMicroempresaScreen({ route }) {
     <ScrollView contentContainerStyle={styles.container}>
       {microempresa ? (
         <>
-          {/* Mostrar foto de perfil si existe */}
           {microempresa.fotoPerfil && (
             <Image source={{ uri: microempresa.fotoPerfil.url }} style={styles.profileImage} />
           )}
@@ -39,34 +38,36 @@ export default function InicioMicroempresaScreen({ route }) {
           <Text style={styles.title}>{microempresa.nombre}</Text>
           <Text style={styles.description}>{microempresa.descripcion}</Text>
 
-          <View style={styles.infoWrapper}>
-            <View style={styles.infoContainer}>
-              <Text style={styles.infoLabel}>Teléfono:</Text>
-              <Text style={styles.infoValue}>{microempresa.telefono}</Text>
-            </View>
-
-            <View style={styles.infoContainer}>
-              <Text style={styles.infoLabel}>Dirección:</Text>
-              <Text style={styles.infoValue}>{microempresa.direccion}</Text>
-            </View>
-
-            <View style={styles.infoContainer}>
-              <Text style={styles.infoLabel}>Email:</Text>
-              <Text style={styles.infoValue}>{microempresa.email}</Text>
-            </View>
-
-            <View style={styles.infoContainer}>
-              <Text style={styles.infoLabel}>Categoría:</Text>
-              <Text style={styles.infoValue}>{microempresa.categoria}</Text>
-            </View>
+          <View style={styles.infoRow}>
+            <Text style={styles.infoLabel}>Teléfono:</Text>
+            <Text style={styles.infoValue}>{microempresa.telefono}</Text>
           </View>
 
-          {/* Mostrar trabajadores si existen */}
+          <View style={styles.infoRow}>
+            <Text style={styles.infoLabel}>Dirección:</Text>
+            <Text style={styles.infoValue}>{microempresa.direccion}</Text>
+          </View>
+
+          <View style={styles.infoRow}>
+            <Text style={styles.infoLabel}>Email:</Text>
+            <Text style={styles.infoValue}>{microempresa.email}</Text>
+          </View>
+
+          <View style={styles.infoRow}>
+            <Text style={styles.infoLabel}>Categoría:</Text>
+            <Text style={styles.infoValue}>{microempresa.categoria}</Text>
+          </View>
+
           {microempresa.trabajadores && microempresa.trabajadores.length > 0 ? (
-            <View style={styles.infoContainer}>
-              <Text style={styles.infoLabel}>Trabajadores:</Text>
+            <View style={styles.trabajadoresContainer}>
+              <Text style={styles.sectionTitle}>Trabajadores:</Text>
               {microempresa.trabajadores.map((trabajador, index) => (
-                <Text key={index} style={styles.infoValue}>- {trabajador.nombre}</Text>
+                <View key={index} style={styles.trabajadorCard}>
+                  <Text style={styles.trabajadorNombre}>
+                    {trabajador.nombre} {trabajador.apellido}
+                  </Text>
+                  <Text style={styles.trabajadorContacto}>{trabajador.email}</Text>
+                </View>
               ))}
             </View>
           ) : (
@@ -99,28 +100,56 @@ const styles = StyleSheet.create({
     marginBottom: 20,
     textAlign: 'center',
   },
-  infoWrapper: {
-    alignItems: 'flex-start',
-    width: '100%',
-    paddingHorizontal: 20,
-  },
-  infoContainer: {
-    flexDirection: 'row',
-    marginBottom: 10,
-  },
-  infoLabel: {
-    fontWeight: 'bold',
-    fontSize: 16,
-    marginRight: 10,
-  },
-  infoValue: {
-    fontSize: 16,
-  },
   profileImage: {
     width: 100,
     height: 100,
     borderRadius: 50,
     marginBottom: 20,
+  },
+  infoRow: {
+    flexDirection: 'row',
+    justifyContent: 'flex-start',
+    marginBottom: 10,
+    width: '100%',
+  },
+  infoLabel: {
+    fontWeight: 'bold',
+    fontSize: 16,
+    marginRight: 5,
+  },
+  infoValue: {
+    fontSize: 16,
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginTop: 20,
+    marginBottom: 10,
+    textAlign: 'left',
+  },
+  trabajadoresContainer: {
+    width: '100%',
+    marginTop: 10,
+  },
+  trabajadorCard: {
+    backgroundColor: '#f9f9f9',
+    padding: 15,
+    borderRadius: 10,
+    marginBottom: 10,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 5,
+    elevation: 3,
+  },
+  trabajadorNombre: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    marginBottom: 5,
+  },
+  trabajadorContacto: {
+    fontSize: 14,
+    color: 'gray',
   },
   error: {
     fontSize: 16,

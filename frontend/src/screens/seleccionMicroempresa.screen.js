@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, Button, StyleSheet, ScrollView, Alert } from 'react-native';
-// import storage from '../utils/asyncStorage.helper'; // ✅ Cambiado a 'storage'
 import { useNavigation } from '@react-navigation/native';
 import MicroempresaService from '../services/microempresa.service';
 import AsyncStorage from '@react-native-async-storage/async-storage';

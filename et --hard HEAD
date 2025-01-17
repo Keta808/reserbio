@@ -1,0 +1,49 @@
+[33mdf70d26[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m)[m resolviendo conflictos
+[33mc148425[m Add SeleccionMicroempresa and Microempresa
+[33mf3152d3[m add id in login
+[33m7265d48[m Merge branch 'main' of https://github.com/Keta808/reserbio
+[33m08508f3[m commit aux
+[33m76c1ecc[m fix login back and frotn
+[33m95abb31[m Merge branch 'main' of https://github.com/Keta808/reserbio
+[33m1091d85[m pantalla suscripcion, APPNavigator fix
+[33mbc49a9e[m suscripcion y planes fix
+[33m1b8e947[m ok Merge branch 'main' of https://github.com/Keta808/reserbio
+[33m0a87c97[m Add 'fecha_termino' on Enlace
+[33m76028af[m add cancel reserva
+[33mb5af23b[m login
+[33m011a5f0[m add disp microempresa
+[33meb91747[m Create function deleteFotoPerfil
+[33m38c0ea4[m fix
+[33m1cee6a6[m add AvailableSlots
+[33meceafcd[m fix enlace
+[33ma9c63b9[m ID MICROEMPRESA SERVICIO
+[33m85d13d5[m actualizacion
+[33m8d40c79[m front react native expo
+[33mc07c20a[m Mercado Pago and first frontend
+[33mf80493b[m Merge branch 'main' of https://github.com/Keta808/reserbio
+[33md67d45e[m update validations
+[33m818fdb2[m fix schema
+[33m840f528[m fix reserva
+[33m60ff05e[m merge
+[33mc2dd5f5[m mercado pago try
+[33m9cc0170[m Merge branch 'main' of https://github.com/Keta808/reserbio
+[33ma73bca6[m update enlace and fix errors
+[33mcb6f949[m fix createReserva
+[33m43f4e34[m add disponibilidad, fix reserva
+[33mfd7db93[m fix
+[33m46ce30c[m fix pull
+[33m30edc8a[m Merge branch 'main' of https://github.com/Keta808/reserbio
+[33m71b5480[m Add uploadFotoPerfil, uploadImagenes, eliminarImagen
+[33me46e409[m servicio fix
+[33m509dcea[m Update getMicroempresas random
+[33m1146d5c[m fix errors
+[33m809a162[m Merge branch 'main' of https://github.com/Keta808/reserbio
+[33md67316d[m Add microempresas CRUD
+[33m93829ad[m Servicios
+[33m5350819[m fix enlace
+[33md6afc07[m Merge branch 'man' of https://github.com/Keta808/reserbio
+[33m2df7ec7[m add enlace - role
+[33m8476952[m configEnv fix and Reserva model
+[33m4ab5333[m fix schema
+[33m157453e[m creacion repo
+[33m3ef9aca[m Initial commit
