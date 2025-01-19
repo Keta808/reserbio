@@ -9,7 +9,7 @@ import MicroempresaInicioScreeen from '../screens/microempresa.screen.js';
 import FormularioMicroempresa from '../screens/formularioMicroempresa.screen.js';
 import DisponibilidadScreen from '../screens/disponibilidad.screen.js';
 import FormularioCreacionHorasScreen from '../screens/formularioCreacionHorario.screen.js'; // Corregido
-
+import SeleccionMicroempresaScreen from '../screens/seleccionMicroempresa.screen.js';
 // PANTALLAS COMUNES (TODOS LOS USARIOS LAS PUEDEN VER)
 import SuscripcionScreen from '../screens/suscripcion.screen.js';
 import PaymentScreen from '../screens/pago.screen.js'; 
