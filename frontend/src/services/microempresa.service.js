@@ -1,88 +1,67 @@
-import instance from './root.services';
+import instance from './root.services.js';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
-// Obetener microempresa por id
-async function obtenerMicroempresa(id){
-    try{
-        const response = await instance.get(`/microempresas/${id}`);
-        return response.data;
-    }catch(error){
-        console.error(`Error al obtener la microempresa con ID ${id}:`, error.response?.data || error.message);
-        throw error;
-    }
+async function getUserIdFromAsyncStorage() {
+  try {
+    const user = await AsyncStorage.getItem('user');
+    const parsedUser = JSON.parse(user);
+    return parsedUser?.id;
+  } catch (error) {
+    console.error('❌ Error al obtener el ID del usuario desde AsyncStorage:', error.message);
+    throw error;
+  }
 }
 
-// Obtener todas las microempresas
-async function obtenerMicroempresas(){
-    try{
-        const response = await instance.get('/microempresas/');
-        return response.data;
-    }catch(error){
-        console.error('Error al obtener las microempresas:', error.response?.data || error.message);
-        throw error;
-    }
+// Crear una microempresa
+async function createMicroempresa(datosFormulario) {
+  try {
+    const userId = await getUserIdFromAsyncStorage();
+
+    if (!userId) throw new Error('El ID del usuario no está disponible.');
+
+    const nuevaMicroempresa = {
+      ...datosFormulario,
+      idTrabajador: userId,
+    };
+
+    const response = await instance.post('/microempresas', nuevaMicroempresa);
+    console.log('📡 Microempresa creada:', response.data);
+
+    return response.data;
+  } catch (error) {
+    console.error('❌ Error al crear la microempresa:', error.response?.data || error.message);
+    throw error;
+  }
 }
 
-// Crear microempresa
-async function crearMicroempresa(data){
-    try{
-        const response = await instance.post('/microempresas/', data);
-        return response.data;
-    }catch(error){
-        console.error('Error al crear la microempresa:', error.response?.data || error.message);
-        throw error;
-    }
+async function getMicroempresaData(idMicroempresa) {
+  try {
+    const response = await instance.get(`/microempresas/${idMicroempresa}`);
+    console.log('📋 Datos de la microempresa obtenidos:', response.data);
+    return response.data;
+  } catch (error) {
+    console.error('❌ Error al obtener los datos de la microempresa:', error.response?.data || error.message);
+    throw error;
+  }
 }
 
-// Actualizar microempresa
-async function actualizarMicroempresa(id, data){
-    try{
-        const response = await instance.put(`/microempresas/${id}`, data);
-        return response.data;
-    }catch(error){
-        console.error(`Error al actualizar la microempresa con ID ${id}:`, error.response?.data || error.message);
-        throw error;
-    }
+async function getMicroempresasByUser(trabajadorId) {
+  try {
+    // ✅ URL CORREGIDA
+    const response = await instance.get(`/microempresas/user/${trabajadorId}`);
+    console.log('📡 Microempresas obtenidas:', response);
+    return response.data;
+  } catch (error) {
+    console.error(
+      '❌ Error al obtener datos de las microempresas:',
+      error.response?.data || error.message
+    );
+    throw error;
+  }
 }
 
-// Eliminar microempresa
-async function eliminarMicroempresa(id){
-    try{
-        const response = await instance.delete(`/microempresas/${id}`);
-        return response.data;
-    }catch(error){
-        console.error(`Error al eliminar la microempresa con ID ${id}:`, error.response?.data || error.message);
-        throw error;
-    }
-}
-
-// Obtener microempresas por categoria
-async function obtenerMicroempresasPorCategoria(categoria) {
-    try {
-        const response = await instance.get(`/microempresa/categoria/${categoria}`);
-        return response.data;
-    } catch (error) {
-        console.error(`Error al obtener las microempresas de la categoría ${categoria}:`, error.response?.data || error.message);
-        throw error;
-    }
-}
-
-// Obtener nombre de la microempresa (pendiente en backend)
-async function obtenerNombreMicroempresa(id){
-    try{
-        const response = await instance.get(`/microempresas/nombre/${id}`);
-        return response.data;
-    }catch(error){
-        console.error(`Error al obtener el nombre de la microempresa con ID ${id}:`, error.response?.data || error.message);
-        throw error;
-    }
-}
-
-export {
-    obtenerMicroempresa,
-    obtenerMicroempresas,
-    crearMicroempresa,
-    actualizarMicroempresa,
-    eliminarMicroempresa,
-    obtenerMicroempresasPorCategoria,
-    obtenerNombreMicroempresa
+export default {
+  getMicroempresaData,
+  getMicroempresasByUser,
+  createMicroempresa,
 };

@@ -1,5 +1,8 @@
 import React, { useContext } from 'react';
+<<<<<<< HEAD
+=======
 
+>>>>>>> ce9cd5ff0e83163960cf450f2fe2e5bac5a3f9a2
 import { createStackNavigator } from '@react-navigation/stack'; 
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 
@@ -7,6 +10,12 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 
 import MicroempresaInicioScreeen from '../screens/microempresa.screen.js';
 import FormularioMicroempresa from '../screens/formularioMicroempresa.screen.js';
+<<<<<<< HEAD
+import SeleccionMicroempresaScreen from '../screens/seleccionMicroempresa.screen.js';
+=======
+import DisponibilidadScreen from '../screens/disponibilidad.screen.js';
+import FormularioCreacionHorasScreen from '../screens/formularioCreacionHorario.screen.js'; // Corregido
+>>>>>>> ce9cd5ff0e83163960cf450f2fe2e5bac5a3f9a2
 
 // PANTALLAS COMUNES (TODOS LOS USARIOS LAS PUEDEN VER)
 import SuscripcionScreen from '../screens/suscripcion.screen.js';
@@ -20,15 +29,14 @@ const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
 
 const HomeNavigator = () => {
-  
-
   return (
     <Tab.Navigator>
       <Tab.Screen name="Home" component={HomeScreen} />
       <Tab.Screen name="Suscripcion" component={SuscripcionScreen} />
       <Tab.Screen name="Microempresa" component={MicroempresaInicioScreeen} />
       <Tab.Screen name="FormularioMicroempresa" component={FormularioMicroempresa} />
-      
+      <Tab.Screen name="SeleccionMicroempresa" component={SeleccionMicroempresaScreen} />
+      <Tab.Screen name="Disponibilidad" component={DisponibilidadScreen} />
     </Tab.Navigator>
   );
 };
@@ -36,24 +44,22 @@ const HomeNavigator = () => {
 const AppNavigator = () => {
   const { isAuthenticated } = useContext(AuthContext);
 
-
   return (
-    
       <Stack.Navigator screenOptions={{ headerShown: false }}>
         {isAuthenticated ? (
           <>
           <Stack.Screen name="HomeNavigator" component={HomeNavigator} /> 
           <Stack.Screen name="Pago" component={PaymentScreen}  />
-          
+          <Stack.Screen name="FormularioCreacionHoras" component={FormularioCreacionHorasScreen} />
+          <Stack.Screen name="SeleccionMicroempresa" component={SeleccionMicroempresaScreen} />
           </>
           
           
 
-        ) : (
-          <Stack.Screen name="Login" component={LoginScreen} />
-        )}
-      </Stack.Navigator>
-   
+      ) : (
+        <Stack.Screen name="Login" component={LoginScreen} />
+      )}
+    </Stack.Navigator>
   );
 };
 

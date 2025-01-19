@@ -14,7 +14,7 @@ export const login = async (dataUser)=> {
             const decodedToken = jwtDecode(accessToken);
 
             const userInfo = { email: decodedToken.email , kind: decodedToken.kind, id: decodedToken.id };
-            //console.log('Datos de usuario: ', userInfo);
+            console.log('Datos de usuario: ', userInfo);
             
             await AsyncStorage.setItem('user', JSON.stringify(userInfo)); // Guardar sin `{userInfo}`
             axios.defaults.headers.common['Authorization'] = `Bearer ${accessToken}`;

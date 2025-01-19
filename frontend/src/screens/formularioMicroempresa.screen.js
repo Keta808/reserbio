@@ -1,115 +1,126 @@
-import React, { useState } from 'react';
-import { View, Text, TextInput, StyleSheet, TouchableOpacity, Picker, ScrollView } from 'react-native';
+// Importación de servicios correctamente
+import React, { useState } from "react";
+import { View, Text, TextInput, Button, StyleSheet, Alert } from "react-native";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import MicroempresaService from '../services/microempresa.service.js';
 
-const FormularioMicroempresa = ({ navigation }) => {
-  const [formData, setFormData] = useState({
-    nombre: '',
-    descripcion: '',
-    telefono: '',
-    direccion: '',
-    email: '',
-    categoria: '',
-  });
+const FormularioMicroempresaScreen = ({ navigation }) => {
+  const [nombre, setNombre] = useState("");
+  const [descripcion, setDescripcion] = useState("");
+  const [telefono, setTelefono] = useState("");
+  const [direccion, setDireccion] = useState("");
+  const [email, setEmail] = useState("");
+  const [categoria, setCategoria] = useState("");
 
-  const categorias = ['Tecnología', 'Alimentos', 'Ropa', 'Educación', 'Otros']; // Ejemplo de categorías
-
-  const handleChange = (key, value) => {
-    setFormData({ ...formData, [key]: value });
+  // Función para obtener el ID del trabajador autenticado
+  const getUserId = async () => {
+    try {
+      const userData = await AsyncStorage.getItem('user');
+      if (userData) {
+        const parsedData = JSON.parse(userData);
+        return parsedData.id;
+      } else {
+        console.error('No se encontraron datos de usuario en AsyncStorage');
+        return null;
+      }
+    } catch (error) {
+      console.error('Error al obtener datos de AsyncStorage:', error);
+      return null;
+    }
   };
 
-  const handleNext = () => {
-    navigation.navigate('SubirFoto', { formData });
+  // Función para manejar el envío del formulario
+  const handleSubmit = async () => {
+    try {
+      const userId = await getUserId();
+      if (!userId) return;
+
+      const nuevaMicroempresa = {
+        nombre,
+        descripcion,
+        telefono,
+        direccion,
+        email,
+        categoria,
+      };
+
+      // Usar el servicio para crear la microempresa
+      const response = await MicroempresaService.createMicroempresa(nuevaMicroempresa);
+      console.log("Datos enviados al backend:", nuevaMicroempresa);
+      Alert.alert("Éxito", "La microempresa fue creada correctamente.");
+      navigation.navigate("Microempresa", { id: response.data._id }); // Redirige al perfil de la microempresa creada
+    } catch (error) {
+      Alert.alert("Error", "No se pudo crear la microempresa.");
+      console.error("❌ Error al crear la microempresa:", error.message);
+    }
   };
 
   return (
-    <ScrollView contentContainerStyle={styles.container}>
-      <Text style={styles.titulo}>Registrar Microempresa</Text>
-
+    <View style={styles.container}>
+      <Text style={styles.title}>Crear Microempresa</Text>
       <TextInput
         style={styles.input}
         placeholder="Nombre"
-        value={formData.nombre}
-        onChangeText={(value) => handleChange('nombre', value)}
+        value={nombre}
+        onChangeText={setNombre}
       />
-
       <TextInput
         style={styles.input}
         placeholder="Descripción"
-        value={formData.descripcion}
-        onChangeText={(value) => handleChange('descripcion', value)}
+        value={descripcion}
+        onChangeText={setDescripcion}
       />
-
       <TextInput
         style={styles.input}
         placeholder="Teléfono"
-        value={formData.telefono}
-        onChangeText={(value) => handleChange('telefono', value)}
+        value={telefono}
+        onChangeText={setTelefono}
         keyboardType="phone-pad"
       />
-
       <TextInput
         style={styles.input}
         placeholder="Dirección"
-        value={formData.direccion}
-        onChangeText={(value) => handleChange('direccion', value)}
+        value={direccion}
+        onChangeText={setDireccion}
       />
-
       <TextInput
         style={styles.input}
         placeholder="Email"
-        value={formData.email}
-        onChangeText={(value) => handleChange('email', value)}
+        value={email}
+        onChangeText={setEmail}
         keyboardType="email-address"
       />
-
-      <Picker
-        selectedValue={formData.categoria}
+      <TextInput
         style={styles.input}
-        onValueChange={(value) => handleChange('categoria', value)}
-      >
-        <Picker.Item label="Selecciona una categoría" value="" />
-        {categorias.map((categoria, index) => (
-          <Picker.Item key={index} label={categoria} value={categoria} />
-        ))}
-      </Picker>
-
-      <TouchableOpacity style={styles.boton} onPress={handleNext}>
-        <Text style={styles.textoBoton}>Siguiente</Text>
-      </TouchableOpacity>
-    </ScrollView>
+        placeholder="Categoría"
+        value={categoria}
+        onChangeText={setCategoria}
+      />
+      <Button title="Crear Microempresa" onPress={handleSubmit} />
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
-    flexGrow: 1,
+    flex: 1,
     padding: 20,
-    backgroundColor: '#fff',
-    justifyContent: 'center',
+    backgroundColor: "#fff",
   },
-  titulo: {
+  title: {
     fontSize: 24,
-    fontWeight: 'bold',
+    fontWeight: "bold",
     marginBottom: 20,
-    textAlign: 'center',
+    textAlign: "center",
   },
   input: {
     borderWidth: 1,
-    borderColor: '#ccc',
+    borderColor: "#ccc",
     borderRadius: 5,
     padding: 10,
     marginBottom: 15,
   },
-  boton: {
-    backgroundColor: '#007bff',
-    padding: 15,
-    borderRadius: 5,
-    alignItems: 'center',
-  },
-  textoBoton: {
-    color: '#fff',
-    fontWeight: 'bold',
-  },
 });
 
-export default FormularioMicroempresa;
+export default FormularioMicroempresaScreen;
+
