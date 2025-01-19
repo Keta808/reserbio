@@ -110,19 +110,28 @@ async function deleteReserva(req, res) {
  * 
  * 
  */
-
 async function cancelReserva(req, res) {
     try {
+        // Valida el ID con el esquema de validación
         const { error } = reservaIdSchema.validate(req.params);
-        if (error) return respondError(req, res, 400, error.message);
+        if (error) {
+            return respondError(req, res, 400, `Error de validación: ${error.message}`);
+        }
 
+        // Llama al servicio para cancelar la reserva
         const [reserva, errorReserva] = await ReservaService.cancelReserva(req.params.id);
-        if (errorReserva) return respondError(req, res, 400, errorReserva);
 
+        // Si hay un error al cancelar la reserva, responde con un mensaje de error
+        if (errorReserva) {
+            return respondError(req, res, 400, `Error al cancelar la reserva: ${errorReserva}`);
+        }
+
+        // Si todo es exitoso, responde con la reserva cancelada
         respondSuccess(req, res, 200, reserva);
     } catch (error) {
-        handleError(error, "reserva.controller -> cancelReserva");
-        respondError(req, res, 400, error.message);
+        // Manejo de errores generales
+        handleError(error, 'reserva.controller -> cancelReserva');
+        respondError(req, res, 500, `Error interno del servidor: ${error.message}`);
     }
 }
 

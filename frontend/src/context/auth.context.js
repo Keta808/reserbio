@@ -18,7 +18,7 @@ export const AuthProvider = ({ children }) => {
           if (storedUser) {
               setUser(JSON.parse(storedUser));
               setIsAuthenticated(true);
-              console.log('User authenticated:', JSON.parse(storedUser));
+              //console.log('User authenticated:', JSON.parse(storedUser));
           } else {
               setIsAuthenticated(false);
               console.log('No user found, not authenticated');
