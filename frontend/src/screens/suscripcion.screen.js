@@ -5,9 +5,9 @@ import { useNavigation } from '@react-navigation/native';
 import { AuthContext } from '../context/auth.context';
 // Descripciones de los planes
 const planDescriptions = {
-  "Plan Gratuito": "Este plan es gratuito y permite acceder a las funciones básicas del sistema por un plazo de tiempo determinado.",
-  "Plan Basico": "El plan básico incluye todas las caracteristicas de agenda y reserva del sistema (hasta 2 trabajadores).",
-  "Plan Premium": "El plan Premium incluye acceso completo a todas las características avanzadas y soporte prioritario (hasta 8 trabajadores) ."
+  "Plan Gratuito": "Este es el plan gratuito y permite acceder a las funciones básicas del sistema por un plazo de tiempo determinado (3 meses de prueba).",
+  "Plan Basico": "El plan Básico incluye todas las caracteristicas de agenda y reserva del sistema con la posibilidad de agregar hasta 2 trabajadores a tu microempresa.",
+  "Plan Premium": "El plan Premium incluye incluye todas las caracteristicas de agenda y reserva del sistema con la posibilidad de agregar hasta 8 trabajadores a tu microempresa y soporte prioritario."
 };
 
 const SuscripcionScreen = () => {
@@ -19,7 +19,7 @@ const SuscripcionScreen = () => {
     // Obtener los planes desde el backend
     const fetchPlanes = async () => {
       try {
-        const data = await obtenerPlanes(); // Llamada a la API para obtener los planes
+        const data = await obtenerPlanes(); // Llamada al backend para obtener los planes
         if (data.state === 'Success' && Array.isArray(data.data)) {  // Verificar que 'data.data' sea un arreglo
           setPlanes(data.data); // Almacenar el arreglo en el estado
         }
@@ -41,8 +41,19 @@ const SuscripcionScreen = () => {
   }
 
   return (
-    <ScrollView style={styles.container}>
-      <Text style={styles.title}>Elige tu plan de suscripción</Text>
+    <ScrollView style={styles.container}> 
+    {/* Sección de introducción */}
+      <View style={styles.introContainer}>
+        <Text style={styles.mainTitle}>¡Suscríbete a un plan para utilizar la aplicacion Reserbio!</Text>
+        <Text style={styles.mainDescription}>
+          Nuestra aplicación ofrece planes diseñados para adaptarse a tus necesidades. 
+          Elige el plan que más te convenga y disfruta de las características que tenemos para ti.
+          !Unetenos y maneja tu agenda con Reserbio¡
+        </Text>
+      </View>
+
+    {/* Listado de planes */}
+      <Text style={styles.title}>Elige tu plan de suscripción.</Text>
       <View style={styles.plansContainer}>
         {Array.isArray(planes) && planes.length > 0 ? (
           planes.map((plan) => {
@@ -62,7 +73,15 @@ const SuscripcionScreen = () => {
         ) : (
           <Text>No se encontraron planes disponibles.</Text> // Mostrar mensaje si no hay planes
         )}
-      </View>
+      </View> 
+
+      {/* Disclaimer */} 
+      <View style={styles.disclaimerContainer}>
+      <Text style={styles.disclaimerText}>
+        Nota: La suscripción al plan seleccionado se cobrará de manera mensual una vez obtenido el plan. 
+        Puedes gestionar tu suscripción a través de la aplicación. 
+      </Text>
+    </View>
     </ScrollView>
   );
 };
@@ -72,6 +91,22 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#fff',
     padding: 20,
+  }, 
+  introContainer: {
+    marginBottom: 20,
+    padding: 15,
+    backgroundColor: '#e8f4f8',
+    borderRadius: 8,
+  },
+  mainTitle: {
+    fontSize: 26,
+    fontWeight: 'bold',
+    color: '#0077b6',
+    marginBottom: 10,
+  },
+  mainDescription: {
+    fontSize: 16,
+    color: '#555',
   },
   loadingContainer: {
     flex: 1,
@@ -113,6 +148,19 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     marginBottom: 10,
     color: '#FF6347',
+  },
+  disclaimerContainer: {
+    marginTop: 20,
+    padding: 15,
+    backgroundColor: '#f9f9f9',
+    borderRadius: 8,
+    borderColor: '#ddd',
+    borderWidth: 1,
+  },
+  disclaimerText: {
+    fontSize: 12,
+    color: '#888',
+    textAlign: 'center',
   },
 });
 

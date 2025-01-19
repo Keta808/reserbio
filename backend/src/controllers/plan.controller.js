@@ -1,3 +1,5 @@
+/* eslint-disable quotes */
+/* eslint-disable no-console */
 /* eslint-disable max-len */
 /* eslint-disable require-jsdoc */
 "use strict";
@@ -94,5 +96,44 @@ async function crearPlanGratuito(req, res) {
         handleError(error, "plan.controller -> crearPlanGratuito");
         respondError(req, res, 500, "Error al crear plan gratuito.");
     }
+} 
+
+async function buscarPlanDeSuscripcion(req, res) {
+    try {
+        const params = req.query;
+        console.log("CONTROLLER BUSCAR PLAN: Datos recibidos en el controller:", params);
+        // Llamada al servicio para buscar plan de suscripción
+        const plan = await suscripcionService.buscarPlanDeSuscripcion(params);
+        return respondSuccess(res, plan, 200);
+    } catch (error) {
+        console.error(`Error en buscarPlanDeSuscripcion:`, error.message);
+        return respondError(req, res, 500, "Error al buscar plan de suscripción", error);
+    }
+}   
+async function obtenerPlanDeSuscripcion(req, res) {
+    try {
+        const planId = req.params.id;
+        console.log("CONTROLLER OBTENER PLAN: Datos recibidos en el controller:", planId);
+        // Llamada al servicio para obtener plan de suscripción
+        const plan = await suscripcionService.obtenerPlanDeSuscripcion(planId);
+        return respondSuccess(res, plan, 200);
+    } catch (error) {
+        console.error(`Error en obtenerPlanDeSuscripcion:`, error.message);
+        return respondError(req, res, 500, "Error al obtener plan de suscripción", error);
+    }
+} 
+async function actualizarPlanDeSuscripcion(req, res) {
+    try {
+        const planId = req.params.id;
+        const plan = req.body;
+        console.log("CONTROLLER ACTUALIZAR PLAN: Datos recibidos en el controller:", planId, plan);
+        // Llamada al servicio para actualizar plan de suscripción
+        const updatedPlan = await suscripcionService.actualizarPlanDeSuscripcion(planId, plan);
+        return respondSuccess(res, updatedPlan, 200);
+    } catch (error) {
+        console.error(`Error en actualizarPlanDeSuscripcion:`, error.message);
+        return respondError(req, res, 500, "Error al actualizar plan de suscripción", error);
+    }
 }
-export default { getPlanes, createPlan, deletePlan, updatePlan, crearPlanBasico, crearPlanPremium, crearPlanGratuito };
+
+export default { getPlanes, createPlan, deletePlan, updatePlan, crearPlanBasico, crearPlanPremium, crearPlanGratuito, buscarPlanDeSuscripcion, obtenerPlanDeSuscripcion, actualizarPlanDeSuscripcion };

@@ -1,3 +1,5 @@
+/* eslint-disable camelcase */
+/* eslint-disable object-curly-spacing */
 /* eslint-disable space-before-blocks */
 /* eslint-disable no-console */
 /* eslint-disable max-len */
@@ -8,89 +10,72 @@ import { respondSuccess, respondError } from "../utils/resHandler.js";
 import { handleError } from "../utils/errorHandler.js"; 
 import { suscripcionBodySchema, suscripcionIdSchema } from "../schema/suscripcion.schema.js";
 
-async function crearSuscripcion(req, res) {
-    try {
-        // Validar el cuerpo de la solicitud
-        const { error } = suscripcionBodySchema.validate(req.body);
-        if (error) return respondError(res, error.message, 400); 
-        const { tipoPlan, cardTokenId } = req.body;
-        const user = req.user;
-        console.log("User:", user);
-        console.log("Plan:", tipoPlan);
-        console.log("Card Token ID:", cardTokenId);
-
-        // Crear suscripción
-        const [suscripcion, errorSuscripcion] = await suscripcionService.crearSuscripcion(tipoPlan, user, cardTokenId);
-        if (errorSuscripcion) return respondError(res, errorSuscripcion, 400);
-
-        return respondSuccess(res, suscripcion, 201);
-    } catch (error) {
-        handleError(error, "suscripcion.controller -> crearSuscripcion");
-        return respondError(res, "Error al crear la suscripción.", 500);
-    }
-}
-
 async function getSuscripciones(req, res) {
     try {
         const [suscripciones, error] = await suscripcionService.getSuscripciones();
-        if (error) return respondError(res, error, 400);
-
-        return respondSuccess(res, suscripciones, 200);
+        if (error) return respondError(req, res, 400, error);
+        suscripciones.length === 0
+            ? respondSuccess(req, res, 204)
+            : respondSuccess(req, res, 200, suscripciones);
     } catch (error) {
         handleError(error, "suscripcion.controller -> getSuscripciones");
-        return respondError(res, "Error al obtener las suscripciones.", 500);
+        return respondError(req, res, 400, error.message);
     }
 }
 
 async function getSuscripcion(req, res) {
     try {
         // Validar el ID de la suscripción
-        const { error } = suscripcionIdSchema.validate(req.params.id);
-        if (error) return respondError(res, error.message, 400);
+        const { error } = suscripcionIdSchema.validate(req.params);
+
+        if (error) { 
+            console.log("Error en getSuscripcion:", error.message);
+            return respondError(req, res, 400, error);
+        } 
 
         const [suscripcion, errorSuscripcion] = await suscripcionService.getSuscripcion(req.params.id);
-        if (errorSuscripcion) return respondError(res, errorSuscripcion, 404);
+        if (errorSuscripcion) return respondError(req, res, 404, errorSuscripcion);
 
-        return respondSuccess(res, suscripcion, 200);
+        return respondSuccess(req, res, 200, suscripcion);
     } catch (error) {
         handleError(error, "suscripcion.controller -> getSuscripcion");
-        return respondError(res, "Error al obtener la suscripción.", 500);
+        return respondError(req, res, 400, "Error al obtener la suscripción.");
     }
 }
 
 async function deleteSuscripcion(req, res) {
     try {
         // Validar el ID de la suscripción
-        const { error } = suscripcionIdSchema.validate(req.params.id);
-        if (error) return respondError(res, error.message, 400);
+        const { error } = suscripcionIdSchema.validate(req.params);
+        if (error) return respondError(req, res, 400, error);
 
         const [suscripcion, errorSuscripcion] = await suscripcionService.deleteSuscripcion(req.params.id);
-        if (errorSuscripcion) return respondError(res, errorSuscripcion, 404);
+        if (errorSuscripcion) return respondError(req, res, 404, errorSuscripcion);
 
-        return respondSuccess(res, suscripcion, 200);
+        return respondSuccess(req, res, 200, suscripcion);
     } catch (error) {
         handleError(error, "suscripcion.controller -> deleteSuscripcion");
-        return respondError(res, "Error al eliminar la suscripción.", 500);
+        return respondError(req, res, 400, "Error al eliminar la suscripción.");
     }
 }
 
 async function updateSuscripcion(req, res) {
     try {
         // Validar el ID de la suscripción
-        const { error: idError } = suscripcionIdSchema.validate(req.params.id);
-        if (idError) return respondError(res, idError.message, 400);
+        const { error } = suscripcionIdSchema.validate(req.params);
+        if (error) return respondError(req, res, 400, error);
 
         // Validar el cuerpo de la solicitud
         const { error: bodyError } = suscripcionBodySchema.validate(req.body);
-        if (bodyError) return respondError(res, bodyError.message, 400);
+        if (bodyError) return respondError(req, res, 400, bodyError);
 
         const [suscripcion, errorSuscripcion] = await suscripcionService.updateSuscripcion(req.params.id, req.body);
-        if (errorSuscripcion) return respondError(res, errorSuscripcion, 404);
+        if (errorSuscripcion) return respondError(req, res, 404, errorSuscripcion);
 
-        return respondSuccess(res, suscripcion, 200);
+        return respondSuccess(req, res, 200, suscripcion);
     } catch (error) {
         handleError(error, "suscripcion.controller -> updateSuscripcion");
-        return respondError(res, "Error al actualizar la suscripción.", 500);
+        return respondError(req, res, 400, "Error al actualizar la suscripción.");
     }
 }
 // eslint-disable-next-line no-unused-vars
@@ -134,7 +119,7 @@ async function getIdentificationTypes(req, res) {
 async function cardForm(req, res) {
     try {
         const paymentData = req.body; 
-        console.log("Datos recibidos en el controller:", paymentData);
+        console.log("CONTROLLER CARDFORM: Datos recibidos en el controller:", paymentData);
         // Llamada al servicio para generar cardTokenId
         const cardTokenId = await suscripcionService.cardForm(paymentData);
         return res.status(200).json({ cardTokenId }); 
@@ -142,7 +127,101 @@ async function cardForm(req, res) {
         console.error(`Error en generarCardTokenId:`, error.message);
         return res.status(500).json({ error: "Error al generar cardTokenId" });
     }
+} 
+async function crearSuscripcion(req, res) { 
+    try {
+        const suscripcionData = req.body; 
+        console.log("CONTROLLER CREAR SUS: Datos recibidos en el controller:", suscripcionData);
+        // Llamada al servicio para crear suscripción
+        const suscripcion = await suscripcionService.crearSuscripcion(suscripcionData);
+        return res.status(200).json(suscripcion); 
+    } catch (error) {
+        console.error(`Error en crearSuscripcion:`, error.message);
+        return res.status(500).json({ error: "Error al crear suscripción" });
+    }
+} 
+
+async function obtenerSuscripcion(req, res) {  
+    try {
+        const { plan, user, cardTokenId, payer_email } = req.body;
+        if (!plan|| !user || !cardTokenId || !payer_email) {
+            return respondError(req, res, 400, "Faltan datos para crear la suscripción");
+        }
+        console.log("CONTROLLER OBTENER SUS: Datos recibidos en el controller:", plan, user, cardTokenId, payer_email); 
+        const [suscripcion, error] = await suscripcionService.obtenerSuscripcion(plan, user, cardTokenId, payer_email);
+        if (error) return respondError(req, res, 400, error.message); 
+       
+        return respondSuccess(req, res, 200, suscripcion);
+    } catch (error){
+        handleError(error, "suscripcion.controller -> obtenerSuscripcion");
+        return respondError(req, res, 400, error.message);
+    }
+} 
+
+async function searchSuscripcionMP(req, res) {
+    try {
+        const { params } = req.query;
+        console.log("CONTROLLER SEARCH SUS: Datos recibidos en el controller:", params);
+        const [suscripcion, error] = await suscripcionService.searchSuscripcionMP(params);
+        if (error) return respondError(req, res, 500, "Error al buscar la suscripción"); 
+        return respondSuccess(req, res, 200, suscripcion);
+    } catch (error){
+        handleError(error, "suscripcion.controller -> searchSuscripcionMP");
+        return respondError(req, res, 500, "Error al buscar la suscripción", error);
+    }
+}  
+async function getSuscripcionById(req, res) {
+    try {
+        const { id } = req.params;
+
+        if (!id) {
+            return respondError(req, res, 400, "ID de suscripción no proporcionado.");
+        }
+
+        console.log("CONTROLLER GET SUSCRIPCIÓN BY ID: ID recibido:", id);
+
+        const [suscripcion, error] = await suscripcionService.getSuscripcionById(id);
+
+        if (error) {
+            return respondError(req, res, 400, "Error al obtener la suscripción");
+        }
+
+        return respondSuccess(req, res, 200, suscripcion);
+    } catch (error) {
+        handleError(error, "suscripcion.controller -> getSuscripcionById");
+        return respondError(req, res, 400, "Error interno al obtener la suscripción");
+    }
 }
+async function updateSuscripcionMP(req, res) {
+    try {
+        const { id } = req.params;
+        const data = req.body;
+
+        if (!id) {
+            return respondError(req, res, 400, "ID de suscripción no proporcionado.");
+        }
+
+        if (!data || Object.keys(data).length === 0) {
+            return respondError(req, res, 400, "No se proporcionaron datos para actualizar.");
+        }
+
+        console.log("CONTROLLER UPDATE SUSCRIPCIÓN: ID recibido:", id);
+        console.log("Datos para actualizar:", data);
+
+        const [suscripcionActualizada, error] = await suscripcionService.updateSuscripcionMP(id, data);
+
+        if (error) {
+            return respondError(req, res, 400, "Error al actualizar la suscripción", error);
+        }
+
+        return respondSuccess(req, res, 200, suscripcionActualizada);
+    } catch (error) {
+        handleError(error, "suscripcion.controller -> updateSuscripcionMP");
+        return respondError(req, res, 500, "Error interno al actualizar la suscripción", error);
+    }
+}
+
+
 export default { 
     crearSuscripcion, 
     getSuscripciones, 
@@ -153,4 +232,8 @@ export default {
     getIssuers,
     getIdentificationTypes,
     cardForm,
+    obtenerSuscripcion,
+    searchSuscripcionMP,
+    getSuscripcionById,
+    updateSuscripcionMP,
 };

@@ -18,20 +18,21 @@ import { ACCESS_TOKEN } from '../config/configEnv.js';
 
 async function getSuscripciones() {
     try {
-        const suscripciones = await Suscripcion.find().populate("idPlan idMicroempresa").exec();
+        const suscripciones = await Suscripcion.find().populate("idPlan idUser").exec();
         if (!suscripciones || suscripciones.length === 0) {
             return [null, "No hay suscripciones disponibles."];
         }
         return [suscripciones, null];
     } catch (error) {
         handleError(error, "suscripcion.service -> getSuscripciones");
+        
     }
 }
 async function getSuscripcion(id) {
     try {
         if (!id) throw new Error("ID de suscripción no proporcionado.");
 
-        const suscripcion = await Suscripcion.findById(id).populate("idPlan idMicroempresa").exec();
+        const suscripcion = await Suscripcion.findById(id).populate("idPlan idUser").exec();
         if (!suscripcion) return [null, "La suscripción no existe."];
 
         return [suscripcion, null];
@@ -110,15 +111,68 @@ async function getIdentificationTypes(){
         handleError(error, "suscripcion.service -> getIdentificationTypes");
     }
 }
+async function getSuscripcionBypreapprovalId(preapprovalId) {
+    try {
+        if (!preapprovalId) throw new Error("ID de suscripción no proporcionado.");
 
+        const suscripcion = await Suscripcion.findOne({ preapproval_id: preapprovalId }).exec();
+        if (!suscripcion) return [null, "La suscripción no existe."];
+
+        return [suscripcion, null];
+    } catch (error) {
+        handleError(error, "suscripcion.service -> getSuscripcionBypreapprovalId");
+        return [null, error.message];
+    }
+}
+// Funciones Tarjeta-Suscripcion Mercado Pago 
+async function updateSuscripcionCard(preapprovalId, newCardTokenId){ 
+    try {
+        if (!preapprovalId) throw new Error("ID de suscripción no proporcionado.");
+        // SOLICITUD MERCADO PAGO
+        const response = await axios.put(`https://api.mercadopago.com/preapproval/${preapprovalId}`,
+            {
+                card_token_id: newCardTokenId
+            },
+            {
+                headers: {
+                    Authorization: `Bearer ${ACCESS_TOKEN}`,
+                    "Content-Type": "application/json",
+                },
+            }
+
+        );
+        return [response.data, null];   
+    } catch (error){
+        console.error(`Error al actualizar la suscripción:`, error.response?.data || error.message);
+        handleError(error, "suscripcion.service -> updateSuscripcionCard");
+        return [null, error.response?.data || error.message];
+    }
+}
 // Funcion para generar cardTokenId
 async function cardForm(paymentData){
     try { 
         // DEPURACION: Mostrar datos recibidos
-        console.log("Datos recibidos para generar cardTokenId:", paymentData);
+        console.log("CARD FORM: Datos recibidos para generar cardTokenId:", paymentData);
+        const { cardNumber, expirationMonth, expirationYear, securityCode, cardholderName, issuer, identificationType, identificationNumber, cardholderEmail } = paymentData; 
+        const payload = {
+            card_number: cardNumber, 
+            expiration_month: parseInt(expirationMonth, 10),
+            expiration_year: parseInt(expirationYear, 10),
+            security_code: securityCode,
+            cardholder: {
+                name: cardholderName,
+                email: cardholderEmail,
+                identification: {
+                    type: identificationType,
+                    number: identificationNumber,
+                },    
+            }, 
+            issuer_id: issuer,
+        }; 
+        console.log("Datos enviados a Mercado Pago:", payload);
         const response = await axios.post(
             "https://api.mercadopago.com/v1/card_tokens",
-            paymentData,
+            payload,
             {
                 headers: {
                     Authorization: `Bearer ${ACCESS_TOKEN}`,
@@ -126,7 +180,7 @@ async function cardForm(paymentData){
                 },
             }
         );
-        console.log("Respuesta de Mercado Pago:", response.data);
+        console.log("CARD FORM: Respuesta de Mercado Pago:", response.data);
         if (response.data.id) {
             return response.data.id; // Devuelve el cardTokenId
         } else {
@@ -139,22 +193,30 @@ async function cardForm(paymentData){
     }
 }
 
-async function crearSuscripcion(tipoPlan, user, cardTokenId){
+// Funcion obtener Suscripcion 
+async function obtenerSuscripcion(plan, user, cardTokenId, payer_email){
     try {
-        const plan = tipoPlan;
-        if (!plan) {
-            return [null, "No se encontró el plan."];
+        if (!plan || !user || !cardTokenId || !payer_email){
+            return [null, "Faltan datos para crear la suscripción."];
         }
-        
         // Configurar fechas de la suscripción
         const startDate = new Date(); // Fecha actual
         const endDate = new Date();
-        endDate.setMonth(startDate.getMonth() + 1); // Duración: 1 mes 
+        endDate.setMonth(startDate.getMonth() + 1); // Duración: 1 mes   
+        // DEPURACION: Mostrar fechas
+        console.log("SERVICES OBTENER SUS: Fecha de inicio:", startDate.toISOString());
+        console.log("SERVICES OBTENER SUS: Fecha de término:", endDate.toISOString());
+        console.log("SERVICES OBTENER SUS: Payer Email:", payer_email);
+
+        // DEPURACION: Mostrar datos de la suscripción
+        console.log("SERVICES OBTENER SUS: Datos de suscripción:", { plan, user, cardTokenId, payer_email });
+
+
         const preapprovalData = {
             preapproval_plan_id: plan.mercadoPagoId,
-            reason: `Suscripción ${plan.tipo_plan}`,
-            payer_email: user.email,
-            card_token_id: cardTokenId,
+            reason: "Suscripción Plan Reserbio",
+            payer_email: payer_email,
+            card_token_id: cardTokenId.cardTokenId,
             auto_recurring: {
                 frequency: 1,
                 frequency_type: "months",
@@ -165,7 +227,13 @@ async function crearSuscripcion(tipoPlan, user, cardTokenId){
             },
             back_url: "https://www.mercadopago.com",
             status: "authorized",
-        }; 
+        };  
+
+        console.log("SERVICES OBTENER SUS: Datos de preaprobación:", preapprovalData); 
+        const cleanData = JSON.parse(JSON.stringify(preapprovalData));
+
+        console.log("Datos limpios enviados a Mercado Pago:", cleanData);
+        // SOLICITUD MERCADO PAGO 
         const response = await axios.post(
             "https://api.mercadopago.com/preapproval",
             preapprovalData,
@@ -176,22 +244,31 @@ async function crearSuscripcion(tipoPlan, user, cardTokenId){
                 },
             }
         ); 
+        if (!response.data || !response.data.id) {
+            return [null, "Error en la respuesta de Mercado Pago."];
+        } 
+        console.log("SERVICE OBTENER SUS: Respuesta de Mercado Pago:", response.data);
+        console.log("SERVICE OBTENER SUS:ID de preaprobación:", response.data.id);
         // Obtener preaproval_id de la respuesta
-        const preapprovalId = response.data.id; 
+        const preapprovalId = response.data.id;
+        
 
-        const nuevaSuscripcion = new Suscripcion({  
-            idUser: user._id,
+        // Guardar la suscripción en la BD
+        const [suscripcion, error] = await crearSuscripcion({
+            idUser: user.id,
             idPlan: plan._id,
             estado: "activo",
             fecha_inicio: startDate,
             fecha_fin: endDate,
             preapproval_id: preapprovalId,
-        }); 
-        await nuevaSuscripcion.save(); 
-        return [{
-            message: `Suscripción al plan ${plan.tipo_plan} creada exitosamente.`,
-            preapprovalId,
-        }, null];
+        });
+
+        if (error) {
+            return [null, "Error al guardar la suscripción en la BD."];
+        }
+
+        return [suscripcion, null];
+
 
 
     } catch (error){
@@ -199,6 +276,86 @@ async function crearSuscripcion(tipoPlan, user, cardTokenId){
         handleError(error, "suscripcion.service -> crearSuscripcion");
         return [null, error.response?.data || error.message];
     }
+} 
+// Funcion para Buscar en las Suscripciones 
+async function searchSuscripcionMP(params){ 
+    try {
+         // SOLICITUD MERCADO PAGO 
+         const response = await axios.get(
+            "https://api.mercadopago.com/preapproval/search",
+            
+            {
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${ACCESS_TOKEN}`,
+                },
+            },
+            params,
+
+        );
+        // Retorna los resultados encontrados
+        return [response.data.results, null];
+    } catch (error) {
+        console.error(`Error al buscar la suscripción:`, error.response?.data || error.message);
+        handleError(error, "suscripcion.service -> searchSuscripcionMP");
+        return [null, error.response?.data || error.message];
+    }
+}   
+// Funcion getSuscripcionById
+async function getSuscripcionById(id){
+    try {
+        if (!id) throw new Error("ID de suscripción no proporcionado.");
+         // SOLICITUD MERCADO PAGO 
+         const response = await axios.get(
+            "https://api.mercadopago.com/preapproval/{id}",
+            id,
+            {
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${ACCESS_TOKEN}`,
+                },
+            }
+        ); 
+        return [response.data, null];
+    } catch (error) {
+        console.error(`Error al obtener la suscripción:`, error.response?.data || error.message);
+        handleError(error, "suscripcion.service -> getSuscripcionById");
+        return [null, error.response?.data || error.message];
+    }
+} 
+// Funcion para Actualizar Suscripcion 
+async function updateSuscripcionMP(id, data){
+    try {
+        if (!id) throw new Error("ID de suscripción no proporcionado.");
+        // SOLICITUD MERCADO PAGO 
+        const response = await axios.put(
+            "https://api.mercadopago.com/preapproval/{id}",
+            data,
+            {
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${ACCESS_TOKEN}`,
+                },
+            }
+        );
+        return [response.data, null];
+    } catch (error) {
+        console.error(`Error al actualizar la suscripción:`, error.response?.data || error.message);
+        handleError(error, "suscripcion.service -> updateSuscripcion");
+        return [null, error.response?.data || error.message];
+    }
+}
+
+async function crearSuscripcion(suscripcionData){
+    try {
+        const { idUser, idPlan, estado, fecha_inicio, fecha_fin, preapproval_id } = suscripcionData;
+        const nuevaSuscripcion = new Suscripcion({ idUser, idPlan, estado, fecha_inicio, fecha_fin, preapproval_id });
+        console.log("Datos de suscripción a guardar:", { idUser, idPlan, estado, fecha_inicio, fecha_fin, preapproval_id });
+        await nuevaSuscripcion.save();
+        return [nuevaSuscripcion, null];
+    } catch (error) {
+        handleError(error, "suscripcion.service -> crearSuscripcion");
+    }   
 }
 
 async function cancelarSuscripcion(user, preapprovalId) {
@@ -278,4 +435,8 @@ async function sincronizarEstados() {
     }
 }
  
-export default { crearSuscripcion, cancelarSuscripcion, getSuscripciones, getSuscripcion, deleteSuscripcion, updateSuscripcion, sincronizarEstados, getIssuers, getIdentificationTypes, cardForm }; 
+export default { crearSuscripcion, cancelarSuscripcion, getSuscripciones, getSuscripcion, 
+deleteSuscripcion, updateSuscripcion, sincronizarEstados, 
+getIssuers, getIdentificationTypes, cardForm, obtenerSuscripcion, 
+searchSuscripcionMP, getSuscripcionById, updateSuscripcionMP, getSuscripcionBypreapprovalId, updateSuscripcionCard,
+}; 

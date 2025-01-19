@@ -1,58 +1,173 @@
 import React, { useState, useEffect } from "react";
 import { View, Text, TextInput, Button, Picker, StyleSheet, Alert } from "react-native";
 
-const PaymentForm = ({ onSubmit, fetchDynamicData }) => {
+const PaymentForm = ({ onSubmit, fetchDynamicData, selectedPlan }) => {
   const [cardNumber, setCardNumber] = useState("");
   const [expirationDate, setExpirationDate] = useState("");
   const [securityCode, setSecurityCode] = useState("");
   const [cardholderName, setCardholderName] = useState("");
   const [issuer, setIssuer] = useState(""); // Banco emisor
-  const [installments, setInstallments] = useState("1"); // Cuotas (siempre 1)
-  const [identificationType, setIdentificationType] = useState(""); // Tipo de documento
+  const [identificationType, setIdentificationType] = useState(""); // Tipo de identificación
   const [identificationNumber, setIdentificationNumber] = useState("");
   const [cardholderEmail, setCardholderEmail] = useState("");
-
+  // fecha de expiracion 
+  const [expirationMonth, setExpirationMonth] = useState("");
+  const [expirationYear, setExpirationYear] = useState("");
+  
   const [issuers, setIssuers] = useState([]);
-  const [identificationTypes, setIdentificationTypes] = useState([]);
+  const [identificationTypes, setIdentificationTypes] = useState([]); 
+
 
   useEffect(() => {
     fetchDynamicData()
       .then(({ issuers, identificationTypes }) => {
         setIssuers(issuers.length ? issuers : [{ id: "", name: "No disponible" }]);
-        setIdentificationTypes(
-          identificationTypes.length ? identificationTypes : [{ id: "", name: "No disponible" }]
-        );
+        setIdentificationTypes(identificationTypes.length ? identificationTypes : [{ id: "", name: "No disponible" }]);
+        
       })
       .catch(() => {
         Alert.alert("Error", "No se pudieron cargar los datos dinámicos");
       });
-  }, []);
+  }, []); 
+  // Formatear el numero de tarjeta con espacios cada 4 digitos 
+  const formatCardNumber = (input) => {
+    return input
+      .replace(/\D/g, "")            // Eliminar todo lo que no sea dígito
+      .replace(/(.{4})/g, "$1 ")     // Agregar un espacio cada 4 dígitos
+      .trim();                       // Eliminar espacios al final
+  }; 
+  
+  // Formatear el input que recibe cardForm 
+  const handleCardNumberChange = (input) => {
+    const formatted = formatCardNumber(input);
+    setCardNumber(formatted);
+  }; 
+  // handler para la fecha de expiracion
+  const handleExpirationDateChange = (input) => {
+    const formattedInput = input.replace(/\D/g, ""); // Solo números
+    let month = "";
+    let year = "";
+  
+    if (formattedInput.length >= 1) {
+      month = formattedInput.slice(0, 2);
+    }
+  
+    if (formattedInput.length >= 3) {
+      year = formattedInput.slice(2, 4);
+    }
+  
+    // Validar que el mes sea válido (01 a 12)
+    if (month && (parseInt(month, 10) < 1 || parseInt(month, 10) > 12)) {
+      return; // No actualizar si el mes no es válido
+    }
+  
+    setExpirationMonth(month);
+    setExpirationYear(year);
+  
+    const formattedDate = month + (year ? `/${year}` : "");
+    setExpirationDate(formattedDate);
+  }; 
+  // handler para el codigo de seguridad
+  const handleSecurityCodeChange = (input) => {
+    const formattedInput = input.replace(/\D/g, ""); // Solo números
+  
+    // Máximo 4 dígitos (3 para Visa/Mastercard, 4 para AMEX)
+    if (formattedInput.length <= 4) {
+      setSecurityCode(formattedInput);
+    }
+  }; 
+  const validarRut = (rut) => {  
+    if (!/^[0-9]+[-|‐]{1}[0-9kK]{1}$/.test(rut)) return false;
+    const [body, verifier] = rut.split("-");
+    let sum = 0;
+    let multiplier = 2;
 
-  const handleSubmit = () => {
+    for (let i = body.length - 1; i >= 0; i--) {
+      sum += body[i] * multiplier;
+      multiplier = multiplier === 7 ? 2 : multiplier + 1;
+    }
+
+    const expectedVerifier = 11 - (sum % 11);
+    const verifierChar = expectedVerifier === 11 ? "0" : expectedVerifier === 10 ? "K" : expectedVerifier.toString();
+
+    return verifier.toUpperCase() === verifierChar;
+  }; 
+
+  const formatRut = (input) => {
+     // Eliminar todo lo que no sea números o la letra K/k
+    const cleanInput = input.replace(/[^0-9kK]/g, "").toUpperCase();
+    return cleanInput; // Solo devolver los números sin formato
+  };
+  const handleIdentificationNumberChange = (input) => { 
+    if (identificationType === "RUT") {
+      const formattedRut = formatRut(input);
+      setIdentificationNumber(formattedRut);
+    } else {
+      setIdentificationNumber(input);
+    }
+  };  
+  
+
+  const handleSubmit = () => { 
+    console.log("onSubmit:", onSubmit);
     if (!cardNumber || !expirationDate || !securityCode || !cardholderName || !identificationNumber || !cardholderEmail) {
       Alert.alert("Error", "Por favor complete todos los campos.");
       return;
+    } 
+    if (!issuer || !identificationType) {
+      Alert.alert("Error", "Seleccione el banco y el tipo de documento.");
+      return;
+    }  
+    if (identificationType === "RUT" && !validarRut(identificationNumber)) {
+      Alert.alert("Error", "El RUT ingresado no es válido.");
+      return;
     }
+    
+    const cleanCardNumber = cardNumber.replace(/\s/g, ""); // cardNumber sin espacios  
+    const fullExpirationYear = `20${expirationYear}`; 
 
-    onSubmit({
-      cardNumber,
-      expirationDate,
+    console.log("datos enviados desde el formulario de pago", {
+      cardNumber: cleanCardNumber,
+      expirationMonth,
+      expirationYear: fullExpirationYear,
       securityCode,
       cardholderName,
       issuer,
-      installments,
+      installments: "1",
       identificationType,
       identificationNumber,
+      cardholderEmail,
+    });
+      
+    onSubmit({
+      cardNumber: cleanCardNumber,
+      expirationMonth,
+      expirationYear: fullExpirationYear,
+      securityCode,
+      cardholderName,
+      issuer,
+      installments: "1",
+      identificationType,
+      identificationNumber: identificationNumber,
       cardholderEmail,
     });
   };
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Formulario de Pago</Text>
-      <TextInput style={styles.input} placeholder="Número de tarjeta" value={cardNumber} onChangeText={setCardNumber} />
-      <TextInput style={styles.input} placeholder="MM/YY" value={expirationDate} onChangeText={setExpirationDate} />
-      <TextInput style={styles.input} placeholder="Código de seguridad" value={securityCode} onChangeText={setSecurityCode} />
+      <Text style={styles.title}>Formulario de Pago</Text> 
+       {/* Información del plan seleccionado */}
+       {selectedPlan && (
+        <View style={styles.planInfo}>
+          <Text style={styles.planTitle}>Plan Seleccionado:</Text>
+          <Text style={styles.planName}>{selectedPlan.tipo_plan}</Text>
+          <Text style={styles.planPrice}>Precio: ${selectedPlan.precio}</Text>
+        </View>
+      )} 
+      {/* Resto del formulario */}
+      <TextInput style={styles.input} placeholder="Número de tarjeta"  keyboardType="numeric" maxLength={19}  value={cardNumber} onChangeText={handleCardNumberChange} />
+      <TextInput style={styles.input} placeholder="MM/YY" value={expirationDate} onChangeText={handleExpirationDateChange} keyboardType="numeric" maxLength={5} />
+      <TextInput style={styles.input} placeholder="Código de seguridad" value={securityCode} onChangeText={handleSecurityCodeChange} keyboardType="numeric" maxLength={4} />
       <TextInput style={styles.input} placeholder="Titular de la tarjeta" value={cardholderName} onChangeText={setCardholderName} />
       
       <Picker selectedValue={issuer} onValueChange={(value) => setIssuer(value)} style={styles.picker}>
@@ -60,23 +175,18 @@ const PaymentForm = ({ onSubmit, fetchDynamicData }) => {
         {issuers.map((issuer) => (
           <Picker.Item key={issuer.id} label={issuer.name} value={issuer.id} />
         ))}
-      </Picker>
-
-      <Picker selectedValue={installments} onValueChange={(value) => setInstallments(value)} style={styles.picker}>
-        <Picker.Item label="1 cuota" value="1" />
-      </Picker>
-
+      </Picker> 
       <Picker selectedValue={identificationType} onValueChange={(value) => setIdentificationType(value)} style={styles.picker}>
-        <Picker.Item label="Seleccione un tipo de documento" value="" />
-        {identificationTypes.map((type) => (
-          <Picker.Item key={type.id} label={type.name} value={type.id} />
+          <Picker.Item label="Seleccione un tipo de documento" value="" />
+          {identificationTypes.map((identificationType) => (
+            <Picker.Item key={identificationType.id} label={identificationType.name} value={identificationType.id} />
         ))}
-      </Picker>
+       </Picker> 
 
-      <TextInput style={styles.input} placeholder="Número de documento" value={identificationNumber} onChangeText={setIdentificationNumber} />
-      <TextInput style={styles.input} placeholder="Correo electrónico" value={cardholderEmail} onChangeText={setCardholderEmail} />
+      <TextInput style={styles.input} placeholder="Número de documento" value={identificationNumber} onChangeText={handleIdentificationNumberChange} keyboardType="default" autoCapitalize="characters"  />
+      <TextInput style={styles.input} placeholder="Correo electrónico" value={cardholderEmail} onChangeText={setCardholderEmail} keyboardType="email-address" />
 
-      <Button title="Pagar" onPress={handleSubmit} />
+      <Button title="Pagar" onPress={handleSubmit}/>
     </View>
   );
 };
@@ -101,6 +211,26 @@ const styles = StyleSheet.create({
     height: 50,
     marginBottom: 10,
   },
+  planInfo: {
+    marginBottom: 20,
+    padding: 10,
+    borderWidth: 1,
+    borderColor: '#ccc',
+    borderRadius: 5,
+  },
+  planTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    marginBottom: 5,
+  },
+  planName: {
+    fontSize: 16,
+  },
+  planPrice: {
+    fontSize: 16,
+    color: '#888',
+  },
 });
 
-export default PaymentForm;
+export default PaymentForm; 
+
