@@ -31,8 +31,14 @@ export default function InicioMicroempresaScreen({ route }) {
     <ScrollView contentContainerStyle={styles.container}>
       {microempresa ? (
         <>
-          {microempresa.fotoPerfil && (
-            <Image source={{ uri: microempresa.fotoPerfil.url }} style={styles.profileImage} />
+         {microempresa.fotoPerfil && typeof microempresa.fotoPerfil === 'string' ? (
+            <Image
+              source={{ uri: microempresa.fotoPerfil }}
+              style={styles.profileImage}
+              onError={(error) => console.error('Error al cargar la imagen:', error.nativeEvent.error)}
+            />
+          ) : (
+            <Text style={styles.error}>Imagen no disponible</Text>
           )}
 
           <Text style={styles.title}>{microempresa.nombre}</Text>
@@ -156,3 +162,4 @@ const styles = StyleSheet.create({
     color: 'red',
   },
 });
+

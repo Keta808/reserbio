@@ -82,14 +82,11 @@ const DisponibilidadScreen = ({ navigation }) => {
   const handleEdit = (disponibilidad) => {
     navigation.navigate('FormularioCreacionHoras', {
       disponibilidad,
-      onGoBack: fetchDisponibilidades,
     });
   };
 
   const handleCreate = () => {
-    navigation.navigate('FormularioCreacionHoras', {
-      onGoBack: fetchDisponibilidades,
-    });
+    navigation.navigate('FormularioCreacionHoras');
   };
 
   const handleDelete = async () => {
@@ -112,19 +109,21 @@ const DisponibilidadScreen = ({ navigation }) => {
   };
 
   const renderDisponibilidad = ({ item }) => (
-    <ScrollView contentContainerStyle={styles.item}>
+    <View style={styles.item}>
       <Text style={styles.itemText}>
         {item.dia}: {item.hora_inicio} - {item.hora_fin}
       </Text>
       {item.excepciones && item.excepciones.length > 0 ? (
-        <ScrollView style={styles.excepcionesContainer}>
-          <Text style={styles.excepcionesTitle}>Excepciones:</Text>
-          {item.excepciones.map((excepcion, index) => (
-            <Text key={index} style={styles.excepcionText}>
+        <FlatList
+          data={item.excepciones}
+          keyExtractor={(excepcion, index) => index.toString()}
+          renderItem={({ item: excepcion }) => (
+            <Text style={styles.excepcionText}>
               - {excepcion.inicio_no_disponible} a {excepcion.fin_no_disponible}
             </Text>
-          ))}
-        </ScrollView>
+          )}
+          numColumns={1}
+        />
       ) : (
         <Text style={styles.noExcepcionesText}>No hay excepciones</Text>
       )}
@@ -137,7 +136,7 @@ const DisponibilidadScreen = ({ navigation }) => {
       >
         <Text style={styles.buttonText}>Eliminar</Text>
       </TouchableOpacity>
-    </ScrollView>
+    </View>
   );
 
   useFocusEffect(
@@ -147,7 +146,7 @@ const DisponibilidadScreen = ({ navigation }) => {
   );
 
   return (
-    <ScrollView contentContainerStyle={styles.container}>
+    <View style={styles.container}>
       <Text style={styles.title}>Horario por día</Text>
       {loading ? (
         <Text style={styles.loadingText}>Cargando...</Text>
@@ -157,6 +156,7 @@ const DisponibilidadScreen = ({ navigation }) => {
           keyExtractor={(item) => item._id}
           renderItem={renderDisponibilidad}
           ListEmptyComponent={<Text style={styles.emptyText}>No hay disponibilidades registradas</Text>}
+          nestedScrollEnabled
         />
       )}
       <TouchableOpacity style={styles.createButton} onPress={handleCreate}>
@@ -180,7 +180,7 @@ const DisponibilidadScreen = ({ navigation }) => {
           </View>
         </View>
       </Modal>
-    </ScrollView>
+    </View>
   );
 };
 

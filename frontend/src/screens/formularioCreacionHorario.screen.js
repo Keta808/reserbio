@@ -1,5 +1,13 @@
-import React, { useState, useEffect } from 'react';
-import { ScrollView, Text, TextInput, StyleSheet, TouchableOpacity, Alert, View } from 'react-native';
+import React, { useState, useEffect, memo } from 'react';
+import {
+  FlatList,
+  Text,
+  TextInput,
+  StyleSheet,
+  TouchableOpacity,
+  Alert,
+  View,
+} from 'react-native';
 import disponibilidadService from '../services/disponibilidad.service';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
@@ -18,6 +26,15 @@ const getUserId = async () => {
     return null;
   }
 };
+
+const DayButton = memo(({ day, selected, onPress }) => (
+  <TouchableOpacity
+    style={[styles.dayButton, selected && styles.dayButtonSelected]}
+    onPress={onPress}
+  >
+    <Text style={styles.dayButtonText}>{day}</Text>
+  </TouchableOpacity>
+));
 
 const FormularioCreacionHorasScreen = ({ route, navigation }) => {
   const { disponibilidad } = route.params || {};
@@ -42,20 +59,25 @@ const FormularioCreacionHorasScreen = ({ route, navigation }) => {
     const fetchUserData = async () => {
       setLoading(true);
       const userId = await getUserId();
-
+  
       if (!userId) {
         Alert.alert('Error', 'No se pudo obtener el ID del usuario.');
         setLoading(false);
         return;
       }
-
+  
       setFormData((prevFormData) => ({ ...prevFormData, trabajador: userId }));
-
+  
       if (!disponibilidad) {
         try {
           const response = await disponibilidadService.getDiasSinHorario(userId);
-          const [diasDisponibles] = response.availableDays || [];
-          setAvailableDays(diasDisponibles || []);
+          const availableDays = response?.availableDays?.[0] || []; // Manejar valores nulos
+          if (availableDays.length === 0) {
+            Alert.alert('Advertencia', 'No hay días disponibles.');
+            setAvailableDays([]);
+          } else {
+            setAvailableDays(availableDays);
+          }
         } catch (error) {
           console.error('Error al obtener días sin horario:', error);
           Alert.alert('Error', 'No se pudieron cargar los días disponibles.');
@@ -115,7 +137,7 @@ const FormularioCreacionHorasScreen = ({ route, navigation }) => {
         Alert.alert('Éxito', 'Disponibilidad creada');
       }
 
-      navigation.goBack({ updated: true });
+      navigation.goBack();
     } catch (error) {
       console.error('Error al guardar la disponibilidad:', error);
       Alert.alert('Error', error?.response?.data?.message || 'No se pudo guardar la disponibilidad.');
@@ -123,29 +145,30 @@ const FormularioCreacionHorasScreen = ({ route, navigation }) => {
   };
 
   return (
-    <ScrollView style={styles.container}>
+    <View style={styles.container}>
       <Text style={styles.title}>
         {disponibilidad ? 'Editar Disponibilidad' : 'Crear Disponibilidad'}
       </Text>
 
       {!disponibilidad && loading ? (
-        <Text style={styles.loadingText}>Cargando días disponibles...</Text>
-      ) : !disponibilidad && availableDays.length > 0 ? (
-        <View style={styles.daysContainer}>
-          {availableDays.map((day, index) => (
-            <TouchableOpacity
-              key={index}
-              style={[
-                styles.dayButton,
-                formData.dia === day && styles.dayButtonSelected,
-              ]}
-              onPress={() => handleChange('dia', day)}
-            >
-              <Text style={styles.dayButtonText}>{day}</Text>
-            </TouchableOpacity>
-          ))}
-        </View>
-      ) : null}
+  <Text style={styles.loadingText}>Cargando días disponibles...</Text>
+) : !disponibilidad && availableDays.length > 0 ? (
+  <FlatList
+    data={availableDays}
+    keyExtractor={(item, index) => index.toString()}
+    renderItem={({ item }) => (
+      <DayButton
+        day={item}
+        selected={formData.dia === item}
+        onPress={() => handleChange('dia', item)}
+      />
+    )}
+    numColumns={3} // Distribuir los elementos en columnas
+    contentContainerStyle={styles.flatListContainer}
+  />
+) : null}
+
+      
 
       <TextInput
         style={styles.input}
@@ -195,7 +218,7 @@ const FormularioCreacionHorasScreen = ({ route, navigation }) => {
       <TouchableOpacity style={styles.submitButton} onPress={handleSubmit}>
         <Text style={styles.buttonText}>Guardar</Text>
       </TouchableOpacity>
-    </ScrollView>
+    </View>
   );
 };
 
