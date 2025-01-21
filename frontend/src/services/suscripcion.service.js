@@ -1,18 +1,19 @@
 import instance from './root.services.js'; 
 
-async function crearSuscripcion(tipoPlan, user, cardTokenId){
+async function obtenerSuscripcion(plan, user, cardTokenId, payer_email){
    try{
-    const response = await instance.post('/suscripcion/obtener-suscripcion',{
-        tipoPlan,
+    const response = await instance.post('/suscripcion/obtenerSuscripcion',{
+        plan,
         user,
         cardTokenId,
+        payer_email,
     });
     return response.data;
    }catch (error) {
     console.error('Error al crear la suscripción:', error.response?.data || error.message);
     throw error;
   }
-} 
+}  
 async function obtenerSuscripciones() {
     try {
       const response = await instance.get('/suscripciones');
@@ -22,7 +23,7 @@ async function obtenerSuscripciones() {
       throw error;
     }
 } 
-async function obtenerSuscripcion(id) {
+async function getSuscripcion(id) {
     try {
       const response = await instance.get(`/suscripcion/${id}`);
       return response.data;
@@ -82,6 +83,7 @@ async function getIdentificationTypes() {
       
 async function cardForm(paymentData) {
     try {
+      console.log("SERVICES FRONT: PAYMENT DATA",paymentData);
       const response = await instance.post('/suscripcion/cardForm', paymentData);
       return response.data;
     } catch (error) {
@@ -90,4 +92,4 @@ async function cardForm(paymentData) {
     }
 }
 
-export {crearSuscripcion, obtenerPlanes, cancelarSuscripcion, obtenerSuscripciones, obtenerSuscripcion, actualizarSuscripcion, getIssuers, getIdentificationTypes, cardForm};
+export { obtenerPlanes, cancelarSuscripcion, obtenerSuscripciones, obtenerSuscripcion, actualizarSuscripcion, getIssuers, getIdentificationTypes, cardForm, getSuscripcion};

@@ -5,7 +5,7 @@
 import Suscripcion from "../models/suscripcion.model.js";
 import Microempresa from "../models/microempresa.model.js";
 import { respondError } from "../utils/resHandler.js";
-
+// Middleware para verificar si Tiene suscripcion 
 async function verificarSuscripcion(req, res, next) {
     try {
         const user = req.user; // Usuario autenticado.
@@ -38,6 +38,7 @@ async function verificarSuscripcion(req, res, next) {
         console.error("Error en verificarSuscripcion:", error);
         return respondError(res, "Error al verificar la suscripción.", 500);
     }
-}
+} 
+// Middleware para verificar Tipo de plan suscrito
 
 export default verificarSuscripcion;

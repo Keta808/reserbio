@@ -1,17 +1,21 @@
 import React, { useContext } from 'react';
-import { ActivityIndicator, View, Text } from 'react-native';
-import { createStackNavigator } from '@react-navigation/stack';
+
+import { createStackNavigator } from '@react-navigation/stack'; 
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 
-import LoginScreen from '../screens/login.screen.js';
-import HomeScreen from '../screens/home.screen.js';
-import SuscripcionScreen from '../screens/suscripcion.screen.js';
+// SEPARAR PANTALLAS POR TIPOS DE USUARIOS Y PRIVILEGIOS
+
+import MicroempresaInicioScreeen from '../screens/microempresa.screen.js';
 import FormularioMicroempresa from '../screens/formularioMicroempresa.screen.js';
-import SeleccionMicroempresaScreen from '../screens/seleccionMicroempresa.screen.js';
 import DisponibilidadScreen from '../screens/disponibilidad.screen.js';
-import FormularioCreacionHorasScreen from '../screens/formularioCreacionHorario.screen.js';
-import PaymentScreen from '../screens/pago.screen.js';
-import CalendarScreen from '../screens/calendario.screen.js';
+import FormularioCreacionHorasScreen from '../screens/formularioCreacionHorario.screen.js'; // Corregido
+import SeleccionMicroempresaScreen from '../screens/seleccionMicroempresa.screen.js';
+// PANTALLAS COMUNES (TODOS LOS USARIOS LAS PUEDEN VER)
+import SuscripcionScreen from '../screens/suscripcion.screen.js';
+import PaymentScreen from '../screens/pago.screen.js'; 
+import LoginScreen from '../screens/login.screen.js'; 
+import HomeScreen from '../screens/home.screen.js';
+
 import { AuthContext } from '../context/auth.context';
 
 const Stack = createStackNavigator();

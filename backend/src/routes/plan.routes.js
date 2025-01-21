@@ -16,5 +16,10 @@ router.put("/:id", isAdmin, planController.updatePlan);
 
 router.post("/crear-plan-basico", isAdmin, planController.crearPlanBasico);
 router.post("/crear-plan-premium", isAdmin, planController.crearPlanPremium);
-router.post("/crear-plan-gratuito", isAdmin, planController.crearPlanGratuito);
+router.post("/crear-plan-gratuito", isAdmin, planController.crearPlanGratuito); 
+
+// Funciones MP 
+router.post("/buscar-plan-suscripcion", planController.buscarPlanDeSuscripcion); 
+router.get("/obtener-plan-suscripcion/:id", isAdmin, planController.obtenerPlanDeSuscripcion);
+router.put("/actualizar-plan-suscripcion/:id", isAdmin, planController.actualizarPlanDeSuscripcion);
 export default router;
