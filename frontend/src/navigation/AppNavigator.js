@@ -1,21 +1,23 @@
-import React, { useContext } from 'react';
-
-import { createStackNavigator } from '@react-navigation/stack'; 
+import React, { useContext, useEffect, useState } from 'react';
+import { View, Text, ActivityIndicator } from 'react-native';
+import { createStackNavigator } from '@react-navigation/stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import axios from '../services/root.services.js';
 
-// SEPARAR PANTALLAS POR TIPOS DE USUARIOS Y PRIVILEGIOS
-
+// Importar pantallas
 import MicroempresaInicioScreeen from '../screens/microempresa.screen.js';
 import FormularioMicroempresa from '../screens/formularioMicroempresa.screen.js';
 import DisponibilidadScreen from '../screens/disponibilidad.screen.js';
-import FormularioCreacionHorasScreen from '../screens/formularioCreacionHorario.screen.js'; // Corregido
+import FormularioCreacionHorasScreen from '../screens/formularioCreacionHorario.screen.js';
 import SeleccionMicroempresaScreen from '../screens/seleccionMicroempresa.screen.js';
-// PANTALLAS COMUNES (TODOS LOS USARIOS LAS PUEDEN VER)
 import SuscripcionScreen from '../screens/suscripcion.screen.js';
-import PaymentScreen from '../screens/pago.screen.js'; 
-import LoginScreen from '../screens/login.screen.js'; 
+import PaymentScreen from '../screens/pago.screen.js';
+import LoginScreen from '../screens/login.screen.js';
 import HomeScreen from '../screens/home.screen.js';
+import CalendarScreen from '../screens/calendario.screen.js';
 
+// Contexto de autenticación
 import { AuthContext } from '../context/auth.context';
 
 const Stack = createStackNavigator();
@@ -40,7 +42,31 @@ const HomeNavigator = () => (
 );
 
 const AppNavigator = () => {
-  const { isAuthenticated, isLoading } = useContext(AuthContext);
+  const { setIsAuthenticated, isAuthenticated } = useContext(AuthContext); // Asumimos que el contexto tiene este método
+  const [isLoading, setIsLoading] = useState(true); // Estado de carga local
+
+  useEffect(() => {
+    const checkAuth = async () => {
+      try {
+        // Recuperar el token desde AsyncStorage
+        const token = await AsyncStorage.getItem('token');
+        if (token) {
+          // Configurar axios con el token recuperado
+          axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+          setIsAuthenticated(true); // Establecer como autenticado en el contexto
+        } else {
+          setIsAuthenticated(false);
+        }
+      } catch (error) {
+        console.error('Error verificando el token:', error);
+        setIsAuthenticated(false);
+      } finally {
+        setIsLoading(false); // Finalizar carga
+      }
+    };
+
+    checkAuth(); // Ejecutar la verificación al montar el componente
+  }, [setIsAuthenticated]);
 
   if (isLoading) {
     // Mostrar pantalla de carga mientras se verifica la autenticación

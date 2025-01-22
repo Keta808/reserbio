@@ -19,7 +19,9 @@ export const AuthProvider = ({ children }) => {
     const checkAuthentication = async () => {
       try {
         const storedUser = await AsyncStorage.getItem('user');
-        if (storedUser) {
+        const token = await AsyncStorage.getItem('token');
+
+        if (storedUser && token) {
           setUser(JSON.parse(storedUser));
           setIsAuthenticated(true);
         } else {
@@ -40,13 +42,12 @@ export const AuthProvider = ({ children }) => {
   const login = async (dataUser) => {
     try {
       const userInfo = await loginService(dataUser); // Simula el servicio de login
-      
+
       await AsyncStorage.setItem('user', JSON.stringify(userInfo)); // Guarda el usuario en AsyncStorage
       setUser(userInfo);
       setIsAuthenticated(true);
       return userInfo;
     } catch (error) {
-    
       console.error('Error al iniciar sesión:', error);
       throw new Error('Credenciales incorrectas');
     }
@@ -57,6 +58,7 @@ export const AuthProvider = ({ children }) => {
     try {
       await logoutService(); // Simula el servicio de logout
       await AsyncStorage.removeItem('user'); // Limpia el usuario de AsyncStorage
+      await AsyncStorage.removeItem('token'); // Limpia el token de AsyncStorage
       setUser(null);
       setIsAuthenticated(false);
       console.log('Usuario cerró sesión correctamente');
@@ -67,7 +69,7 @@ export const AuthProvider = ({ children }) => {
 
   // Proveer el contexto con los valores y funciones necesarias
   return (
-    <AuthContext.Provider value={{ isAuthenticated, isLoading, user, login, logout }}>
+    <AuthContext.Provider value={{ isAuthenticated, isLoading, user, login, logout, setIsAuthenticated }}>
       {children}
     </AuthContext.Provider>
   );

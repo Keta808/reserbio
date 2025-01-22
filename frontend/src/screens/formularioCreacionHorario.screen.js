@@ -150,25 +150,23 @@ const FormularioCreacionHorasScreen = ({ route, navigation }) => {
         {disponibilidad ? 'Editar Disponibilidad' : 'Crear Disponibilidad'}
       </Text>
 
-      {!disponibilidad && loading ? (
-  <Text style={styles.loadingText}>Cargando días disponibles...</Text>
-) : !disponibilidad && availableDays.length > 0 ? (
-  <FlatList
-    data={availableDays}
-    keyExtractor={(item, index) => index.toString()}
-    renderItem={({ item }) => (
-      <DayButton
-        day={item}
-        selected={formData.dia === item}
-        onPress={() => handleChange('dia', item)}
-      />
-    )}
-    numColumns={3} // Distribuir los elementos en columnas
-    contentContainerStyle={styles.flatListContainer}
-  />
-) : null}
-
-      
+        {!disponibilidad && loading ? (
+            <Text style={styles.loadingText}>Cargando días disponibles...</Text>
+             ) : !disponibilidad && availableDays.length > 0 ? (
+            <FlatList
+              data={availableDays}
+              keyExtractor={(item, index) => index.toString()}
+              renderItem={({ item }) => (
+                <DayButton
+                  day={item}
+                  selected={formData.dia === item}
+                  onPress={() => handleChange('dia', item)}
+                />
+              )}
+              numColumns={3} // Distribuir los elementos en columnas
+              contentContainerStyle={styles.flatListContainer}
+            />
+      ) : null}
 
       <TextInput
         style={styles.input}
