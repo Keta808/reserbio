@@ -41,3 +41,14 @@ export const login = async (dataUser) => {
         throw error.response ? error.response.data : new Error('Error en Inicio de sesión');
     }
 };
+
+export const logout = async () => {
+    try {
+        await AsyncStorage.removeItem('user');
+        await AsyncStorage.removeItem('token');
+        delete axios.defaults.headers.common['Authorization'];
+    } catch (error) {
+        console.log('Error en Logout', error);
+        throw error.response ? error.response.data : new Error('Error en Cierre de sesión');
+    }
+};

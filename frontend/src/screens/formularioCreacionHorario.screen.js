@@ -2,12 +2,12 @@ import React, { useState, useEffect, memo } from 'react';
 import {
   FlatList,
   Text,
-  TextInput,
   StyleSheet,
   TouchableOpacity,
   Alert,
   View,
 } from 'react-native';
+import RNPickerSelect from 'react-native-picker-select';
 import disponibilidadService from '../services/disponibilidad.service';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
@@ -36,6 +36,18 @@ const DayButton = memo(({ day, selected, onPress }) => (
   </TouchableOpacity>
 ));
 
+const generateTimeOptions = () => {
+  const times = [];
+  for (let hour = 8; hour <= 24; hour++) {
+    const formattedHour = hour < 10 ? `0${hour}` : `${hour}`;
+    times.push({ label: `${formattedHour}:00`, value: `${formattedHour}:00` });
+    times.push({ label: `${formattedHour}:30`, value: `${formattedHour}:30` });
+  }
+  return times;
+};
+
+const timeOptions = generateTimeOptions();
+
 const FormularioCreacionHorasScreen = ({ route, navigation }) => {
   const { disponibilidad } = route.params || {};
 
@@ -59,19 +71,19 @@ const FormularioCreacionHorasScreen = ({ route, navigation }) => {
     const fetchUserData = async () => {
       setLoading(true);
       const userId = await getUserId();
-  
+
       if (!userId) {
         Alert.alert('Error', 'No se pudo obtener el ID del usuario.');
         setLoading(false);
         return;
       }
-  
+
       setFormData((prevFormData) => ({ ...prevFormData, trabajador: userId }));
-  
+
       if (!disponibilidad) {
         try {
           const response = await disponibilidadService.getDiasSinHorario(userId);
-          const availableDays = response?.availableDays?.[0] || []; // Manejar valores nulos
+          const availableDays = response?.availableDays?.[0] || [];
           if (availableDays.length === 0) {
             Alert.alert('Advertencia', 'No hay días disponibles.');
             setAvailableDays([]);
@@ -119,6 +131,12 @@ const FormularioCreacionHorasScreen = ({ route, navigation }) => {
 
   const handleSubmit = async () => {
     try {
+      // Validar si el formulario está vacío
+      if (!formData.dia || !formData.hora_inicio || !formData.hora_fin) {
+        Alert.alert('Error', 'Debe completar todos los campos obligatorios.');
+        return;
+      }
+
       const cleanedFormData = {
         ...formData,
         excepciones: formData.excepciones || [],
@@ -149,87 +167,100 @@ const FormularioCreacionHorasScreen = ({ route, navigation }) => {
       <Text style={styles.title}>
         {disponibilidad ? 'Editar Disponibilidad' : 'Crear Disponibilidad'}
       </Text>
-
+  
+      <View style={styles.formContent}>
         {!disponibilidad && loading ? (
-            <Text style={styles.loadingText}>Cargando días disponibles...</Text>
-             ) : !disponibilidad && availableDays.length > 0 ? (
-            <FlatList
-              data={availableDays}
-              keyExtractor={(item, index) => index.toString()}
-              renderItem={({ item }) => (
-                <DayButton
-                  day={item}
-                  selected={formData.dia === item}
-                  onPress={() => handleChange('dia', item)}
-                />
-              )}
-              numColumns={3} // Distribuir los elementos en columnas
-              contentContainerStyle={styles.flatListContainer}
-            />
-      ) : null}
-
-      <TextInput
-        style={styles.input}
-        placeholder="Hora Inicio (HH:MM)"
-        value={formData.hora_inicio}
-        onChangeText={(value) => handleChange('hora_inicio', value)}
-      />
-      <TextInput
-        style={styles.input}
-        placeholder="Hora Fin (HH:MM)"
-        value={formData.hora_fin}
-        onChangeText={(value) => handleChange('hora_fin', value)}
-      />
-
-      <Text style={styles.subTitle}>Excepciones</Text>
-      {formData.excepciones.map((excepcion, index) => (
-        <View key={index} style={styles.exceptionContainer}>
-          <Text style={styles.exceptionText}>
-            {excepcion.inicio_no_disponible} - {excepcion.fin_no_disponible}
-          </Text>
-          <TouchableOpacity
-            style={styles.deleteButton}
-            onPress={() => removeException(index)}
-          >
-            <Text style={styles.buttonText}>Eliminar</Text>
-          </TouchableOpacity>
-        </View>
-      ))}
-
-      <TextInput
-        style={styles.input}
-        placeholder="Inicio no disponible (HH:MM)"
-        value={newException.inicio_no_disponible}
-        onChangeText={(value) => handleExceptionChange('inicio_no_disponible', value)}
-      />
-      <TextInput
-        style={styles.input}
-        placeholder="Fin no disponible (HH:MM)"
-        value={newException.fin_no_disponible}
-        onChangeText={(value) => handleExceptionChange('fin_no_disponible', value)}
-      />
-
-      <TouchableOpacity style={styles.addButton} onPress={addException}>
-        <Text style={styles.buttonText}>Agregar Excepción</Text>
-      </TouchableOpacity>
-
-      <TouchableOpacity style={styles.submitButton} onPress={handleSubmit}>
-        <Text style={styles.buttonText}>Guardar</Text>
-      </TouchableOpacity>
+          <Text style={styles.loadingText}>Cargando días disponibles...</Text>
+        ) : !disponibilidad && availableDays.length > 0 ? (
+          <FlatList
+            data={availableDays}
+            keyExtractor={(item, index) => index.toString()}
+            renderItem={({ item }) => (
+              <DayButton
+                day={item}
+                selected={formData.dia === item}
+                onPress={() => handleChange('dia', item)}
+              />
+            )}
+            numColumns={3}
+            contentContainerStyle={styles.flatListContainer}
+          />
+        ) : null}
+  
+        <RNPickerSelect
+          onValueChange={(value) => handleChange('hora_inicio', value)}
+          items={timeOptions}
+          value={formData.hora_inicio}
+          placeholder={{ label: 'Seleccionar Hora Inicio', value: null }}
+        />
+        <RNPickerSelect
+          onValueChange={(value) => handleChange('hora_fin', value)}
+          items={timeOptions}
+          value={formData.hora_fin}
+          placeholder={{ label: 'Seleccionar Hora Fin', value: null }}
+        />
+  
+        <Text style={styles.subTitle}>Excepciones</Text>
+        {formData.excepciones.map((excepcion, index) => (
+          <View key={index} style={styles.exceptionContainer}>
+            <Text style={styles.exceptionText}>
+              {excepcion.inicio_no_disponible} - {excepcion.fin_no_disponible}
+            </Text>
+            <TouchableOpacity
+              style={styles.deleteButton}
+              onPress={() => removeException(index)}
+            >
+              <Text style={styles.buttonText}>Eliminar</Text>
+            </TouchableOpacity>
+          </View>
+        ))}
+  
+        <RNPickerSelect
+          onValueChange={(value) => handleExceptionChange('inicio_no_disponible', value)}
+          items={timeOptions}
+          value={newException.inicio_no_disponible}
+          placeholder={{ label: 'Seleccionar Inicio no Disponible', value: null }}
+        />
+        <RNPickerSelect
+          onValueChange={(value) => handleExceptionChange('fin_no_disponible', value)}
+          items={timeOptions}
+          value={newException.fin_no_disponible}
+          placeholder={{ label: 'Seleccionar Fin no Disponible', value: null }}
+        />
+  
+        <TouchableOpacity style={styles.addButton} onPress={addException}>
+          <Text style={styles.buttonText}>Agregar Excepción</Text>
+        </TouchableOpacity>
+      </View>
+  
+      <View style={styles.buttonContainer}>
+        <TouchableOpacity style={styles.submitButton} onPress={handleSubmit}>
+          <Text style={styles.buttonText}>Guardar</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
+          <Text style={styles.buttonText}>Volver</Text>
+        </TouchableOpacity>
+      </View>
     </View>
   );
+  
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 20,
+    padding: 10,
     backgroundColor: '#fff',
+  },
+  formContent: {
+    flex: 1, // Ocupa el espacio disponible
+    justifyContent: 'center', // Centrar el contenido verticalmente
   },
   title: {
     fontSize: 24,
     fontWeight: 'bold',
     marginBottom: 20,
+    marginTop: 100,
     textAlign: 'center',
   },
   subTitle: {
@@ -243,10 +274,9 @@ const styles = StyleSheet.create({
     color: '#777',
     marginBottom: 20,
   },
-  daysContainer: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    marginBottom: 20,
+  flatListContainer: {
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   dayButton: {
     padding: 10,
@@ -263,13 +293,6 @@ const styles = StyleSheet.create({
   dayButtonText: {
     color: '#000',
     fontWeight: 'bold',
-  },
-  input: {
-    borderWidth: 1,
-    borderColor: '#ccc',
-    borderRadius: 5,
-    padding: 10,
-    marginBottom: 15,
   },
   exceptionContainer: {
     flexDirection: 'row',
@@ -292,11 +315,25 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 15,
   },
+  buttonContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-around', // Espacio uniforme entre botones
+    marginTop: 20,
+  },
   submitButton: {
     backgroundColor: '#28a745',
     padding: 15,
     borderRadius: 5,
     alignItems: 'center',
+    flex: 1,
+    marginRight: 10,
+  },
+  backButton: {
+    backgroundColor: '#6c757d',
+    padding: 15,
+    borderRadius: 5,
+    alignItems: 'center',
+    flex: 1,
   },
   buttonText: {
     color: '#fff',
