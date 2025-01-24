@@ -41,9 +41,14 @@ async function createMicroempresa(microempresa) {
             imagenes,
         } = microempresa;
 
+        // Verificar si la microempresa ya existe por email
         const microempresaFound = await Microempresa.findOne({ email: microempresa.email });
         if (microempresaFound) return [null, "La microempresa ya existe"];
 
+        // URL de imagen de perfil predeterminada
+        const defaultProfileImageUrl = "https://res.cloudinary.com/dzkna5hbk/image/upload/v1737576587/defaultProfile_ysxp6x.webp";
+
+        // Crear la nueva microempresa con la imagen predeterminada si no se proporciona
         const newMicroempresa = new Microempresa({
             nombre,
             descripcion,
@@ -54,12 +59,19 @@ async function createMicroempresa(microempresa) {
             idPlan,
             idTrabajador,
             imagenes,
+            fotoPerfil: {
+                url: defaultProfileImageUrl,
+                public_id: null, // No hay un public_id para la imagen predeterminada
+            },
         });
+
+        // Guardar la microempresa en la base de datos
         await newMicroempresa.save();
 
         return [newMicroempresa, null];
     } catch (error) {
         handleError(error, "microempresa.service -> createMicroempresa");
+        return [null, "Error interno al crear la microempresa"];
     }
 }
 
@@ -82,8 +94,6 @@ async function getMicroempresaById(id) {
 
         // 4️⃣ Añadir los trabajadores a la microempresa
         microempresa.trabajadores = trabajadores;
-
-        console.log("getMicroempresaById en backend", microempresa);
 
         return [microempresa, null];
     } catch (error) {
@@ -111,16 +121,20 @@ async function updateMicroempresaById(id, microempresa) {
             imagenes,
         } = microempresa;
         const microempresaFound = await Microempresa.findById(id).exec();
+        if (!microempresaFound) {
+            return [null, "La microempresa no existe"];
+          }
+          
         if (!microempresaFound) return [null, "La microempresa no existe"];
 
-        microempresaFound.nombre = nombre;
-        microempresaFound.descripcion = descripcion;
-        microempresaFound.telefono = telefono;
-        microempresaFound.direccion = direccion;
-        microempresaFound.email = email;
-        microempresaFound.categoria = categoria;
+        if (nombre) microempresaFound.nombre = nombre;
+        if (descripcion) microempresaFound.descripcion = descripcion;
+        if (telefono) microempresaFound.telefono = telefono;
+        if (direccion) microempresaFound.direccion = direccion;
+        if (email) microempresaFound.email = email;
+        if (categoria) microempresaFound.categoria = categoria;
         microempresaFound.idPlan = idPlan;
-        microempresaFound.idTrabajador = idTrabajador;
+        if (idTrabajador) microempresaFound.idTrabajador = idTrabajador;
         microempresaFound.imagenes = imagenes;
 
         await microempresaFound.save();

@@ -21,7 +21,7 @@ router.get("/", isAdmin, microempresaController.getMicroempresas);
 router.get("/:id", isTrabajador, microempresaController.getMicroempresaById);
 // router.get("/nombre/:nombre", isAdmin, microempresaController.getMicroempresaByNombre);
 router.post("/", isTrabajador, microempresaController.createMicroempresa);
-router.put("/:id", isAdmin, microempresaController.updateMicroempresaById);
+router.put("/:id", isTrabajador, microempresaController.updateMicroempresaById);
 router.delete("/:id", isAdmin, microempresaController.deleteMicroempresaById);
 router.get("/categoria/:categoria", isAdmin, microempresaController.getMicroempresasPorCategoria);
 router.get("/user/:trabajadorId", microempresaController.getMicroempresasByUser);

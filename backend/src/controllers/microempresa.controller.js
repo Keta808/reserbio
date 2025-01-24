@@ -5,6 +5,7 @@
 
 import { respondSuccess, respondError } from "../utils/resHandler.js";
 import MicroempresaService from "../services/microempresa.service.js";
+import Microempresa from "../models/microempresa.model.js";
 import { microempresaBodySchema, microempresaIdSchema } from "../schema/microempresa.schema.js";
 import { handleError } from "../utils/errorHandler.js";
 
@@ -37,8 +38,6 @@ async function createMicroempresa(req, res) {
     const { error } = microempresaBodySchema.validate(req.body);
     if (error) return respondError(req, res, 400, error.message);
 
-    console.log("Datos recibidos en el backend:", req.body);
-
     // Llamada al servicio para crear la microempresa
     const [newMicroempresa, errorMicroempresa] = await MicroempresaService
     .createMicroempresa(req.body);
@@ -51,7 +50,6 @@ async function createMicroempresa(req, res) {
 
     // Responder con la nueva microempresa creada
     respondSuccess(req, res, 201, { _id: newMicroempresa._id, ...newMicroempresa.toObject() });
-
   } catch (error) {
     // Manejar errores generales
     handleError(error, "microempresa.controller -> createMicroempresa");
@@ -83,21 +81,44 @@ async function getMicroempresaById(req, res) {
  */
 async function updateMicroempresaById(req, res) {
     try {
-        const { id } = req.params;
-        const { body } = req;
-        const { error: idError } = microempresaIdSchema.validate({ id });
-        if (idError) return respondError(req, res, 400, idError.message);
+      const { id } = req.params; // ID de la microempresa a actualizar
+      const { userId, ...body } = req.body; // Extraer userId y demás datos
+      const { error: idError } = microempresaIdSchema.validate({ id });
+      if (idError) return respondError(req, res, 400, idError.message);
+
+      // Validar que el userId esté presente
+      if (!userId) {
+        return respondError(req, res, 400, "El ID del usuario es obligatorio.");
+      }
+
+      const tienePermiso = await verificarPermisos(userId, id); // Implementa esta función
+        if (!tienePermiso) {
+            return respondError(req, res, 403, "No tienes permisos para actualizar esta microempresa.");
+        }
 
         const [microempresa, errorMicroempresa] = await MicroempresaService
         .updateMicroempresaById(id, body);
         if (errorMicroempresa) return respondError(req, res, 404, errorMicroempresa);
-        if (!microempresa) return respondError(res, 404, "La microempresa no existe");
+        if (!microempresa) return respondError(req, res, 404, "La microempresa no existe");
+
         return respondSuccess(req, res, 200, microempresa);
     } catch (error) {
         handleError(error, "microempresa.controller -> updateMicroempresaById");
         return respondError(req, res, 400, error.message);
     }
 }
+
+async function verificarPermisos(userId, microempresaId) {
+  const microempresa = await Microempresa.findById(microempresaId);
+
+  if (!microempresa) {
+      return false; // La microempresa no existe
+  }
+
+  // Validar si el usuario es dueño de la microempresa
+  return microempresa.idTrabajador.toString() === userId;
+}
+
 
 /**
  * Elimina una microempresa en la base de datos por su id
