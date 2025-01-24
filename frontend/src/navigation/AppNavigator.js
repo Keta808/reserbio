@@ -8,6 +8,8 @@ import axios from '../services/root.services.js';
 // Importar pantallas
 import MicroempresaInicioScreeen from '../screens/microempresa.screen.js';
 import FormularioMicroempresa from '../screens/formularioMicroempresa.screen.js';
+import FormularioEdicionMicroempresa from '../screens/formularioEdicionMicroempresa.screen.js';
+import ListaMicroempresasScreen from '../screens/listaMicroempresas.screen.js';
 import DisponibilidadScreen from '../screens/disponibilidad.screen.js';
 import FormularioCreacionHorasScreen from '../screens/formularioCreacionHorario.screen.js';
 import SeleccionMicroempresaScreen from '../screens/seleccionMicroempresa.screen.js';
@@ -81,6 +83,9 @@ const AppNavigator = () => {
           <Stack.Screen name="Pago" component={PaymentScreen} />
           <Stack.Screen name="FormularioCreacionHoras" component={FormularioCreacionHorasScreen} />
           <Stack.Screen name="SeleccionMicroempresa" component={SeleccionMicroempresaScreen} />
+          <Stack.Screen name="Microempresa" component={MicroempresaInicioScreeen} />
+          <Stack.Screen name="EditarMicroempresa" component={FormularioEdicionMicroempresa} />
+          <Stack.Screen name="ListaMicroempresas" component={ListaMicroempresasScreen} />
         </>
       ) : (
         <Stack.Screen name="Login" component={LoginScreen} />

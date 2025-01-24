@@ -53,6 +53,28 @@ async function getMicroempresaData(idMicroempresa) {
   }
 }
 
+async function getMicroempresas() {
+  try {
+    const response = await instance.get('/microempresas'); // Llama al endpoint
+    console.log('📋 Microempresas obtenidas:', response.data); // Opcional: para debug
+    return response.data; // Devuelve las microempresas
+  } catch (error) {
+    console.error('❌ Error al obtener las microempresas:', error.response?.data || error.message);
+    throw error;
+  }
+}
+
+async function getMicroempresasForPage(page = 1, limit = 10) {
+  try {
+    const response = await instance.get(`/microempresas/page/${page}/limit/${limit}`);
+    return response.data;
+  } catch (error) {
+    console.error("Error al obtener microempresas paginadas:", error.response?.data || error.message);
+    throw error;
+  }
+}
+
+
 async function updateMicroempresa(id, datosActualizados) {
   try {
       const response = await instance.put(`/microempresas/${id}`, datosActualizados);
@@ -81,7 +103,9 @@ async function getMicroempresasByUser(trabajadorId) {
 
 export default {
   getMicroempresaData,
+  getMicroempresasForPage,
   getMicroempresasByUser,
+  getMicroempresas,
   createMicroempresa,
   updateMicroempresa,
 };

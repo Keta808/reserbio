@@ -114,6 +114,7 @@ export default function MicroempresaScreen({ route, navigation }) {
           color="#007BFF"
         />
       </View>
+
     </ScrollView>
   );
 }

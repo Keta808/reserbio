@@ -22,6 +22,24 @@ async function getMicroempresas() {
     }
 }
 
+async function getMicroempresasForPage(page = 1, limit = 10) {
+    try {
+        const skip = (page - 1) * limit; // Cálculo para saltar las microempresas anteriores
+        const microempresas = await Microempresa.find()
+            .skip(skip) // Saltar las anteriores
+            .limit(limit) // Limitar la cantidad
+            .exec();
+
+        if (!microempresas || microempresas.length === 0) {
+            return [null, "No hay microempresas"];
+        }
+
+        return [microempresas, null];
+    } catch (error) {
+        handleError(error, "microempresa.service -> getMicroempresas");
+    }
+}
+
 /**
  * Crea una nueva microempresa en la base de datos
  * @param {Object} microempresa Objeto de microempresa
@@ -217,6 +235,7 @@ async function getMicroempresasByUser(trabajadorId) {
 
 export default {
     getMicroempresas,
+    getMicroempresasForPage,
     createMicroempresa,
     getMicroempresaById,
     updateMicroempresaById,
