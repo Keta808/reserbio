@@ -87,13 +87,7 @@ async function crearPlanBasico() {
         auto_recurring: {
           frequency: 1,
           frequency_type: 'months',
-          repetitions: 12,
-          billing_day: 10,
-          billing_day_proportional: true,
-          free_trial: {
-            frequency: 1,
-            frequency_type: 'months',
-          },
+          repetitions: null,
           transaction_amount: 3990,
           currency_id: 'CLP',
           payment_methods_allowed: {
@@ -151,13 +145,7 @@ async function crearPlanPremium(){
         auto_recurring: {
           frequency: 1,
           frequency_type: 'months',
-          repetitions: 12,
-          billing_day: 10,
-          billing_day_proportional: true,
-          free_trial: {
-            frequency: 1,
-            frequency_type: 'months',
-          },
+          repetitions: null,
           transaction_amount: 11990,
           currency_id: 'CLP',
           payment_methods_allowed: {
@@ -206,15 +194,52 @@ async function crearPlanPremium(){
 
 } 
 
-async function crearPlanGratuito() {
-  try {
+async function crearPlanGratuito() { 
+  const planG = { 
+      reason: 'Plan Gratuito',
+      auto_recurring: {
+        frequency: 1,
+        frequency_type: 'months',
+        repetitions: 3,
+        billing_day: 10,
+        billing_day_proportional: true,
+        free_trial: {
+          frequency: 3,
+          frequency_type: 'months',
+        },
+        transaction_amount: 950,
+        currency_id: 'CLP',
+        payment_methods_allowed: {
+          payment_types: [
+            { id: 'credit_card' },
+            { id: 'debit_card' },
+          ],
+        },
+      },
+      back_url: 'https://www.mercadopago.com',
+    };
+
+  try { 
+    const response = await axios.post(
+      'https://api.mercadopago.com/preapproval_plan',
+      planG,
+      {
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${ACCESS_TOKEN}`
+        }
+      }
+    ); 
+    console.log(response.data); 
+    console.log(`Plan creado: ${planG.reason}`, response.data); 
+
       // Crear y guardar el plan gratuito en MongoDB
       const newPlan = new Plan({
           tipo_plan: 'Plan Gratuito',
           precio: 0,
-          mercadoPagoId: 'GRATIS', // ID específico para el plan gratuito
-          estado: 'active', // Estado puede ser "active" o cualquier valor que prefieras
-          fecha_creacion: new Date(),
+          mercadoPagoId: response.data.id,
+          estado: response.data.status,
+          fecha_creacion: response.data.date_created,
       });
 
       await newPlan.save(); // Guardar en MongoDB
@@ -227,6 +252,65 @@ async function crearPlanGratuito() {
       throw new Error("Error al crear plan gratuito en la base de datos.");
   }
 }
+// Funciones de Plan MercadoPago 
+// Buscar en plan de suscripcion 
+async function buscarPlanDeSuscripcion(params){
+    try {
+      const response = await axios.post(
+        'https://api.mercadopago.com/preapproval_plan',
+     
+        {
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${ACCESS_TOKEN}`
+          }, 
+          params: params
+        }
+      ); 
+      console.log(response.data);
+      return response.data; 
 
-export default { getPlanes, createPlan, deletePlan, updatePlan, crearPlanBasico, crearPlanPremium, crearPlanGratuito }; 
+    } catch (error) {
+        handleError(error, "plan.service -> buscarPlanDeSuscripcion");
+    }
+}
+// Obtener plan de suscripcion 
+async function obtenerPlanDeSuscripcion(id){
+    try {
+        const response = await axios.get(
+          `https://api.mercadopago.com/preapproval_plan/${id}`,
+          {
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${ACCESS_TOKEN}`
+            }
+          }
+        );
+        console.log(response.data);
+        return response.data; 
+    } catch (error) {
+        handleError(error, "plan.service -> obtenerPlanDeSuscripcion");
+    }
+} 
+
+// Actualizar plan de Suscripcion  
+async function actualizarPlanDeSuscripcion(id, plan){
+    try {
+        const response = await axios.put(
+          `https://api.mercadopago.com/preapproval_plan/${id}`,
+          plan,
+          {
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${ACCESS_TOKEN}`
+            }
+          }
+        );
+        console.log(response.data);
+        return response.data; 
+    } catch (error) {
+        handleError(error, "plan.service -> actualizarPlanDeSuscripcion");
+    }
+}
+export default { getPlanes, createPlan, deletePlan, updatePlan, crearPlanBasico, crearPlanPremium, crearPlanGratuito, buscarPlanDeSuscripcion, obtenerPlanDeSuscripcion, actualizarPlanDeSuscripcion }; 
 

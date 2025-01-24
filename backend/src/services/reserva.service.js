@@ -38,7 +38,7 @@ Obtiene todas las reservas de la base de datos por id del trabajador
 async function getReservasByTrabajador(id) {
     try {
         console.log("id", id);
-        const reservas = await Reserva.find({ trabajador: id })
+        const reservas = await Reserva.find({ trabajador: id, estado: { $ne: 'Cancelada' } })
             .populate('cliente')
             .populate('trabajador')
             .populate('servicio')
@@ -78,86 +78,70 @@ async function createReserva(reserva) {
     try {
         const { hora_inicio, fecha, cliente, trabajador, servicio, estado } = reserva;
 
-        
-
-      
-        //Valida que la hora sea una hora valida
+        // Validar formato de la hora de inicio
         const horaInicio = hora_inicio.split(':');
         if (horaInicio.length !== 2) return [null, "La hora de inicio no es válida"];
-        
 
-        // Validaciones adicionales de existencia de trabajador y cliente
+        // Validar existencia de trabajador y cliente
         const trabajadorFound = await Trabajador.findById(trabajador);
         if (!trabajadorFound) return [null, "El trabajador no existe"];
         const clienteFound = await Cliente.findById(cliente);
         if (!clienteFound) return [null, "El cliente no existe"];
 
-        // Convertir la fecha y hora de inicio a objeto Date
-        const fechaReserva = stringToDateOnly(fecha);  // Fecha en formato DD-MM-YYYY
-        const horaInicioDate = stringToDate(hora_inicio, fecha);  // Hora en formato HH:MM
+        // Convertir fecha y hora a objetos Date
+        const fechaReserva = stringToDateOnly(fecha); // Convertir DD-MM-YYYY a Date
+        const horaInicioDate = stringToDate(hora_inicio, fecha); // Convertir HH:MM con fecha a Date
 
-        // Obtener el día de la semana como string (ej: "lunes")
-        const diaSemana = diasSemana[fechaReserva.getDay()];
-
-        // Validación de que el trabajador esté disponible en ese día
-        const disponibilidad = await Disponibilidad.findOne({ trabajador: trabajador, dia: diaSemana });
-        if (!disponibilidad || disponibilidad.length === 0) {
-            return [null, "El trabajador no está disponible en este día"];
-        }
-       
-        // Verificar si la hora de inicio está dentro del rango de disponibilidad
-        const [inicioDisponible, finDisponible] = [
-            new Date(`${fechaReserva.toDateString()} ${disponibilidad.hora_inicio}`),
-            new Date(`${fechaReserva.toDateString()} ${disponibilidad.hora_fin}`)
-        ];
-
-
-         // Verificar si la hora de inicio está dentro del rango de las excepciones
-         const excepciones = disponibilidad.excepciones; // Accede al array de excepciones
-         //console.log(excepciones);
-         if (excepciones && excepciones.length > 0) {
-
-             for (let excepcion of excepciones) {
-                 const excepcionInicio = new Date(`${fechaReserva.toDateString()} ${excepcion.inicio_no_disponible}`);
-                 const excepcionFin = new Date(`${fechaReserva.toDateString()} ${excepcion.fin_no_disponible}`);
- 
-                 // Comprobar si la hora de inicio de la reserva choca con las excepciones
-                 if (
-                    console.log(horaInicioDate),
-                        console.log(excepcionInicio),
-                        console.log(excepcionFin),
-                        
-                     (horaInicioDate >= excepcionInicio && horaInicioDate < excepcionFin) || 
-                     (horaFin > excepcionInicio && horaFin <= excepcionFin) ||
-                     (horaInicioDate <= excepcionInicio && horaFin >= excepcionFin)
-                 ) {
-                     return [null, "La hora ingresada choca con las excepciones del trabajador"];
-                 }
-             }
-         }
-         
-        // Validación de que no exista una reserva con la misma hora de inicio y trabajador
-        const reservaFound = await Reserva.findOne({ hora_inicio: horaInicioDate, trabajador });
-        if (reservaFound) return [null, "Ya existe una reserva con la misma hora de inicio y trabajador"];
-
-        // Validación de que no exista otra reserva que sume la duración del servicio
+        // Validar existencia del servicio y calcular duración
         const servicioFound = await Servicio.findById(servicio);
         if (!servicioFound) return [null, "El servicio no existe"];
-        //Saca la duracion del servicio
 
         const duracion = servicioFound.duracion;
         const horaFin = new Date(horaInicioDate);
         horaFin.setMinutes(horaFin.getMinutes() + duracion);
 
-        // Obtener reservas existentes del trabajador en el día
-        const reservas = await Reserva.find({ trabajador, fecha: fechaReserva });
+        // Obtener día de la semana
+        const diaSemana = diasSemana[fechaReserva.getDay()];
 
+        // Verificar disponibilidad del trabajador en el día
+        const disponibilidad = await Disponibilidad.findOne({ trabajador: trabajador, dia: diaSemana });
+        if (!disponibilidad) return [null, "El trabajador no está disponible en este día"];
+
+        // Rango de disponibilidad
+        const [inicioDisponible, finDisponible] = [
+            new Date(`${fechaReserva.toDateString()} ${disponibilidad.hora_inicio}`),
+            new Date(`${fechaReserva.toDateString()} ${disponibilidad.hora_fin}`)
+        ];
+
+        // Validar que la hora de inicio esté dentro del rango disponible
+        if (horaInicioDate < inicioDisponible || horaInicioDate >= finDisponible) {
+            return [null, "La hora ingresada está fuera del rango de disponibilidad del trabajador"];
+        }
+
+        // Validar contra excepciones
+        const excepciones = disponibilidad.excepciones;
+        if (excepciones && excepciones.length > 0) {
+            for (let excepcion of excepciones) {
+                const excepcionInicio = new Date(`${fechaReserva.toDateString()} ${excepcion.inicio_no_disponible}`);
+                const excepcionFin = new Date(`${fechaReserva.toDateString()} ${excepcion.fin_no_disponible}`);
+
+                if (
+                    (horaInicioDate >= excepcionInicio && horaInicioDate < excepcionFin) ||
+                    (horaFin > excepcionInicio && horaFin <= excepcionFin) ||
+                    (horaInicioDate <= excepcionInicio && horaFin >= excepcionFin)
+                ) {
+                    return [null, "La hora ingresada choca con las excepciones del trabajador"];
+                }
+            }
+        }
+
+        // Validar que no exista una reserva que choque en horario
+        const reservas = await Reserva.find({ trabajador, fecha: fechaReserva });
         for (let reservaExistente of reservas) {
             const horaInicioReserva = new Date(reservaExistente.hora_inicio);
             const horaFinReserva = new Date(horaInicioReserva);
-            horaFinReserva.setMinutes(horaFinReserva.getMinutes() + servicioFound.duracion);
+            horaFinReserva.setMinutes(horaFinReserva.getMinutes() + reservaExistente.duracion);
 
-            // Verificar colisiones de horarios
             if (
                 (horaInicioDate >= horaInicioReserva && horaInicioDate < horaFinReserva) ||
                 (horaFin > horaInicioReserva && horaFin <= horaFinReserva) ||
@@ -167,26 +151,26 @@ async function createReserva(reserva) {
             }
         }
 
-        
-        console.log("¿lleggo");
         // Crear la nueva reserva
         const newReserva = new Reserva({
-            hora_inicio: horaInicioDate,  // Guardamos el Date de la hora
-            fecha: fechaReserva,  // Guardamos el Date de la fecha
+            hora_inicio: horaInicioDate,
+            fecha: fechaReserva,
             cliente,
             trabajador,
             servicio,
             duracion,
             estado
         });
-        console.log(newReserva);
-        await newReserva.save();
 
+        await newReserva.save();
         return [newReserva, null];
     } catch (error) {
         handleError(error, "reserva.service -> createReserva");
+        return [null, "Ocurrió un error al crear la reserva"];
     }
 }
+
+
 
 
 
@@ -226,19 +210,27 @@ async function updateReserva(id, estado) {
  * Cambia el estado de una reserva a Cancelado
  * 
  */
-
 async function cancelReserva(id) {
     try {
-        return await Reserva.findByIdAndUpdate(id
-            , { estado: "Cancelado" }
-            , { new: true });
-    }
-    catch (error) {
-        handleError(error, "reserva.service -> cancelReserva");
-    }
+        // Actualiza la reserva y cambia su estado a "Cancelada"
+        const reserva = await Reserva.findByIdAndUpdate(
+            id,
+            { estado: 'Cancelada' },
+            { new: true, runValidators: true }
+        );
 
+        // Si no se encuentra la reserva, devuelve un error
+        if (!reserva) {
+            return [null, 'Reserva no encontrada'];
+        }
+
+        // Devuelve la reserva actualizada y un error nulo
+        return [reserva, null];
+    } catch (error) {
+        console.error('Error en cancelReserva:', error.message || error);
+        return [null, error.message];
+    }
 }
-
 
 export default { getReservas, getReservasByTrabajador, createReserva, deleteReserva, updateReserva, cancelReserva };
 
