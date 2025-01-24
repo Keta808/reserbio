@@ -36,12 +36,31 @@ async function createMicroempresa(datosFormulario) {
 
 async function getMicroempresaData(idMicroempresa) {
   try {
+    if (!idMicroempresa) {
+      throw new Error('El ID de la microempresa es obligatorio.');
+    }
+
     const response = await instance.get(`/microempresas/${idMicroempresa}`);
-    console.log('📋 Datos de la microempresa obtenidos:', response.data);
-    return response.data;
+    if (!response?.data?.data) {
+      throw new Error('La respuesta no contiene datos válidos.');
+    }
+
+    // console.log('📋 Datos de la microempresa obtenidos:', response.data.data);
+    return response.data; // Asegúrate de devolver solo la clave `data` del backend
   } catch (error) {
-    console.error('❌ Error al obtener los datos de la microempresa:', error.response?.data || error.message);
+    console.error('❌ Error al obtener los datos de la microempresa:', error.response?.data || error.message || error);
     throw error;
+  }
+}
+
+async function updateMicroempresa(id, datosActualizados) {
+  try {
+      const response = await instance.put(`/microempresas/${id}`, datosActualizados);
+      console.log("📡 Microempresa actualizada:", response.data);
+      return response.data;
+  } catch (error) {
+      console.error("❌ Error al actualizar la microempresa:", error.response?.data || error.message);
+      throw error;
   }
 }
 
@@ -49,7 +68,7 @@ async function getMicroempresasByUser(trabajadorId) {
   try {
     // ✅ URL CORREGIDA
     const response = await instance.get(`/microempresas/user/${trabajadorId}`);
-    console.log('📡 Microempresas obtenidas:', response);
+    // console.log('📡 Microempresas obtenidas:', response);
     return response.data;
   } catch (error) {
     console.error(
@@ -64,4 +83,5 @@ export default {
   getMicroempresaData,
   getMicroempresasByUser,
   createMicroempresa,
+  updateMicroempresa,
 };

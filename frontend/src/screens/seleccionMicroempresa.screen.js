@@ -23,6 +23,7 @@ const getUserId = async () => {
 export default function SeleccionMicroempresaScreen() {
   const [microempresas, setMicroempresas] = useState([]);
   const navigation = useNavigation();
+  const [userId, setUserId] = useState(null);
 
   useEffect(() => {
     const fetchMicroempresas = async () => {
@@ -33,19 +34,20 @@ export default function SeleccionMicroempresaScreen() {
           return;
         }
 
-        console.log('👤 ID de usuario encontrado:', userId);
+        // console.log('👤 ID de usuario encontrado:', userId);
+        setUserId(userId);
         const response = await MicroempresaService.getMicroempresasByUser(userId);
-        console.log('📦 microempresa encontrada en screen:', response);
+        // console.log('📦 microempresa encontrada en screen:', response);
     
         // ✅ Valida que la respuesta sea un array antes de actualizar el estado
         if (Array.isArray(response.data)) {
           setMicroempresas(response.data);
         } else {
           setMicroempresas([]);
-          console.log('Error', 'No se pudieron cargar las microempresas');
+          Alert.alert('Error', 'No se pudieron cargar las microempresas');
         }
       } catch (error) {
-        console.error('Error al obtener microempresas:', error);
+        // console.error('Error al obtener microempresas:', error);
         Alert.alert('Error', 'Ocurrió un error al obtener las microempresas');
       }
     };     
@@ -55,8 +57,25 @@ export default function SeleccionMicroempresaScreen() {
 
   // ✅ Función para manejar la selección de una microempresa
   const handleSelectMicroempresa = (id) => {
-    console.log('📲 Navegando al perfil de la microempresa con ID:', id); // 🔍 Verifica el ID que se está pasando
-    navigation.navigate('Microempresa', { id });
+    try{
+      if (!id || !userId) {
+        console.error('Error: Parámetros inválidos:', { id, userId });
+        Alert.alert('Error', 'No se pudo navegar a la microempresa.');
+        return;
+      }
+      
+      // console.log("Redirigiendo a la microempresa con ID:", response.data._id, "y userId:", userId);
+      
+      console.log('🔍 Navegando a la screen Microempresa con:', { id, userId });
+     
+     // 🔍 Verifica el ID que se está pasando
+      // navigation.navigate('Microempresa', { id, userId }); uso previo de navigate
+      
+      navigation.navigate('Microempresa', { id, userId });
+    }catch(error){
+      console.error('Error al seleccionar la microempresa:', error);
+      Alert.alert('Error', 'Ocurrió un error al seleccionar la microempresa');
+    }
   };  
 
   return (

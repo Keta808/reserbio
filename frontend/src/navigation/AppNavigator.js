@@ -1,8 +1,4 @@
 import React, { useContext } from 'react';
-<<<<<<< HEAD
-=======
-
->>>>>>> ce9cd5ff0e83163960cf450f2fe2e5bac5a3f9a2
 import { createStackNavigator } from '@react-navigation/stack'; 
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import LoginScreen from '../screens/login.screen.js'; 
@@ -10,12 +6,10 @@ import HomeScreen from '../screens/home.screen.js';
 import SuscripcionScreen from '../screens/suscripcion.screen.js';
 import MicroempresaInicioScreeen from '../screens/microempresa.screen.js';
 import FormularioMicroempresa from '../screens/formularioMicroempresa.screen.js';
-<<<<<<< HEAD
 import SeleccionMicroempresaScreen from '../screens/seleccionMicroempresa.screen.js';
-=======
 import DisponibilidadScreen from '../screens/disponibilidad.screen.js';
 import FormularioCreacionHorasScreen from '../screens/formularioCreacionHorario.screen.js'; // Corregido
->>>>>>> ce9cd5ff0e83163960cf450f2fe2e5bac5a3f9a2
+import EditarMicroempresaScreen from '../screens/formularioEdicionMicroempresa.screen.js'; // Corregido
 
 import PaymentScreen from '../screens/pago.screen.js';
 import { AuthContext } from '../context/auth.context';
@@ -47,6 +41,8 @@ const AppNavigator = () => {
           <Stack.Screen name="Pago" component={PaymentScreen}  />
           <Stack.Screen name="FormularioCreacionHoras" component={FormularioCreacionHorasScreen} />
           <Stack.Screen name="SeleccionMicroempresa" component={SeleccionMicroempresaScreen} />
+          <Stack.Screen name="EditarMicroempresa" component={EditarMicroempresaScreen} />
+          <Stack.Screen name="Microempresa" component={MicroempresaInicioScreeen} />
           </>
           
           
