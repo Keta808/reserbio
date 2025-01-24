@@ -23,7 +23,7 @@ const userSchema = new mongoose.Schema(
     state: {
       type: mongoose.Schema.Types.ObjectId,  // Asegúrate de que esto sea correcto
       ref: "State",  // Este es el nombre del modelo que has exportado
-    },
+    }, 
     },
     options,
 );

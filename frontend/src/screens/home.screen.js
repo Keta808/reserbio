@@ -13,13 +13,16 @@ export default function HomeScreen() {
   const handleGoToSuscripcion = () => {
     navigation.navigate('Suscripcion');
   };
-
+  const handleGoToGestorSuscripcion = () => {
+    navigation.navigate('GestorSuscripcion');
+  }
 
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Bienvenido a la App de Reservas</Text> 
       <Button title="Ir a Suscripciones" onPress={handleGoToSuscripcion} />
-      <Button title="Cerrar Sesión" onPress={handleLogout} />
+      <Button title="Cerrar Sesión" onPress={handleLogout} /> 
+      <Button title="Gestionar Suscripción" onPress={handleGoToGestorSuscripcion} />
     </View>
   );
 }

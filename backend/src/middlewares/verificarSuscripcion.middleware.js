@@ -2,43 +2,86 @@
 /* eslint-disable max-len */
 /* eslint-disable require-jsdoc */
 
-import Suscripcion from "../models/suscripcion.model.js";
-import Microempresa from "../models/microempresa.model.js";
+import Suscripcion from "../models/suscripcion.model.js"; 
+import { User } from "../models/user.model.js";
+
 import { respondError } from "../utils/resHandler.js";
+import { handleError } from "../utils/errorHandler.js"; 
 // Middleware para verificar si Tiene suscripcion 
 async function verificarSuscripcion(req, res, next) {
     try {
-        const user = req.user; // Usuario autenticado.
-
-        // Verificar si es un Trabajador
-        if (user.kind !== "Trabajador") {
-            return respondError(res, "Solo los Trabajadores pueden crear microempresas.", 403);
+        // Verifica que req.user existe y tiene el id
+        if (!req.user || !req.user.id) {
+          return respondError(req, res, 401, "Usuario no autenticado.");
+      }
+        const userId = req.user.id;
+        // Validar que el usuario sea Trabajador o Administrador
+        const user = await User.findById(userId).exec();
+        if (!user || !["Trabajador", "Administrador"].includes(user.kind)) {
+            return respondError(req, res, 403, "Acceso no autorizado para este tipo de usuario.");
         }
 
-        // Verificar si ya tiene una microempresa registrada
-        const microempresaExistente = await Microempresa.findOne({ idTrabajador: user._id });
-        if (microempresaExistente) {
-            return respondError(res, "Ya tienes una microempresa registrada.", 400);
-        }
+        const suscripcion = await Suscripcion.findOne({ 
+            idUser: userId, 
+            estado: { $in: ["authorized", "active"] },
+        }).populate("idPlan");
+        if (!suscripcion) {
+            return respondError(req, res, 400, "El usuario no tiene suscripción activa.");
+        } 
+        req.suscripcion = suscripcion;
 
-        // Verificar suscripción activa
-        const suscripcionActiva = await Suscripcion.findOne({
-            idMicroempresa: user._id, // Aquí usas el ID del usuario dueño.
-            estado: "activo",
-        });
-
-        if (!suscripcionActiva) {
-            return respondError(res, "Debes tener una suscripción activa para crear una microempresa.", 403);
-        }
-
-        // Pasar el ID de la suscripción al controlador
-        req.suscripcionId = suscripcionActiva._id;
         next();
     } catch (error) {
-        console.error("Error en verificarSuscripcion:", error);
-        return respondError(res, "Error al verificar la suscripción.", 500);
+        handleError(error, "authentication.middleware -> verificarSuscripcion");
+        return respondError(req, res, 500, "Error al verificar la suscripción.");
     }
 } 
-// Middleware para verificar Tipo de plan suscrito
-
-export default verificarSuscripcion;
+// Middleware para verificar Tipo de plan suscrito 
+  
+async function isPlanBasico(req, res, next) {
+    try {
+      const { suscripcion } = req;
+  
+      if (!suscripcion) {
+        return respondError(req, res, 400, "No se encontró información de la suscripción activa.");
+      }
+  
+      const tiposBasico = ["Plan Basico", "Plan Gratuito"];
+  
+      if (!tiposBasico.includes(suscripcion.idPlan.tipo_plan)) {
+        return respondError(
+          req,
+          res,
+          403,
+          "El plan del usuario no permite realizar esta acción. Solo disponible para Plan Básico o Gratuito.");
+      }
+  
+      next();
+    } catch (error) {
+      handleError(error, "authentication.middleware -> isPlanBasico");
+      return respondError(req, res, 500, "Error al verificar el plan básico o gratuito.");
+    }
+  } 
+async function isPlanPremium(req, res, next) {
+    try {
+      const { suscripcion } = req;
+  
+      if (!suscripcion) {
+        return respondError(req, res, 400, "No se encontró información de la suscripción activa.");
+      }
+  
+      if (suscripcion.idPlan.tipo_plan !== "Plan Premium") {
+        return respondError(
+          req,
+          res,
+          403,
+          "El plan del usuario no permite realizar esta acción. Solo disponible para Plan Premium.");
+      }
+  
+      next();
+    } catch (error) {
+      handleError(error, "authentication.middleware -> isPlanPremium");
+      return respondError(req, res, 500, "Error al verificar el plan premium.");
+    }
+  }
+export default { verificarSuscripcion, isPlanBasico, isPlanPremium }; 

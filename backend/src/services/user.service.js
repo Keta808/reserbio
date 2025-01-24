@@ -1,6 +1,12 @@
+/* eslint-disable no-console */
+/* eslint-disable max-len */
+/* eslint-disable padded-blocks */
+/* eslint-disable keyword-spacing */
+/* eslint-disable require-jsdoc */
 "use strict";
 // Importa el objeto por defecto que contiene todos los modelos
-import UserModels from "../models/user.model.js";
+import UserModels from "../models/user.model.js"; 
+
 // Extrae el modelo 'User'
 const { User, Trabajador, Cliente, Administrador } = UserModels;
 
@@ -148,8 +154,7 @@ async function createAdministrador(administrador) {
     await newAdministrador.save();
 
     return [newAdministrador, null];
-  }
-  catch (error) {
+  }catch (error) {
     handleError(error, "user.service -> createAdministrador");
   }
 }
@@ -162,7 +167,7 @@ async function createAdministrador(administrador) {
 
 async function createCliente(cliente) {
   try {
-    const { nombre, apellido, email, password, state,telefono } = cliente;
+    const { nombre, apellido, email, password, state, telefono } = cliente;
 
     const userFound = await User .findOne({ email: cliente.email });
     if (userFound) return [null, "El usuario ya existe"];
@@ -183,8 +188,7 @@ async function createCliente(cliente) {
     await newCliente.save();
 
     return [newCliente, null];
-  }
-  catch (error) {
+  }catch (error) {
     handleError(error, "user.service -> createCliente");
   }
 }
@@ -217,6 +221,7 @@ async function deleteUser(id) {
   }
 }
 
+
 export default {
   getUsers,
   createUser,
@@ -226,4 +231,5 @@ export default {
   createCliente,
   getUserById,
   deleteUser,
+  
 };

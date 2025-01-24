@@ -1,3 +1,5 @@
+/* eslint-disable max-len */
+/* eslint-disable require-jsdoc */
 "use strict";
 
 import { respondSuccess, respondError } from "../utils/resHandler.js";
@@ -173,6 +175,9 @@ async function deleteUser(req, res) {
     respondError(req, res, 400, error.message);
   }
 }
+
+
+
 export default {
   getUsers,
   createUser,
@@ -182,4 +187,5 @@ export default {
   createCliente,
   getUserById,
   deleteUser,
+  
 };

@@ -4,6 +4,8 @@ import PaymentForm from '../components/paymentform.component'; // Ruta del compo
 // LLAMAR A FUNCION GENERAR TOKEN ID
 import { obtenerSuscripcion, getIssuers, getIdentificationTypes, cardForm } from '../services/suscripcion.service';
 
+
+
 const PaymentScreen = ({ route, navigation }) => {
   const { selectedPlan, user } = route.params;
 
@@ -32,10 +34,17 @@ const PaymentScreen = ({ route, navigation }) => {
         );
 
         if (suscripcionResponse.state === 'Success') {
+           
+          console.log("Suscripción realizada con éxito:", suscripcionResponse);
+          
+         
+         
+          // Redirigir a la pantalla de login 
           Alert.alert('Éxito', 'Suscripción realizada con éxito');
           navigation.navigate('HomeNavigator', { screen: 'Home' });
         } else {
           Alert.alert('Error', 'Hubo un problema al procesar la suscripción');
+          navigation.navigate('HomeNavigator', { screen: 'Suscripciones' });
         }
       } else {
         Alert.alert('Error', 'No se pudo generar el token de la tarjeta');

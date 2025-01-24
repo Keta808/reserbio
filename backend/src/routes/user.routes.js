@@ -23,7 +23,8 @@ router.post("/createtrabajador", isAdmin, usuarioController.createTrabajador);
 router.post("/createcliente", isAdmin, usuarioController.createCliente);
 router.post("/", isAdmin, usuarioController.createAdministrador);
 router.get("/:id", isAdmin, usuarioController.getUserById);
-router.delete("/:id", isAdmin, usuarioController.deleteUser);
+router.delete("/:id", isAdmin, usuarioController.deleteUser); 
+
 
 // Exporta el enrutador
 export default router;

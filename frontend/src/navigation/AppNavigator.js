@@ -4,6 +4,8 @@ import { createStackNavigator } from '@react-navigation/stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 
 // SEPARAR PANTALLAS POR TIPOS DE USUARIOS Y PRIVILEGIOS
+// Usuario Trabajador gestor Suscripcion
+import gestorSuscripcionScreen from '../screens/gestorSuscripcion.screen.js';
 
 import MicroempresaInicioScreeen from '../screens/microempresa.screen.js';
 import FormularioMicroempresa from '../screens/formularioMicroempresa.screen.js';
@@ -45,10 +47,10 @@ const AppNavigator = () => {
           <Stack.Screen name="Pago" component={PaymentScreen}  />
           <Stack.Screen name="FormularioCreacionHoras" component={FormularioCreacionHorasScreen} />
           <Stack.Screen name="SeleccionMicroempresa" component={SeleccionMicroempresaScreen} />
+          <Stack.Screen name="GestorSuscripcion" component={gestorSuscripcionScreen} />
           </>
           
-          
-
+        
       ) : (
         <Stack.Screen name="Login" component={LoginScreen} />
       )}
