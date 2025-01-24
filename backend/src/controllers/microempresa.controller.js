@@ -28,6 +28,47 @@ async function getMicroempresas(req, res) {
 }
 
 /**
+ * Obtiene microempresas separas por paginas con limmite de microempresas por pagina
+ */
+async function getMicroempresasForPage(req, res) {
+  try {
+    // Extraer los parámetros `page` y `limit` de la URL
+    const { page, limit } = req.params;
+
+    // Convertir a números y validar
+    const pageNumber = parseInt(page, 10);
+    const limitNumber = parseInt(limit, 10);
+
+    if (isNaN(pageNumber) || isNaN(limitNumber) || pageNumber <= 0 || limitNumber <= 0) {
+      return respondError(req, res, 400, "Los parámetros de paginación deben ser números mayores a 0.");
+    }
+
+    // Calcular la cantidad de documentos a saltar
+    const skip = (pageNumber - 1) * limitNumber;
+
+    // Obtener las microempresas con paginación
+    const microempresas = await Microempresa.find()
+      .skip(skip)
+      .limit(limitNumber)
+      .exec();
+
+    // Contar el total de microempresas para la paginación
+    const total = await Microempresa.countDocuments();
+
+    // Responder con las microempresas y datos adicionales de paginación
+    respondSuccess(req, res, 200, {
+      data: microempresas,
+      total, // Total de microempresas
+      currentPage: pageNumber, // Página actual
+      totalPages: Math.ceil(total / limitNumber), // Total de páginas
+    });
+  } catch (error) {
+    handleError(error, "microempresa.controller -> getMicroempresasForPage");
+    respondError(req, res, 500, "Error al obtener las microempresas.");
+  }
+}
+
+/**
  * Crea una nueva microempresa en la base de datos
  * @param {Object} req Objeto de solicitud
  * @param {Object} res Objeto de respuesta
@@ -188,6 +229,7 @@ async function getMicroempresasByUser(req, res) {
 
 export default {
     getMicroempresas,
+    getMicroempresasForPage,
     createMicroempresa,
     getMicroempresaById,
     updateMicroempresaById,
