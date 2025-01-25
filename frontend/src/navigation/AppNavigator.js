@@ -10,6 +10,7 @@ import MicroempresaInicioScreeen from '../screens/microempresa.screen.js';
 import FormularioMicroempresa from '../screens/formularioMicroempresa.screen.js';
 import FormularioEdicionMicroempresa from '../screens/formularioEdicionMicroempresa.screen.js';
 import ListaMicroempresasScreen from '../screens/listaMicroempresas.screen.js';
+import PerfilTrabajadorScreen from '../screens/perfilTrabajador.screen.js';
 import DisponibilidadScreen from '../screens/disponibilidad.screen.js';
 import FormularioCreacionHorasScreen from '../screens/formularioCreacionHorario.screen.js';
 import SeleccionMicroempresaScreen from '../screens/seleccionMicroempresa.screen.js';
@@ -86,6 +87,8 @@ const AppNavigator = () => {
           <Stack.Screen name="Microempresa" component={MicroempresaInicioScreeen} />
           <Stack.Screen name="EditarMicroempresa" component={FormularioEdicionMicroempresa} />
           <Stack.Screen name="ListaMicroempresas" component={ListaMicroempresasScreen} />
+          <Stack.Screen name="Trabajador" component={PerfilTrabajadorScreen} />
+          
         </>
       ) : (
         <Stack.Screen name="Login" component={LoginScreen} />
