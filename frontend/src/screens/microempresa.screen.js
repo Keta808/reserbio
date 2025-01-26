@@ -1,13 +1,12 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, ActivityIndicator, Alert, Image, ScrollView, Button, ImageBackground } from 'react-native';
+import { View, Text, StyleSheet, ActivityIndicator, Alert, FlatList, Button, TouchableOpacity } from 'react-native';
 import MicroempresaService from '../services/microempresa.service';
 
 export default function MicroempresaScreen({ route, navigation }) {
-  const { id, userId } = route.params || {}; // Recibe parámetros desde SeleccionMicroempresaScreen
+  const { id, userId } = route.params || {};
   const [microempresa, setMicroempresa] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // Obtener datos de la microempresa
   useEffect(() => {
     const fetchMicroempresa = async () => {
       try {
@@ -16,13 +15,13 @@ export default function MicroempresaScreen({ route, navigation }) {
           setLoading(false);
           return;
         }
-  
+
         console.log('📥 Fetching microempresa with ID:', id);
         const response = await MicroempresaService.getMicroempresaData(id);
-  
+
         if (response) {
           console.log('📋 Datos de la microempresa obtenidos:', response);
-          setMicroempresa(response.data); // Cambiado para usar el objeto correcto
+          setMicroempresa(response.data);
         } else {
           console.warn('⚠️ Respuesta inesperada del servicio:', response);
           Alert.alert('Error', 'No se pudieron cargar los datos de la microempresa.');
@@ -34,29 +33,19 @@ export default function MicroempresaScreen({ route, navigation }) {
         setLoading(false);
       }
     };
-  
-    fetchMicroempresa();
-  }, [id]);  
 
-  // Renderizar la foto de perfil con dimensiones explícitas
-  /* const renderFotoPerfil = () => {
-    if (microempresa?.fotoPerfil?.url && typeof microempresa.fotoPerfil.url === 'string') {
-      return (
-        <Image
-          source={{ uri: microempresa.fotoPerfil.url }}
-          style={styles.profileImage}
-        />
-      );
-    } else {
-      console.warn('⚠️ Foto de perfil no válida o ausente:', microempresa?.fotoPerfil);
-      // Muestra un placeholder si no hay imagen
-      return (
-        <View style={styles.placeholderContainer}>
-          <Text style={styles.placeholderText}>Sin foto de perfil</Text>
-        </View>
-      );
-    }
-  }; */
+    fetchMicroempresa();
+  }, [id]);
+
+  const renderTrabajador = ({ item }) => (
+    <TouchableOpacity
+      style={styles.card}
+      onPress={() => navigation.navigate('Trabajador', { trabajador: item })}
+    >
+      <Text style={styles.cardTitle}>{item.nombre}</Text>
+      <Text style={styles.cardDetail}>{item.telefono}</Text>
+    </TouchableOpacity>
+  );
 
   if (loading) {
     return (
@@ -66,85 +55,101 @@ export default function MicroempresaScreen({ route, navigation }) {
       </View>
     );
   }
-  
+
   if (!microempresa) {
     return (
       <View style={styles.errorContainer}>
         <Text style={styles.error}>No se pudieron cargar los datos de la microempresa.</Text>
       </View>
     );
-  }  
+  }
 
   return (
-    <ScrollView contentContainerStyle={styles.container}>
-      
-
-      <Text style={styles.title}>{microempresa.nombre || 'Sin nombre'}</Text>
-      <Text style={styles.description}>{microempresa.descripcion || 'Sin descripción'}</Text>
-
-      <View style={styles.infoRow}>
-        <Text style={styles.infoLabel}>Teléfono:</Text>
-        <Text style={styles.infoValue}>{microempresa.telefono || 'Sin teléfono'}</Text>
-      </View>
-
-      <View style={styles.infoRow}>
-        <Text style={styles.infoLabel}>Dirección:</Text>
-        <Text style={styles.infoValue}>{microempresa.direccion || 'Sin dirección'}</Text>
-      </View>
-
-      <View style={styles.infoRow}>
-        <Text style={styles.infoLabel}>Email:</Text>
-        <Text style={styles.infoValue}>{microempresa.email || 'Sin email'}</Text>
-      </View>
-
-      <View style={styles.infoRow}>
-        <Text style={styles.infoLabel}>Categoría:</Text>
-        <Text style={styles.infoValue}>{microempresa.categoria || 'Sin categoría'}</Text>
-      </View>
-
-      <Button
-        title="Editar Microempresa"
-        onPress={() => navigation.navigate('EditarMicroempresa', { id, userId })}
-      />
-
-      <View style={styles.buttonContainer}>
-        <Button
-          title="Volver al Inicio"
-          onPress={() => navigation.navigate('HomeNavigator')}
-          color="#007BFF"
-        />
-      </View>
-    </ScrollView>
+    <FlatList
+      data={microempresa.trabajadores}
+      renderItem={renderTrabajador}
+      keyExtractor={(item) => item._id}
+      numColumns={2} // Mostrar en formato de 2 columnas
+      ListHeaderComponent={
+        <View style={styles.container}>
+          <Text style={styles.title}>{microempresa.nombre || 'Sin nombre'}</Text>
+          <Text style={styles.description}>{microempresa.descripcion || 'Sin descripción'}</Text>
+  
+          <View style={styles.infoRow}>
+            <Text style={styles.infoLabel}>Teléfono:</Text>
+            <Text style={styles.infoValue}>{microempresa.telefono || 'Sin teléfono'}</Text>
+          </View>
+  
+          <View style={styles.infoRow}>
+            <Text style={styles.infoLabel}>Dirección:</Text>
+            <Text style={styles.infoValue}>{microempresa.direccion || 'Sin dirección'}</Text>
+          </View>
+  
+          <View style={styles.infoRow}>
+            <Text style={styles.infoLabel}>Email:</Text>
+            <Text style={styles.infoValue}>{microempresa.email || 'Sin email'}</Text>
+          </View>
+  
+          <View style={styles.infoRow}>
+            <Text style={styles.infoLabel}>Categoría:</Text>
+            <Text style={styles.infoValue}>{microempresa.categoria || 'Sin categoría'}</Text>
+          </View>
+  
+          <Text style={styles.sectionTitle}>Trabajadores</Text>
+        </View>
+      }
+      ListFooterComponent={
+        <View style={styles.buttonContainer}>
+          <Button
+            title="Editar Microempresa"
+            onPress={() => navigation.navigate('EditarMicroempresa', { id, userId })}
+          />
+          <Button
+            title="Reservar"
+            onPress={() => navigation.navigate('Reservar', { id, userId })}
+            color="red"
+          />
+          <Button
+            title="Volver al Inicio"
+            onPress={() => navigation.navigate('HomeNavigator')}
+            color="#007BFF"
+          />
+        </View>
+      }
+      contentContainerStyle={styles.listContainer}
+    />
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    flexGrow: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
     padding: 20,
   },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 20,
+  listContainer: {
+    paddingBottom: 20,
   },
-  loadingText: {
-    marginTop: 10,
-    fontSize: 16,
+  card: {
+    backgroundColor: '#fff',
+    borderRadius: 8,
+    padding: 10,
+    margin: 5,
+    width: '45%', // Ajustar tamaño para 2 columnas
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  cardTitle: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    textAlign: 'center',
+  },
+  cardDetail: {
+    fontSize: 12,
     color: '#555',
-  },
-  errorContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 20,
-  },
-  error: {
-    fontSize: 18,
-    color: 'red',
+    textAlign: 'center',
   },
   title: {
     fontSize: 24,
@@ -158,32 +163,19 @@ const styles = StyleSheet.create({
     marginBottom: 20,
     textAlign: 'center',
   },
-  profileImage: {
-    width: 150, // Tamaño explícito de la imagen
-    height: 150,
-    borderRadius: 75, // Imagen circular
-    marginBottom: 20,
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 1, // Reducir la distancia del título con las tarjetas
+    textAlign: 'left',
   },
-  placeholderContainer: {
-    width: 150,
-    height: 150,
-    borderRadius: 75,
-    backgroundColor: '#f0f0f0',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 20,
-  },
-  placeholderText: {
-    color: '#888',
-    fontStyle: 'italic',
-    fontSize: 14,
-    textAlign: 'center',
+  trabajadorListContainer: {
+    marginTop: 1, // Ajustar separación entre "Trabajadores" y las tarjetas
   },
   infoRow: {
     flexDirection: 'row',
     justifyContent: 'flex-start',
     marginBottom: 10,
-    width: '100%',
   },
   infoLabel: {
     fontWeight: 'bold',
@@ -193,5 +185,11 @@ const styles = StyleSheet.create({
   infoValue: {
     fontSize: 16,
   },
+  buttonContainer: {
+    marginTop: 20,
+    paddingHorizontal: 10,
+  },
 });
+
+
 

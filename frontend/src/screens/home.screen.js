@@ -8,27 +8,37 @@ export default function HomeScreen() {
   const navigation = useNavigation();
 
   const handleLogout = async () => {
-    try {
-      await logout();
-      console.log('Cierre de sesión exitoso');
-      
-    } catch (error) {
-      console.error('Error durante el cierre de sesión:', error);
-    }
-  }; 
+    await logout();
+  };
+
   const handleGoToSuscripcion = () => {
     navigation.navigate('Suscripcion');
   };
-  const handleGoToGestorSuscripcion = () => {
-    navigation.navigate('GestorSuscripcion');
-  }
+
+  const handleGoToListaMicroempresas = () => {
+    navigation.navigate('ListaMicroempresas');
+  };
 
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Bienvenido a la App de Reservas</Text> 
-      <Button title="Ir a Suscripciones" onPress={handleGoToSuscripcion} />
-      <Button title="Cerrar Sesión" onPress={handleLogout} /> 
-      <Button title="Gestionar Suscripción" onPress={handleGoToGestorSuscripcion} />
+
+      <Button 
+        title="Ir a Suscripciones" 
+        onPress={handleGoToSuscripcion} 
+      />
+      
+      <Button 
+        title="Ver Lista de Microempresas" 
+        onPress={handleGoToListaMicroempresas} 
+        color="#28A745" 
+      />
+
+      <Button 
+        title="Cerrar Sesión" 
+        onPress={handleLogout} 
+        color="#FF0000" 
+      />
     </View>
   );
 }

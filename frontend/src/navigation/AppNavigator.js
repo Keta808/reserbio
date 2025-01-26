@@ -8,6 +8,9 @@ import axios from '../services/root.services.js';
 // Importar pantallas
 import MicroempresaInicioScreeen from '../screens/microempresa.screen.js';
 import FormularioMicroempresa from '../screens/formularioMicroempresa.screen.js';
+import FormularioEdicionMicroempresa from '../screens/formularioEdicionMicroempresa.screen.js';
+import ListaMicroempresasScreen from '../screens/listaMicroempresas.screen.js';
+import PerfilTrabajadorScreen from '../screens/perfilTrabajador.screen.js';
 import DisponibilidadScreen from '../screens/disponibilidad.screen.js';
 import FormularioCreacionHorasScreen from '../screens/formularioCreacionHorario.screen.js';
 import SeleccionMicroempresaScreen from '../screens/seleccionMicroempresa.screen.js';
@@ -15,7 +18,9 @@ import SuscripcionScreen from '../screens/suscripcion.screen.js';
 import PaymentScreen from '../screens/pago.screen.js';
 import LoginScreen from '../screens/login.screen.js';
 import HomeScreen from '../screens/home.screen.js';
-import CalendarScreen from '../screens/calendario.screen.js';
+import CalendarScreen from '../screens/calendario.screen.js'; 
+
+// Pantallas para Trabajador
 import gestorSuscripcionScreen from '../screens/gestorSuscripcion.screen.js'; 
 import CardForm from '../screens/cardForm.screen.js'; 
 // Contexto de autenticación
@@ -84,6 +89,12 @@ const AppNavigator = () => {
           <Stack.Screen name="SeleccionMicroempresa" component={SeleccionMicroempresaScreen} /> 
           <Stack.Screen name="GestorSuscripcion" component={gestorSuscripcionScreen} /> 
           <Stack.Screen name="CardForm" component={CardForm} />
+          <Stack.Screen name="SeleccionMicroempresa" component={SeleccionMicroempresaScreen} />
+          <Stack.Screen name="Microempresa" component={MicroempresaInicioScreeen} />
+          <Stack.Screen name="EditarMicroempresa" component={FormularioEdicionMicroempresa} />
+          <Stack.Screen name="ListaMicroempresas" component={ListaMicroempresasScreen} />
+          <Stack.Screen name="Trabajador" component={PerfilTrabajadorScreen} />
+          
         </>
       ) : (
         <Stack.Screen name="Login" component={LoginScreen} />

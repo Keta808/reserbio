@@ -164,7 +164,6 @@ async function createAdministrador(administrador) {
  * 
  * 
  */
-
 async function createCliente(cliente) {
   try {
     const { nombre, apellido, email, password, state, telefono } = cliente;
