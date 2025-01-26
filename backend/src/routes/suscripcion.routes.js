@@ -21,11 +21,12 @@ router.post('/cardForm', suscripcionController.cardForm);
 router.post('/obtenerSuscripcion', suscripcionController.obtenerSuscripcion);
 router.get('/buscar-suscripcion', suscripcionController.searchSuscripcionMP);
 router.get('/buscar-suscripcion/:id', suscripcionController.getSuscripcionById);
-router.put('/new-suscripcionCard/:id', suscripcionController.updateSuscripcionCard);
+
 router.put('/update-suscripcion/:id', suscripcionController.updateSuscripcionMP);
 router.get('/datos-suscripcion/:idUser', suscripcionController.getUserSubscription);
 
-
+router.post('/new-suscripcionCard/:id', suscripcionController.updateSuscripcionCard);
+router.post('/cancelar-suscripcion', suscripcionController.cancelarSuscripcion);
 // Sincronizar estados con Job
 router.get('/sincronizar-estados', suscripcionController.sincronizarEstados);
 

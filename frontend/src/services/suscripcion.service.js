@@ -92,9 +92,9 @@ async function cardForm(paymentData) {
     }
 } 
 
-async function updateSuscripcionCard(preapprovalId, newCardTokenId, user){
+async function updateSuscripcionCard(preapprovalId, newCardTokenId, idUser){
   try {
-      const response = await instance.put(`/suscripcion/new-suscripcionCard/${preapprovalId}`, {newCardTokenId, idUser: user._id});
+      const response = await instance.post(`/suscripcion/new-suscripcionCard/${preapprovalId}`, {newCardTokenId, idUser});
       return response.data;
   } catch (error) {
     console.error(`Error al actualizar la suscripción con ID ${preapprovalId}:`, error.response?.data || error.message);
@@ -138,9 +138,12 @@ async function updateSuscripcionMP(id, data){
     throw error;
   }
 } 
-async function cancelarSuscripcion(user, preapprovalId){ 
+async function cancelarSuscripcion(idUser, preapprovalId){ 
   try {
-    const response = await instance.put(`/suscripcion/cancelar-suscripcion/${preapprovalId}`, {user});
+    const response = await instance.post("/suscripcion/cancelar-suscripcion",{ 
+      idUser,
+      preapprovalId,
+    });
     return response.data;
   } catch (error) {
     console.error(`Error al cancelar la suscripción de ${preapprovalId}:`, error.response?.data || error.message);

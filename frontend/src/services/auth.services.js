@@ -39,5 +39,19 @@ export const login = async (dataUser) => {
     } catch (error) {
         console.log('Error en Login', error);
         throw error.response ? error.response.data : new Error('Error en Inicio de sesión');
+    } 
+
+
+    
+}; 
+
+export const logout = async () => {
+    try {
+      await AsyncStorage.removeItem('user'); // Limpia el usuario de AsyncStorage
+      await AsyncStorage.removeItem('token'); // Limpia el token de AsyncStorage
+      console.log('Usuario cerró sesión correctamente');
+    } catch (error) {
+      console.error('Error durante el cierre de sesión:', error);
+      throw error;
     }
-};
+  };

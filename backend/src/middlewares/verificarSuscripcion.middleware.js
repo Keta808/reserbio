@@ -23,7 +23,7 @@ async function verificarSuscripcion(req, res, next) {
 
         const suscripcion = await Suscripcion.findOne({ 
             idUser: userId, 
-            estado: { $in: ["authorized", "active"] },
+            estado: { $in: ["authorized", "pending"] },
         }).populate("idPlan");
         if (!suscripcion) {
             return respondError(req, res, 400, "El usuario no tiene suscripción activa.");

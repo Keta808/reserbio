@@ -1,5 +1,5 @@
-import React from 'react';
-import { View, Alert, StyleSheet } from 'react-native';
+import React, { useState } from 'react';
+import { View, Alert, StyleSheet, ActivityIndicator, Modal, Text } from 'react-native';
 import PaymentForm from '../components/paymentform.component'; // Ruta del componente
 // LLAMAR A FUNCION GENERAR TOKEN ID
 import { obtenerSuscripcion, getIssuers, getIdentificationTypes, cardForm } from '../services/suscripcion.service';
@@ -8,8 +8,10 @@ import { obtenerSuscripcion, getIssuers, getIdentificationTypes, cardForm } from
 
 const PaymentScreen = ({ route, navigation }) => {
   const { selectedPlan, user } = route.params;
+  const [isLoading, setIsLoading] = useState(false);
 
-  const handlePayment = async (paymentData) => {
+  const handlePayment = async (paymentData) => { 
+    setIsLoading(true); // Mostrar el indicador de carga
     try { 
       console.log("Datos enviados al backend para generar cardTokenId:", paymentData);
       // correo de comprador
@@ -52,6 +54,8 @@ const PaymentScreen = ({ route, navigation }) => {
     } catch (error) { 
       console.error("Error processing payment:", error.message || error);
       Alert.alert('Error', 'Ocurrió un error al procesar el pago');
+    } finally {
+      setIsLoading(false); // Ocultar el indicador de carga
     }
   }; 
 
@@ -73,7 +77,14 @@ const PaymentScreen = ({ route, navigation }) => {
   return (
     <View style={styles.container}> 
       <PaymentForm onSubmit={handlePayment} fetchDynamicData={fetchDynamicData} selectedPlan={selectedPlan} />
-    </View>
+      {/* Modal para el estado de carga */}
+      <Modal visible={isLoading} transparent={true} animationType="fade">
+        <View style={styles.loadingOverlay}>
+          <ActivityIndicator size="large" color="#ffffff" />
+          <Text style={styles.loadingText}>Procesando pago...</Text>
+        </View>
+      </Modal>
+   </View>
   );
 };
 
@@ -82,6 +93,18 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     padding: 20,
+  },
+  loadingOverlay: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)', // Fondo semitransparente
+  },
+  loadingText: {
+    marginTop: 10,
+    color: '#ffffff',
+    fontSize: 16,
+    fontWeight: 'bold',
   },
   
 });

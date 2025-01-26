@@ -238,15 +238,20 @@ async function updateSuscripcionCard(req, res) {
 }
 
 async function cancelarSuscripcion(req, res){
-    try {
-        const { preapprovalId } = req.params; 
-        const { user } = req.body; 
-        if (!preapprovalId || !user) {
+    try { 
+        console.log("Body recibido en cancelarSuscripcion:", req.body);
+
+        const { idUser, preapprovalId } = req.body; 
+        
+        if (!idUser || !preapprovalId) {
             return respondError(req, res, 400, "Faltan datos para cancelar la suscripción");
-        } 
-        console.log("CONTROLLER CANCELAR SUS: Datos recibidos en el controller:", preapprovalId, user);
-        const [suscripcion, error] = await suscripcionService.cancelarSuscripcion(user, preapprovalId);
-        if (error) return respondError(req, res, 400, error.message);
+          }
+        console.log("CONTROLLER CANCELAR SUS: Datos recibidos en el controller:", idUser, preapprovalId);
+        const [suscripcion, error] = await suscripcionService.cancelarSuscripcion(idUser, preapprovalId);
+        if (error) {
+            console.error("Error en cancelarSuscripcionService:", error);
+            return respondError(req, res, 400, error);
+        }
         return respondSuccess(req, res, 200, suscripcion);
     } catch (error) {
         handleError(error, "suscripcion.controller -> cancelarSuscripcion");

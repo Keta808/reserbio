@@ -1,20 +1,21 @@
 import React, { useEffect, useState, useContext } from 'react';
-import { View, Text, StyleSheet, ActivityIndicator, Alert, Button, TouchableOpacity } from 'react-native';
-import { getUserSubscription, cancelarSuscripcion, updateSuscripcionCard } from '../services/suscripcion.service';
+import { View, Text, StyleSheet, ActivityIndicator, Alert, TouchableOpacity } from 'react-native';
+import { getUserSubscription, cancelarSuscripcion } from '../services/suscripcion.service';
+import { useNavigation } from '@react-navigation/native';
 import { AuthContext } from '../context/auth.context';
 
 const GestorSuscripcionScreen = () => { 
   const { user } = useContext(AuthContext);
   const [suscripcion, setSuscripcion] = useState(null);
   const [loading, setLoading] = useState(true);
-
+  const navigation = useNavigation(); 
   useEffect(() => {
     const fetchSubscription = async () => {
       try { 
         if (!user || !user.id) {
           throw new Error("Usuario no autenticado o sin ID válido");
         } 
-        console.log("ID de usuario autenticado:", user.id);
+        console.log("ID de usuario autenticado:", user.id); 
         const response = await getUserSubscription(user.id);
         if (response.state === 'Success') {
           setSuscripcion(response.data);
@@ -33,16 +34,15 @@ const GestorSuscripcionScreen = () => {
   }, []); 
   // cancelar suscripción
   const handleCancelSubscription = async () => { 
-    try {
-      if (!user || !user.id) {
-        throw new Error("Usuario no autenticado o sin ID válido");
-      } 
-      console.log("ID de usuario autenticado:", user.id);
-      const response = await cancelarSuscripcion(user.id, suscripcion.id);
+    try { 
+      const idUser = user.id; 
+      const preapprovalId = suscripcion.id; 
+      console.log("Cancelando suscripción con:", { idUser, preapprovalId });
+
+      const response = await cancelarSuscripcion(idUser, preapprovalId);
       if (response.state === 'Success') {
         Alert.alert('Éxito', 'Suscripción cancelada con éxito');
-        // Actualizar el estado de la suscripción
-        // devolver a la pantalla de inicio o a la de suscripciones
+        // Devolver a pantalla de Login
         setSuscripcion(null);
       } else {
         Alert.alert('Error', 'No se pudo cancelar la suscripción');
@@ -54,18 +54,10 @@ const GestorSuscripcionScreen = () => {
   };
   // actualizar tarjeta de crédito
   const actualizarPaymentInfo = async () => { 
-    try {
-      const response = await updateSuscripcionCard(suscripcion.id, suscripcion.cardTokenId, user);
-      if (response.state === 'Success') {
-        Alert.alert('Datos actualizados', 'Los datos de pago se han actualizado correctamente.');
-      } else {
-        Alert.alert('Error', 'No se pudo actualizar la información de pago');
-      }
-    } catch (error) {
-      console.error("Error updating payment info:", error.message || error);
-      Alert.alert('Error', 'No se pudo actualizar la información de pago');
-      
-    }
+    navigation.navigate('CardForm', { suscripcion, user });
+  };
+  const handleVolver = () => {
+    navigation.goBack();
   };
 
   const statusMap = {
@@ -122,7 +114,10 @@ const GestorSuscripcionScreen = () => {
         </TouchableOpacity>
         <TouchableOpacity style={styles.button} onPress={actualizarPaymentInfo}>
           <Text style={styles.buttonText}>Actualizar Datos de Pago</Text>
-        </TouchableOpacity>
+        </TouchableOpacity> 
+        <TouchableOpacity style={styles.button} onPress={handleVolver}>
+          <Text style={styles.buttonText}>Volver</Text>
+        </TouchableOpacity> 
     </View>
     
     </View>

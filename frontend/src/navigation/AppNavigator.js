@@ -15,9 +15,9 @@ import SuscripcionScreen from '../screens/suscripcion.screen.js';
 import PaymentScreen from '../screens/pago.screen.js';
 import LoginScreen from '../screens/login.screen.js';
 import HomeScreen from '../screens/home.screen.js';
-import CalendarScreen from '../screens/calendario.screen.js'; 
-import gestorSuscripcionScreen from '../screens/gestorSuscripcion.screen.js';
-
+import CalendarScreen from '../screens/calendario.screen.js';
+import gestorSuscripcionScreen from '../screens/gestorSuscripcion.screen.js'; 
+import CardForm from '../screens/cardForm.screen.js'; 
 // Contexto de autenticación
 import { AuthContext } from '../context/auth.context';
 
@@ -81,11 +81,10 @@ const AppNavigator = () => {
           <Stack.Screen name="HomeNavigator" component={HomeNavigator} />
           <Stack.Screen name="Pago" component={PaymentScreen} />
           <Stack.Screen name="FormularioCreacionHoras" component={FormularioCreacionHorasScreen} />
-          <Stack.Screen name="SeleccionMicroempresa" component={SeleccionMicroempresaScreen} />
-          <Stack.Screen name="GestorSuscripcion" component={gestorSuscripcionScreen} />
-          </>
-          
-        
+          <Stack.Screen name="SeleccionMicroempresa" component={SeleccionMicroempresaScreen} /> 
+          <Stack.Screen name="GestorSuscripcion" component={gestorSuscripcionScreen} /> 
+          <Stack.Screen name="CardForm" component={CardForm} />
+        </>
       ) : (
         <Stack.Screen name="Login" component={LoginScreen} />
       )}

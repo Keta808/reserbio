@@ -151,11 +151,12 @@ async function updateSuscripcionCard(preapprovalId, newCardTokenId, idUser){
     try {
         if (!preapprovalId) return [null, "Error al actualizar la suscripción: ID de preaprobación no proporcionado."];
         if (!newCardTokenId) return [null, "Error al actualizar la suscripción: cardTokenId no proporcionado."];
-        if (!idUser || !idUser._id) return [null, "Error al actualizar la suscripción: usuario no proporcionado."];
+        if (!idUser ) return [null, "Error al actualizar la suscripción: usuario no proporcionado."];
        // Buscar la suscripción en la BD
        const suscripcion = await Suscripcion.findOne({ 
         preapproval_id: preapprovalId, 
-        idUser 
+        idUser,
+        estado: "authorized" || "pending", 
         }).exec();
 
         if (!suscripcion) {
@@ -184,7 +185,7 @@ async function updateSuscripcionCard(preapprovalId, newCardTokenId, idUser){
         await suscripcion.save();
 
         return [suscripcion, null];
-       
+        
     } catch (error){
         console.error(`Error al actualizar la suscripción:`, error.response?.data || error.message);
         handleError(error, "suscripcion.service -> updateSuscripcionCard");
@@ -357,7 +358,8 @@ async function searchSuscripcionMP(params){
 // Funcion getSuscripcionById
 async function getSuscripcionById(id){
     try {
-        if (!id) throw new Error("ID de suscripción no proporcionado.");
+        if (!id) return [null, "id de suscripción no proporcionado."]; 
+
          // SOLICITUD MERCADO PAGO 
          const response = await axios.get(
             "https://api.mercadopago.com/preapproval/{id}",
@@ -411,20 +413,21 @@ async function crearSuscripcion(suscripcionData){
     }   
 }
 
-async function cancelarSuscripcion(user, preapprovalId) {
+async function cancelarSuscripcion(idUser, preapprovalId) {
     try {
-        if (!preapprovalId) throw new Error("ID de preaprobación no proporcionado.");
-
-        const suscripcion = await Suscripcion.findOne({ preapproval_id: preapprovalId, estado: "activo" }).exec();
+        if (!preapprovalId) return [null, "Error al cancelar la suscripción: ID de preaprobación no proporcionado."];
+        
+        const suscripcion = await Suscripcion.findOne({ preapproval_id: preapprovalId, estado: "authorized" }).exec();
+        console.log("Suscripcion encontrada:", suscripcion);
         if (!suscripcion) {
             return [null, "No se encontró una suscripción activa con este ID."];
         }
 
-        if (String(suscripcion.idUser) !== String(user._id)) {
-            throw new Error("No tienes permiso para cancelar esta suscripción.");
+        if (String(suscripcion.idUser) !== String(idUser)) {
+            return [null, "No tienes permiso para cancelar la suscripcion."];
         }
-
-        await axios.put(
+        console.log("Datos de la suscripción a cancelar:", suscripcion); 
+        const response = await axios.put(
             `https://api.mercadopago.com/preapproval/${preapprovalId}`,
             { status: "cancelled" },
             {
@@ -434,14 +437,33 @@ async function cancelarSuscripcion(user, preapprovalId) {
                 },
             }
         );
+        console.log("Mercado pago response: ", response); 
+        if (!response || response.status !== 200) {
+            return [null, "Error al cancelar la suscripción en Mercado Pago."];
+        }
 
-        suscripcion.estado = "cancelled";
+       
+        // Rellenar los campos de la suscripción y actualizar el estado
+        const updatedSuscripcion = {
+            idUser: suscripcion.idUser || idUser,
+            idPlan: suscripcion.idPlan,
+            estado: "cancelled", // Cambiamos el estado a "cancelled"
+            preapproval_id: suscripcion.preapproval_id || preapprovalId,
+            cardTokenId: suscripcion.cardTokenId,
+        };
+
+        // Aplicar los cambios en la suscripción existente
+        Object.assign(suscripcion, updatedSuscripcion);
+        console.log("Datos antes de guardar:", suscripcion);
         await suscripcion.save();
+        console.log("datos guardados correctamente");
+        console.log("Suscripción cancelada:", suscripcion);
 
-        return [{ message: "Suscripción cancelada exitosamente." }, null];
+        return [suscripcion, null];
     } catch (error) {
         console.error(`Error al cancelar la suscripción:`, error.response?.data || error.message);
         handleError(error, "suscripcion.service -> cancelarSuscripcion");
+        return [null, error.response?.data || error.message];
     }
 } 
 async function sincronizarEstados() {

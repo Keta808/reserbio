@@ -8,7 +8,13 @@ export default function HomeScreen() {
   const navigation = useNavigation();
 
   const handleLogout = async () => {
-    await logout();
+    try {
+      await logout();
+      console.log('Cierre de sesión exitoso');
+      
+    } catch (error) {
+      console.error('Error durante el cierre de sesión:', error);
+    }
   }; 
   const handleGoToSuscripcion = () => {
     navigation.navigate('Suscripcion');
