@@ -76,27 +76,30 @@ const PaymentForm = ({ onSubmit, fetchDynamicData, selectedPlan }) => {
       setSecurityCode(formattedInput);
     }
   }; 
+  // Validar si el Rut ingresado es valido con Algoritmo
   const validarRut = (rut) => {  
     if (!/^[0-9]+[-|‐]{1}[0-9kK]{1}$/.test(rut)) return false;
     const [body, verifier] = rut.split("-");
     let sum = 0;
     let multiplier = 2;
-
+  
     for (let i = body.length - 1; i >= 0; i--) {
       sum += body[i] * multiplier;
       multiplier = multiplier === 7 ? 2 : multiplier + 1;
     }
-
+  
     const expectedVerifier = 11 - (sum % 11);
     const verifierChar = expectedVerifier === 11 ? "0" : expectedVerifier === 10 ? "K" : expectedVerifier.toString();
-
+  
     return verifier.toUpperCase() === verifierChar;
-  }; 
+  };
+  
 
   const formatRut = (input) => {
-     // Eliminar todo lo que no sea números o la letra K/k
-    const cleanInput = input.replace(/[^0-9kK]/g, "").toUpperCase();
-    return cleanInput; // Solo devolver los números sin formato
+    const cleanInput = input.replace(/[^0-9kK]/g, ""); // Elimina todo lo que no sea números o 'k/K'
+    const body = cleanInput.slice(0, -1); // Parte numérica
+    const verifier = cleanInput.slice(-1).toUpperCase(); // Dígito verificador en mayúscula
+    return `${body}${verifier}`;
   };
   const handleIdentificationNumberChange = (input) => { 
     if (identificationType === "RUT") {
@@ -105,11 +108,18 @@ const PaymentForm = ({ onSubmit, fetchDynamicData, selectedPlan }) => {
     } else {
       setIdentificationNumber(input);
     }
+  }; 
+  const handleEmailChange = (input) => {
+    setCardholderEmail(input);
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(input)) {
+      Alert.alert("Error", "Por favor ingrese un correo electrónico válido.");
+    }
   };  
   
 
   const handleSubmit = () => { 
-    console.log("onSubmit:", onSubmit);
+    
     if (!cardNumber || !expirationDate || !securityCode || !cardholderName || !identificationNumber || !cardholderEmail) {
       Alert.alert("Error", "Por favor complete todos los campos.");
       return;
@@ -184,7 +194,7 @@ const PaymentForm = ({ onSubmit, fetchDynamicData, selectedPlan }) => {
        </Picker> 
 
       <TextInput style={styles.input} placeholder="Número de documento" value={identificationNumber} onChangeText={handleIdentificationNumberChange} keyboardType="default" autoCapitalize="characters"  />
-      <TextInput style={styles.input} placeholder="Correo electrónico" value={cardholderEmail} onChangeText={setCardholderEmail} keyboardType="email-address" />
+      <TextInput style={styles.input} placeholder="Correo electrónico" value={cardholderEmail} onChangeText={handleEmailChange} keyboardType="email-address" />
 
       <Button title="Pagar" onPress={handleSubmit}/>
     </View>

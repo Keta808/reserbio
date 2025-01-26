@@ -219,9 +219,78 @@ async function updateSuscripcionMP(req, res) {
         handleError(error, "suscripcion.controller -> updateSuscripcionMP");
         return respondError(req, res, 500, "Error interno al actualizar la suscripción", error);
     }
+} 
+async function updateSuscripcionCard(req, res) { 
+    try {
+        const { preapprovalId } = req.params;
+        const { newCardTokenId, idUser } = req.body;
+        if (!preapprovalId || !newCardTokenId || !idUser) {
+            return respondError(req, res, 400, "Faltan datos para actualizar la suscripción");
+        }
+        console.log("CONTROLLER UPDATE SUS CARD: Datos recibidos en el controller:", preapprovalId, newCardTokenId, idUser);
+        const [suscripcion, error] = await suscripcionService.updateSuscripcionCard(preapprovalId, newCardTokenId, idUser);
+        if (error) return respondError(req, res, 400, error.message); 
+        return respondSuccess(req, res, 200, suscripcion);
+    } catch (error){
+        handleError(error, "suscripcion.controller -> updateSuscripcionCard");
+        return respondError(req, res, 400, error.message);
+    }
 }
 
+async function cancelarSuscripcion(req, res){
+    try { 
+        console.log("Body recibido en cancelarSuscripcion:", req.body);
 
+        const { idUser, preapprovalId } = req.body; 
+        
+        if (!idUser || !preapprovalId) {
+            return respondError(req, res, 400, "Faltan datos para cancelar la suscripción");
+          }
+        console.log("CONTROLLER CANCELAR SUS: Datos recibidos en el controller:", idUser, preapprovalId);
+        const [suscripcion, error] = await suscripcionService.cancelarSuscripcion(idUser, preapprovalId);
+        if (error) {
+            console.error("Error en cancelarSuscripcionService:", error);
+            return respondError(req, res, 400, error);
+        }
+        return respondSuccess(req, res, 200, suscripcion);
+    } catch (error) {
+        handleError(error, "suscripcion.controller -> cancelarSuscripcion");
+        return respondError(req, res, 400, error.message);
+    }
+} 
+
+async function updateCardTokenByUserId(req, res) {
+    try {
+        const { userId } = req.params;
+        const { cardTokenId } = req.body;
+        if (!userId || !cardTokenId) {
+            return respondError(req, res, 400, "Faltan datos para actualizar el token de la tarjeta");
+        } 
+        console.log("CONTROLLER UPDATE CARD TOKEN: Datos recibidos en el controller:", userId, cardTokenId);
+        const [suscripcion, error] = await suscripcionService.updateCardTokenByUserId(userId, cardTokenId);
+        if (error) return respondError(req, res, 400, error.message);
+        return respondSuccess(req, res, 200, suscripcion);
+    } catch (error) {
+        handleError(error, "suscripcion.controller -> updateCardTokenByUserId");
+        return respondError(req, res, 400, error.message);   
+    }
+} 
+
+async function getUserSubscription(req, res) { 
+    try {
+        const idUser = req.params.idUser;
+        if (!idUser) {
+            return respondError(req, res, 400, "Faltan datos para obtener la suscripción");
+        } 
+        console.log("CONTROLLER GET USER SUBSCRIPTION: ID recibido:", idUser); 
+        const [suscripcion, error] = await suscripcionService.getUserSubscription(idUser); 
+        if (error) return respondError(req, res, 400, error);
+        return respondSuccess(req, res, 200, suscripcion);        
+    } catch (error) { 
+        handleError(error, "suscripcion.controller -> getUserSubscription");
+        return respondError(req, res, 400, error.message);
+    }
+}
 export default { 
     crearSuscripcion, 
     getSuscripciones, 
@@ -236,4 +305,9 @@ export default {
     searchSuscripcionMP,
     getSuscripcionById,
     updateSuscripcionMP,
+    updateSuscripcionCard,
+    cancelarSuscripcion,
+    updateCardTokenByUserId,
+    getUserSubscription,
+
 };

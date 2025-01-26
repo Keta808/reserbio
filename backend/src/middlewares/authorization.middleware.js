@@ -54,7 +54,5 @@ async function isCliente(req, res, next) {
   }
 }
 
-
-
 export { isAdmin, isTrabajador, isCliente };
 

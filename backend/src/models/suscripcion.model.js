@@ -13,19 +13,14 @@ const suscripcionSchema = new mongoose.Schema({
     },
     estado: {
         type: String,
-        enum: ["pendiente", "activo", "cancelado", "expirado"],
-        default: "pendiente",
-    },
-    fecha_inicio: {
-        type: Date,
-        default: Date.now,
-        required: true,
-    },
-    fecha_fin: {
-        type: Date,
-        required: true,
+        enum: ["authorized", "paused", "cancelled", "pending", "expired"],
+        default: "pending",
     },
     preapproval_id: {
+        type: String,
+        required: true,
+    },
+    cardTokenId: {
         type: String,
         required: true,
     },
