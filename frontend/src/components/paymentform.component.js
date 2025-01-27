@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
-import { View, Text, TextInput, Button, Picker, StyleSheet, Alert } from "react-native";
+import { View, Text, TextInput, Button, StyleSheet, Alert } from "react-native";
+import { Picker } from '@react-native-picker/picker';
 
 const PaymentForm = ({ onSubmit, fetchDynamicData, selectedPlan }) => {
   const [cardNumber, setCardNumber] = useState("");

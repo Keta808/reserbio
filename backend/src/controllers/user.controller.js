@@ -96,6 +96,20 @@ async function createTrabajador(req, res) {
   }
 }
 
+async function getTrabajadorById(req, res) {
+  try {
+    const { error } = userIdSchema.validate(req.params);
+    if (error) return respondError(req, res, 400, error.message);
+
+    const [trabajador, errorTrabajador] = await UserService.getTrabajadorById(req.params.id);
+    if (errorTrabajador) return respondError(req, res, 404, errorTrabajador);
+    console.log("CONTROLLER TRAB: ", trabajador);
+    respondSuccess(req, res, 200, trabajador);
+  } catch (error) {
+    handleError(error, "user.controller -> getTrabajadorById");
+    respondError(req, res, 400, error.message);
+  }
+}
 /**
  * Crea un nuevo administrador en la base de datos
  * 
@@ -177,7 +191,6 @@ async function deleteUser(req, res) {
 }
 
 
-
 export default {
   getUsers,
   createUser,
@@ -187,5 +200,5 @@ export default {
   createCliente,
   getUserById,
   deleteUser,
-  
+  getTrabajadorById,
 };

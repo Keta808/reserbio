@@ -18,7 +18,7 @@ export default function HomeScreen() {
   const handleGoToListaMicroempresas = () => {
     navigation.navigate('ListaMicroempresas');
   };
-
+  
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Bienvenido a la App de Reservas</Text> 

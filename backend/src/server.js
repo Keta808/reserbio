@@ -59,9 +59,8 @@ async function setupAPI() {
     await createState();
     // Inicia la creación del usuario admin y user
     await createUsers();
-    //Inicia la creación de los roles
+    // Inicia la creación de los roles
     await createRoles();
-
   } catch (err) {
     handleFatalError(err, "/server.js -> setupAPI");
   }

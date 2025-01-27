@@ -17,7 +17,7 @@ import SeleccionMicroempresaScreen from '../screens/seleccionMicroempresa.screen
 import SuscripcionScreen from '../screens/suscripcion.screen.js';
 import PaymentScreen from '../screens/pago.screen.js';
 import LoginScreen from '../screens/login.screen.js';
-import HomeScreen from '../screens/home.screen.js';
+// import HomeScreen from '../screens/home.screen.js';
 import CalendarScreen from '../screens/calendario.screen.js'; 
 import HomeClienteScreen from '../screens/homeCliente.screen.js';
 import MicroempresaClienteScreen from '../screens/microempresaCliente.screen.js';
@@ -27,6 +27,8 @@ import SeleccionServicioScreen from '../screens/seleccionServicio.screen.js';
 // Pantallas para Trabajador
 import gestorSuscripcionScreen from '../screens/gestorSuscripcion.screen.js'; 
 import CardForm from '../screens/cardForm.screen.js'; 
+import TrabajadorScreen from '../screens/trabajador.screen.js';
+import HomeTrabajadorScreen from '../screens/homeTrabajador.screen.js';
 // Contexto de autenticación
 import { AuthContext } from '../context/auth.context';
 
@@ -41,16 +43,6 @@ const LoadingScreen = () => (
   </View>
 );
 
-const HomeNavigator = () => (
-  <Tab.Navigator lazy={true}>
-    <Tab.Screen name="Home" component={HomeScreen} />
-    <Tab.Screen name="Suscripcion" component={SuscripcionScreen} />
-    <Tab.Screen name="FormularioMicroempresa" component={FormularioMicroempresa} />
-    <Tab.Screen name="SeleccionMicroempresa" component={SeleccionMicroempresaScreen} />
-    <Tab.Screen name="Horario" component={DisponibilidadScreen} />
-    <Tab.Screen name="Calendario" component={CalendarScreen} />
-  </Tab.Navigator>
-);
 
 const HomeClienteNavigator = () => (
  <Tab.Navigator lazy={true}>
@@ -58,7 +50,16 @@ const HomeClienteNavigator = () => (
     
   </Tab.Navigator>
 );
-
+const HomeTrabajadorNavigator = () => (
+<Tab.Navigator lazy={true}>
+    <Tab.Screen name="HomeTrabajador" component={HomeTrabajadorScreen} /> 
+    <Tab.Screen name="Suscripcion" component={SuscripcionScreen} />
+    <Tab.Screen name="FormularioMicroempresa" component={FormularioMicroempresa} />
+    <Tab.Screen name="SeleccionMicroempresa" component={SeleccionMicroempresaScreen} />
+    <Tab.Screen name="Horario" component={DisponibilidadScreen} />
+    <Tab.Screen name="Calendario" component={CalendarScreen} />
+  </Tab.Navigator>
+);
 
 const AppNavigator = () => {
   const { setIsAuthenticated, isAuthenticated ,user} = useContext(AuthContext); // Asumimos que el contexto tiene este método
@@ -103,7 +104,7 @@ const AppNavigator = () => {
   
   const TrabajadorStack = () => (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
-      <Stack.Screen name="HomeNavigator" component={HomeNavigator} />
+      <Stack.Screen name="HomeNavigator" component={HomeTrabajadorNavigator} />
       <Stack.Screen name="Pago" component={PaymentScreen} />
       <Stack.Screen name="FormularioCreacionHoras" component={FormularioCreacionHorasScreen} />
       <Stack.Screen name="SeleccionMicroempresa" component={SeleccionMicroempresaScreen} /> 
@@ -112,7 +113,9 @@ const AppNavigator = () => {
       <Stack.Screen name="Microempresa" component={MicroempresaInicioScreeen} />
       <Stack.Screen name="EditarMicroempresa" component={FormularioEdicionMicroempresa} />
       <Stack.Screen name="ListaMicroempresas" component={ListaMicroempresasScreen} />
-      <Stack.Screen name="Trabajador" component={PerfilTrabajadorScreen} />
+      <Stack.Screen name="Trabajador" component={PerfilTrabajadorScreen} /> 
+      <Stack.Screen name="Perfil" component={TrabajadorScreen} /> 
+      
     </Stack.Navigator>
   );
   

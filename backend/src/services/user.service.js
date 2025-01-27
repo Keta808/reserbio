@@ -123,12 +123,24 @@ async function createTrabajador(trabajador) {
     await newTrabajador.save();
 
     return [newTrabajador, null];
-  }
-  catch (error) {
+  } catch (error) {
     handleError(error, "user.service -> createTrabajador");
   }
 }
+async function getTrabajadorById(id) { 
+  try {
+    const trabajador = await Trabajador.findById({ _id: id })
+      .select("-password")
+      .populate("state")
+      .exec();
 
+    if (!trabajador) return [null, "El trabajador no existe"];
+    console.log("SERVICES TRAB:", trabajador);
+    return [trabajador, null];
+  } catch (error) {
+    handleError(error, "user.service -> getTrabajadorById");
+  }
+}
 /**
  * Crea un nuevo administrador en la base de datos
  * 
@@ -230,5 +242,5 @@ export default {
   createCliente,
   getUserById,
   deleteUser,
-  
+  getTrabajadorById,
 };
