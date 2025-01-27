@@ -19,12 +19,17 @@ import PaymentScreen from '../screens/pago.screen.js';
 import LoginScreen from '../screens/login.screen.js';
 import HomeScreen from '../screens/home.screen.js';
 import CalendarScreen from '../screens/calendario.screen.js'; 
+import HomeClienteScreen from '../screens/homeCliente.screen.js';
+import MicroempresaClienteScreen from '../screens/microempresaCliente.screen.js';
+import SeleccionServicioScreen from '../screens/seleccionServicio.screen.js';
+
 
 // Pantallas para Trabajador
 import gestorSuscripcionScreen from '../screens/gestorSuscripcion.screen.js'; 
 import CardForm from '../screens/cardForm.screen.js'; 
 // Contexto de autenticación
 import { AuthContext } from '../context/auth.context';
+
 
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -47,8 +52,16 @@ const HomeNavigator = () => (
   </Tab.Navigator>
 );
 
+const HomeClienteNavigator = () => (
+ <Tab.Navigator lazy={true}>
+    <Tab.Screen name="HomeCliente" component={HomeClienteScreen} />
+    
+  </Tab.Navigator>
+);
+
+
 const AppNavigator = () => {
-  const { setIsAuthenticated, isAuthenticated } = useContext(AuthContext); // Asumimos que el contexto tiene este método
+  const { setIsAuthenticated, isAuthenticated ,user} = useContext(AuthContext); // Asumimos que el contexto tiene este método
   const [isLoading, setIsLoading] = useState(true); // Estado de carga local
 
   useEffect(() => {
@@ -79,23 +92,42 @@ const AppNavigator = () => {
     return <LoadingScreen />;
   }
 
+  const ClienteStack = () => (
+    <Stack.Navigator screenOptions={{ headerShown: false }}>
+      <Stack.Screen name="HomeNavigator" component={HomeClienteNavigator} />
+      <Stack.Screen name ="ListaMicroempresas" component={ListaMicroempresasScreen} />  
+      <Stack.Screen name="MicroempresaCliente" component={MicroempresaClienteScreen} />
+      <Stack.Screen name="SeleccionServicio" component={SeleccionServicioScreen} />
+    </Stack.Navigator>
+  );
+  
+  const TrabajadorStack = () => (
+    <Stack.Navigator screenOptions={{ headerShown: false }}>
+      <Stack.Screen name="HomeNavigator" component={HomeNavigator} />
+      <Stack.Screen name="Pago" component={PaymentScreen} />
+      <Stack.Screen name="FormularioCreacionHoras" component={FormularioCreacionHorasScreen} />
+      <Stack.Screen name="SeleccionMicroempresa" component={SeleccionMicroempresaScreen} /> 
+      <Stack.Screen name="GestorSuscripcion" component={gestorSuscripcionScreen} /> 
+      <Stack.Screen name="CardForm" component={CardForm} />
+      <Stack.Screen name="Microempresa" component={MicroempresaInicioScreeen} />
+      <Stack.Screen name="EditarMicroempresa" component={FormularioEdicionMicroempresa} />
+      <Stack.Screen name="ListaMicroempresas" component={ListaMicroempresasScreen} />
+      <Stack.Screen name="Trabajador" component={PerfilTrabajadorScreen} />
+    </Stack.Navigator>
+  );
+  
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
       {isAuthenticated ? (
-        <>
-          <Stack.Screen name="HomeNavigator" component={HomeNavigator} />
-          <Stack.Screen name="Pago" component={PaymentScreen} />
-          <Stack.Screen name="FormularioCreacionHoras" component={FormularioCreacionHorasScreen} />
-          <Stack.Screen name="SeleccionMicroempresa" component={SeleccionMicroempresaScreen} /> 
-          <Stack.Screen name="GestorSuscripcion" component={gestorSuscripcionScreen} /> 
-          <Stack.Screen name="CardForm" component={CardForm} />
-          <Stack.Screen name="SeleccionMicroempresa" component={SeleccionMicroempresaScreen} />
-          <Stack.Screen name="Microempresa" component={MicroempresaInicioScreeen} />
-          <Stack.Screen name="EditarMicroempresa" component={FormularioEdicionMicroempresa} />
-          <Stack.Screen name="ListaMicroempresas" component={ListaMicroempresasScreen} />
-          <Stack.Screen name="Trabajador" component={PerfilTrabajadorScreen} />
-          
-        </>
+        (() => {
+          console.log('Valor de user:', user); // Verifica si `user` existe y muestra su contenido
+          console.log('Valor de user.kind:', user?.kind); // Verifica el valor de `kind`
+          return user?.kind === 'Cliente' ? ( 
+            <Stack.Screen name="Cliente" component={ClienteStack} />
+          ) : (
+            <Stack.Screen name="Worker" component={TrabajadorStack} />
+          );
+        })()
       ) : (
         <Stack.Screen name="Login" component={LoginScreen} />
       )}

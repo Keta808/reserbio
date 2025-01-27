@@ -14,6 +14,10 @@ export default function LoginScreen() {
     const email_prueba = 'trabajador@email.com';
     const password_prueba = 'trabajador123';
 
+    const cliente_prueba= 'cliente@email.com';
+
+    const password_cliente ='cliente123';
+
     const handleLogin = async () => {
       if (!email || !password) {
         Alert.alert('Error', 'Por favor, complete todos los campos');
@@ -51,6 +55,17 @@ export default function LoginScreen() {
       }
     }
 
+    const handleLoginCliente = async () => {
+      try {
+          const dataUser = {email: cliente_prueba, password: password_cliente};
+          const userInfo = await login(dataUser);
+          console.log('Usuario autenticado:', userInfo);
+          Alert.alert('Inicio de sesión exitoso', `Bienvenido, ${cliente_prueba}`);
+      } catch (error) {
+        Alert.alert('Error', 'El usuario o la contraseña son incorrectos');
+      }
+    }
+
 
     console.log('LoginScreen - Rendering');
     return (
@@ -71,7 +86,9 @@ export default function LoginScreen() {
           secureTextEntry
         />
         <Button title="Ingresar" onPress={handleLogin} />
+        
         <Button title ='logeo rapido con trabajador' onPress={ handleLoginPrueba} />
+        <Button title ='logeo rapido con cliente' onPress={ handleLoginCliente} />
       </View>
     );
   }

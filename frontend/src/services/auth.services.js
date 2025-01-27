@@ -52,3 +52,4 @@ export const logout = async () => {
         throw error.response ? error.response.data : new Error('Error en Cierre de sesión');
     }
 };
+ 

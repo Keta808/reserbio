@@ -74,4 +74,17 @@ async function getServicioById(id) {
 
 // añadir get por reserva o microempresa posiblemente segun MER
 
-export default { getServicios, createServicio, deleteServicio, updateServicio, getServicioById };
+
+//Get servicios por id de microempresa
+
+async function getServiciosByMicroempresaId(id) {
+    try {
+        const servicios = await Servicio.find({ idMicroempresa: id }).exec();
+        if (!servicios) return [null, "No hay servicios"];
+        return [servicios, null];
+    } catch (error) {
+        handleError(error, "servicio.service -> getServiciosByMicroempresaId");
+    }
+}
+
+export default { getServicios, createServicio, deleteServicio, updateServicio, getServicioById, getServiciosByMicroempresaId };

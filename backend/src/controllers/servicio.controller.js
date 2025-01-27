@@ -79,4 +79,26 @@ async function getServicioById(req, res) {
         respondError(req, res, 400, error.message); 
     } 
 } 
-export default { getServicios, createServicio, deleteServicio, updateServicio, getServicioById }; 
+
+
+//get servicios por ID microempresa
+
+async function getServiciosByMicroempresaId(req, res) {
+    try {
+        const { error } = servicioIdSchema.validate(req.params);
+        if (error) return respondError(req, res, 400, error.message);
+
+        const [servicios, errorServicios] = await servicioService.getServiciosByMicroempresaId(req.params.id);
+        if (errorServicios) return respondError(req, res, 404, errorServicios);
+
+        servicios.length === 0
+            ? respondSuccess(req, res, 204)
+            : respondSuccess(req, res, 200, servicios);
+    } catch (error) {
+        handleError(error, "servicio.controller -> getServiciosByMicroempresaId");
+        respondError(req, res, 400, error.message);
+    }
+}
+
+
+export default { getServicios, createServicio, deleteServicio, updateServicio, getServicioById, getServiciosByMicroempresaId }; 

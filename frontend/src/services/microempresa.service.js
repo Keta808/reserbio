@@ -56,7 +56,7 @@ async function getMicroempresaData(idMicroempresa) {
 async function getMicroempresas() {
   try {
     const response = await instance.get('/microempresas'); // Llama al endpoint
-    console.log('📋 Microempresas obtenidas:', response.data); // Opcional: para debug
+   // console.log('📋 Microempresas obtenidas:', response.data); // Opcional: para debug
     return response.data; // Devuelve las microempresas
   } catch (error) {
     console.error('❌ Error al obtener las microempresas:', error.response?.data || error.message);

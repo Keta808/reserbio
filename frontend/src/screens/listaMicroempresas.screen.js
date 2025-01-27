@@ -9,10 +9,10 @@ export default function ListaMicroempresasScreen({ navigation }) {
   useEffect(() => {
     const fetchMicroempresas = async () => {
       try {
-        console.log('📥 Fetching microempresas...');
+        //console.log('📥 Fetching microempresas...');
         const response = await MicroempresaService.getMicroempresas();
         if (response.data) {
-          console.log('📋 Microempresas obtenidas:', response.data);
+          //console.log('📋 Microempresas obtenidas:', response.data);
           setMicroempresas(response.data);
         } else {
           Alert.alert('Error', 'No se encontraron microempresas.');
@@ -32,7 +32,7 @@ export default function ListaMicroempresasScreen({ navigation }) {
     return (
       <TouchableOpacity
         style={styles.card}
-        onPress={() => navigation.navigate('Microempresa', { id: item._id })}
+        onPress={() => navigation.navigate('MicroempresaCliente', { id: item._id })}
       >
         {/* Información de la microempresa */}
         <View style={styles.infoContainer}>
