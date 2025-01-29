@@ -3,10 +3,11 @@ import { View, Text, StyleSheet, ActivityIndicator, Alert, FlatList, Button, Tou
 import MicroempresaService from '../services/microempresa.service';
 
 export default function MicroempresaScreen({ route, navigation }) {
-  const { id, userId } = route.params || {};
+  const { id } = route.params || {};
   const [microempresa, setMicroempresa] = useState(null);
   const [loading, setLoading] = useState(true);
 
+  console.log('🔍 Buscando microempresa con ID:', id);
   useEffect(() => {
     const fetchMicroempresa = async () => {
       try {
@@ -16,11 +17,11 @@ export default function MicroempresaScreen({ route, navigation }) {
           return;
         }
 
-        console.log('📥 Fetching microempresa with ID:', id);
+       // console.log('📥 Fetching microempresa with ID:', id);
         const response = await MicroempresaService.getMicroempresaData(id);
 
         if (response) {
-          console.log('📋 Datos de la microempresa obtenidos:', response);
+         // console.log('📋 Datos de la microempresa obtenidos:', response);
           setMicroempresa(response.data);
         } else {
           console.warn('⚠️ Respuesta inesperada del servicio:', response);
@@ -102,7 +103,7 @@ export default function MicroempresaScreen({ route, navigation }) {
         <View style={styles.buttonContainer}>
           <Button
             title="Reservar"
-            onPress={() => navigation.navigate('SeleccionServicio', { microempresaId: id })}
+            onPress={() => navigation.navigate('SeleccionServicio', { microempresaId: id, trabajadores: microempresa.trabajadores })}
             color="red"
           />
           <Button

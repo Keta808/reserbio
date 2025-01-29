@@ -22,7 +22,8 @@ import CalendarScreen from '../screens/calendario.screen.js';
 import HomeClienteScreen from '../screens/homeCliente.screen.js';
 import MicroempresaClienteScreen from '../screens/microempresaCliente.screen.js';
 import SeleccionServicioScreen from '../screens/seleccionServicio.screen.js';
-
+import ConfirmacionReservaScreen from '../screens/confirmacionReserva.screen.js';
+import TestScreen from '../screens/testimagenes.screen.js';
 
 // Pantallas para Trabajador
 import gestorSuscripcionScreen from '../screens/gestorSuscripcion.screen.js'; 
@@ -49,12 +50,14 @@ const HomeNavigator = () => (
     <Tab.Screen name="SeleccionMicroempresa" component={SeleccionMicroempresaScreen} />
     <Tab.Screen name="Horario" component={DisponibilidadScreen} />
     <Tab.Screen name="Calendario" component={CalendarScreen} />
+   
   </Tab.Navigator>
 );
 
 const HomeClienteNavigator = () => (
  <Tab.Navigator lazy={true}>
     <Tab.Screen name="HomeCliente" component={HomeClienteScreen} />
+    <Tab.Screen name ="Test" component={TestScreen} />  
     
   </Tab.Navigator>
 );
@@ -98,6 +101,8 @@ const AppNavigator = () => {
       <Stack.Screen name ="ListaMicroempresas" component={ListaMicroempresasScreen} />  
       <Stack.Screen name="MicroempresaCliente" component={MicroempresaClienteScreen} />
       <Stack.Screen name="SeleccionServicio" component={SeleccionServicioScreen} />
+      <Stack.Screen name="ConfirmacionReserva" component={ConfirmacionReservaScreen} />
+      <Stack.Screen name="Test" component={TestScreen} />
     </Stack.Navigator>
   );
   
@@ -113,6 +118,8 @@ const AppNavigator = () => {
       <Stack.Screen name="EditarMicroempresa" component={FormularioEdicionMicroempresa} />
       <Stack.Screen name="ListaMicroempresas" component={ListaMicroempresasScreen} />
       <Stack.Screen name="Trabajador" component={PerfilTrabajadorScreen} />
+   
+    
     </Stack.Navigator>
   );
   
