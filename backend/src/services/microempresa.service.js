@@ -200,7 +200,6 @@ async function getMicroempresasPorCategoria(categoria) {
     }
 } 
 
-
 // getMicromempresaPorNombre  
 
 async function getMicromempresaPorNombre(nombre) { 

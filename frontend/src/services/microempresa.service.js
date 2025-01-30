@@ -101,6 +101,16 @@ async function getMicroempresasByUser(trabajadorId) {
   }
 }
 
+async function getMicroempresasPorCategoria(categoria) {
+  try {
+    const response = await instance.get(`/microempresas/categoria/${categoria}`);
+    return response.data.data; // Devuelve solo la lista de microempresas
+  } catch (error) {
+    console.error("❌ Error al obtener microempresas por categoría:", error.response?.data || error.message);
+    return [];
+  }
+}
+
 export default {
   getMicroempresaData,
   getMicroempresasForPage,
@@ -108,4 +118,5 @@ export default {
   getMicroempresas,
   createMicroempresa,
   updateMicroempresa,
+  getMicroempresasPorCategoria,
 };

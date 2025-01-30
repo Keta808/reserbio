@@ -181,21 +181,26 @@ async function deleteMicroempresaById(req, res) {
 }
 
 // eslint-disable-next-line require-jsdoc, space-before-blocks
-async function getMicroempresasPorCategoria(req, res){
-    try {
-        const { categoria } = req.params;
-        // eslint-disable-next-line max-len
-        const [microempresas, errorMicroempresas] = await MicroempresaService.getMicroempresasPorCategoria(categoria);
-        if (errorMicroempresas) return respondError(req, res, 404, errorMicroempresas);
+async function getMicroempresasPorCategoria(req, res) {
+  try {
+    const { categoria } = req.params;
+    if (!categoria) {
+      return res.status(400).json({ error: "La categoría es obligatoria" });
+    }
 
-        microempresas.length === 0
-          ? respondSuccess(req, res, 204)
-          : respondSuccess(req, res, 200, microempresas);
-      } catch (error) {
-        handleError(error, "microempresa.controller -> getMicroempresasPorCategoria");
-        respondError(req, res, 400, error.message);
-      }
+    const [microempresas, error] = await MicroempresaService.getMicroempresasPorCategoria(categoria);
+
+    if (error) {
+      return res.status(404).json({ error });
+    }
+
+    return res.status(200).json({ data: microempresas });
+  } catch (error) {
+    console.error("❌ Error en getMicroempresasPorCategoria:", error);
+    res.status(500).json({ error: "Error interno del servidor" });
+  }
 }
+
 async function getMicromempresaPorNombre(req, res){
     try {
         const { nombre } = req.params;

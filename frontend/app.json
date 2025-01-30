@@ -15,12 +15,13 @@
       "supportsTablet": true
     },
     "android": {
-      "adaptiveIcon": {
-        "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#ffffff"
-      },
-      "newArchEnabled": true
-    },
+   "permissions": ["INTERNET", "ACCESS_NETWORK_STATE"],
+   "adaptiveIcon": {
+     "foregroundImage": "./assets/adaptive-icon.png",
+     "backgroundColor": "#ffffff"
+   },
+   "newArchEnabled": true
+ },
     "web": {
       "favicon": "./assets/favicon.png"
     },
