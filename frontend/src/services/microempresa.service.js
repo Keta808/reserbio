@@ -64,6 +64,28 @@ async function getMicroempresas() {
   }
 }
 
+async function getMicroempresaFotoPerfil(id) {
+  try {
+      console.log(`🔍 Solicitando foto de perfil para microempresa con ID: ${id}`);
+
+      const response = await instance.get(`/microempresas/fotoPerfil/${id}`);
+
+      if (!response.data || !response.data.fotoPerfil) {
+          console.warn("⚠️ La respuesta del backend no contiene fotoPerfil:", response.data);
+          return null;
+      }
+
+      console.log("📸 URL de la foto de perfil recibida:", response.data.fotoPerfil);
+      return response.data.fotoPerfil;
+  } catch (error) {
+      console.error(
+          "❌ Error al obtener la foto de perfil de la microempresa:",
+          error.response?.data || error.message
+      );
+      return null;
+  }
+}
+
 async function getMicroempresasForPage(page = 1, limit = 10) {
   try {
     const response = await instance.get(`/microempresas/page/${page}/limit/${limit}`);
@@ -116,6 +138,7 @@ export default {
   getMicroempresasForPage,
   getMicroempresasByUser,
   getMicroempresas,
+  getMicroempresaFotoPerfil,
   createMicroempresa,
   updateMicroempresa,
   getMicroempresasPorCategoria,

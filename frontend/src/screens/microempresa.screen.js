@@ -1,10 +1,12 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, ActivityIndicator, Alert, FlatList, Button, TouchableOpacity, Image } from 'react-native';
+import { View, Text, StyleSheet, ActivityIndicator, Alert, FlatList, Button, TouchableOpacity } from 'react-native';
+import { Image } from 'expo-image';
 import MicroempresaService from '../services/microempresa.service';
 
 export default function MicroempresaScreen({ route, navigation }) {
   const { id, userId } = route.params || {};
   const [microempresa, setMicroempresa] = useState(null);
+  const [fotoPerfilUrl, setFotoPerfilUrl] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -29,19 +31,24 @@ export default function MicroempresaScreen({ route, navigation }) {
       } catch (error) {
         console.error('❌ Error al obtener los datos de la microempresa:', error.message);
         Alert.alert('Error', 'No se pudieron cargar los datos de la microempresa.');
-      } finally {
-        setLoading(false);
+      }
+    };
+
+    const fetchFotoPerfil = async () => {
+      try {
+        console.log(`🔍 Solicitando foto de perfil para la microempresa con ID: ${id}`);
+        const fotoPerfil = await MicroempresaService.getMicroempresaFotoPerfil(id);
+        console.log('📸 Foto de perfil recibida:', fotoPerfil);
+        setFotoPerfilUrl(fotoPerfil);
+      } catch (error) {
+        console.error('❌ Error al obtener la foto de perfil:', error);
       }
     };
 
     fetchMicroempresa();
+    fetchFotoPerfil();
+    setLoading(false);
   }, [id]);
-
-  // ✅ Validar la URL de la imagen antes de usarla
-  const imageUrl = microempresa?.fotoPerfil?.url?.trim() || null;
-  console.log("🖼 URL procesada:", imageUrl);
-  console.log("📱 URL en Xiaomi:", `"${microempresa?.fotoPerfil?.url}"`);
-
 
   if (loading) {
     return (
@@ -77,9 +84,9 @@ export default function MicroempresaScreen({ route, navigation }) {
       ListHeaderComponent={
         <View style={styles.container}>
           <View style={styles.imageContainer}>
-            {imageUrl ? (
+            {fotoPerfilUrl ? (
               <Image
-                source={{ uri: imageUrl + '?' + new Date().getTime() }}
+                source={{ uri: `${fotoPerfilUrl}?time=${new Date().getTime()}` }}
                 style={styles.image}
                 resizeMode="cover"
                 onError={() => console.log("❌ Error al cargar la imagen de perfil")}
@@ -186,23 +193,6 @@ const styles = StyleSheet.create({
     marginBottom: 1,
     textAlign: 'left',
   },
-  infoRow: {
-    flexDirection: 'row',
-    justifyContent: 'flex-start',
-    marginBottom: 10,
-  },
-  infoLabel: {
-    fontWeight: 'bold',
-    fontSize: 16,
-    marginRight: 5,
-  },
-  infoValue: {
-    fontSize: 16,
-  },
-  buttonContainer: {
-    marginTop: 20,
-    paddingHorizontal: 10,
-  },
   placeholderText: {
     fontSize: 16,
     color: '#888',
@@ -210,5 +200,6 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   }  
 });
+
 
 

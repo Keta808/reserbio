@@ -28,6 +28,23 @@ async function getMicroempresas(req, res) {
 }
 
 /**
+ * Obtiene solo la URL de la foto de perfil de una microempresa
+ */
+async function getMicroempresaFotoPerfil(req, res) {
+  try {
+      const { id } = req.params;
+      const [fotoPerfil, error] = await MicroempresaService.getMicroempresaFotoPerfil(id);
+      if (error) {
+          return res.status(404).json({ error });
+      }
+      return res.status(200).json({ fotoPerfil });
+  } catch (error) {
+      console.error("❌ Error en getMicroempresaFotoPerfil:", error);
+      res.status(500).json({ error: "Error interno del servidor" });
+  }
+}
+
+/**
  * Obtiene microempresas separas por paginas con limmite de microempresas por pagina
  */
 async function getMicroempresasForPage(req, res) {
@@ -234,6 +251,7 @@ async function getMicroempresasByUser(req, res) {
 
 export default {
     getMicroempresas,
+    getMicroempresaFotoPerfil,
     getMicroempresasForPage,
     createMicroempresa,
     getMicroempresaById,
