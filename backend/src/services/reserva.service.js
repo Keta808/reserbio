@@ -232,7 +232,36 @@ async function cancelReserva(id) {
     }
 }
 
-export default { getReservas, getReservasByTrabajador, createReserva, deleteReserva, updateReserva, cancelReserva };
+
+//get reservas cliente
+
+async function getReservasByCliente(id) {
+    try {
+        console.log("id en servicio", id);
+        
+        const reservas = await Reserva.find({ cliente: id })
+            .select("hora_inicio fecha estado trabajador servicio") // Solo los campos necesarios de la reserva
+            .populate({
+                path: "trabajador",
+                select: "nombre apellido", // Solo traemos el nombre y apellido del trabajador
+            })
+            .populate({
+                path: "servicio",
+                select: "nombre", // Solo traemos el nombre del servicio
+            })
+            .exec();
+
+        if (!reservas || reservas.length === 0) return [null, "No hay reservas"];
+
+        return [reservas, null];
+    } catch (error) {
+        handleError(error, "reserva.service -> getReservasByCliente");
+    }
+}
+
+
+
+export default { getReservas, getReservasByTrabajador, createReserva, deleteReserva, updateReserva, cancelReserva, getReservasByCliente };
 
 
 

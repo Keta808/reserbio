@@ -135,6 +135,26 @@ async function cancelReserva(req, res) {
     }
 }
 
+//get reservas cliente
 
-export default { getReservas, getReservasByTrabajador, createReserva ,deleteReserva ,updateReserva, cancelReserva };
+async function getReservasByCliente(req, res) {
+    try {
+        console.log(req.params);
+        const { error } = reservaIdSchema.validate(req.params);
+        if (error) return respondError(req, res, 400, error.message);
+
+        const [reservas, errorReservas] = await ReservaService.getReservasByCliente(req.params.id);
+        if (errorReservas) return respondError(req, res, 404, errorReservas);
+
+        reservas.length === 0
+            ? respondSuccess(req, res, 204)
+            : respondSuccess(req, res, 200, reservas);
+    } catch (error) {
+        handleError(error, "reserva.controller -> getReservasByCliente");
+        respondError(req, res, 400, error.message);
+    }
+}
+
+
+export default { getReservas, getReservasByTrabajador, createReserva ,deleteReserva ,updateReserva, cancelReserva, getReservasByCliente};
 

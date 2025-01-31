@@ -60,9 +60,24 @@ async function cancelReserva(id) {
     }
 }
 
+//get reservas by cliente id
+
+async function getReservasByCliente(clienteId) {
+    try {
+        const response = await instance.get(`/reservas/cliente/${clienteId}`);
+        return response.data;
+    } catch (error) {
+        console.error(
+        "Error al obtener las reservas del cliente:",
+        error.response?.data || error.message
+        );
+        throw error;
+    }
+}
 export default {
     getReservasByTrabajadorId,
     createReserva,
     deleteReserva,
-    cancelReserva
+    cancelReserva,
+    getReservasByCliente,
 };

@@ -42,7 +42,9 @@ async function deleteDisponibilidad(id){
 
 async function getHorariosDisponibles(data){
     try{
+        console.log('Data:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaa', data);
         const response = await instance.post('/disponibilidad/horarios-disponibles', data);
+        console.log('Respuesta del backendaaaa:', response.data);
         return response.data;
     }catch(error){
         console.error('Error al obtener los horarios disponibles:', error.response?.data || error.message);

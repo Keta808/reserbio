@@ -24,6 +24,7 @@ import MicroempresaClienteScreen from '../screens/microempresaCliente.screen.js'
 import SeleccionServicioScreen from '../screens/seleccionServicio.screen.js';
 import ConfirmacionReservaScreen from '../screens/confirmacionReserva.screen.js';
 import TestScreen from '../screens/testimagenes.screen.js';
+import ReservaClienteScreen from '../screens/reservasCliente.screen.js';
 
 // Pantallas para Trabajador
 import gestorSuscripcionScreen from '../screens/gestorSuscripcion.screen.js'; 
@@ -58,6 +59,7 @@ const HomeClienteNavigator = () => (
  <Tab.Navigator lazy={true}>
     <Tab.Screen name="HomeCliente" component={HomeClienteScreen} />
     <Tab.Screen name ="Test" component={TestScreen} />  
+    <Tab.Screen name="Reservas" component={ReservaClienteScreen} />
     
   </Tab.Navigator>
 );
