@@ -42,9 +42,11 @@ const SuscripcionScreen = () => {
 
   return (
     <ScrollView style={styles.container}> 
-    {/* Sección de introducción */}
+    
       <View style={styles.introContainer}>
-        <Text style={styles.mainTitle}>¡Suscríbete a un plan para utilizar la aplicacion Reserbio!</Text>
+        <Text style={styles.mainTitle}>
+          ¡Suscríbete a un plan para utilizar la aplicacion Reserbio!
+        </Text>
         <Text style={styles.mainDescription}>
           Nuestra aplicación ofrece planes diseñados para adaptarse a tus necesidades. 
           Elige el plan que más te convenga y disfruta de las características que tenemos para ti.
@@ -52,17 +54,18 @@ const SuscripcionScreen = () => {
         </Text>
       </View>
 
-    {/* Listado de planes */}
+    
       <Text style={styles.title}>Elige tu plan de suscripción.</Text>
+
       <View style={styles.plansContainer}>
         {Array.isArray(planes) && planes.length > 0 ? (
           planes.map((plan) => {
-            const description = planDescriptions[plan.tipo_plan]; // Obtener la descripción del plan
+            const description = planDescriptions[plan.tipo_plan] || "Descripcion no disponible"; // Obtener la descripción del plan
             return (
-              <View key={plan._id} style={styles.planCard}>
-                <Text style={styles.planTitle}>{plan.tipo_plan}</Text>
-                <Text style={styles.planDescription}>{description}</Text> {/* Descripción del plan */} 
-                <Text style={styles.planPrice}>${plan.precio}</Text> {/* Precio del plan */}
+              <View key={String(plan._id)} style={styles.planCard}>
+                <Text style={styles.planTitle}>{String(plan.tipo_plan || "Sin nombre")}</Text>
+                <Text style={styles.planDescription}>{String(description)}</Text>  
+                <Text style={styles.planPrice}>${String(plan.precio || "0")}</Text> 
                 <Button
                   title="Obtener"
                   onPress={() => navigation.navigate('Pago', {selectedPlan: plan, user })} // Navegar a la pantalla de pago
@@ -71,11 +74,11 @@ const SuscripcionScreen = () => {
             );
           })
         ) : (
-          <Text>No se encontraron planes disponibles.</Text> // Mostrar mensaje si no hay planes
+          <Text>{String("No se encontraron planes disponibles.")}</Text> // Mostrar mensaje si no hay planes
         )}
       </View> 
 
-      {/* Disclaimer */} 
+      
       <View style={styles.disclaimerContainer}>
       <Text style={styles.disclaimerText}>
         Nota: La suscripción al plan seleccionado se cobrará de manera mensual una vez obtenido el plan. 

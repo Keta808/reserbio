@@ -1,10 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, ActivityIndicator, Alert, FlatList, Button, TouchableOpacity } from 'react-native';
+import { Image } from 'expo-image';
 import MicroempresaService from '../services/microempresa.service';
 
 export default function MicroempresaScreen({ route, navigation }) {
   const { id, userId } = route.params || {};
   const [microempresa, setMicroempresa] = useState(null);
+  const [fotoPerfilUrl, setFotoPerfilUrl] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -29,23 +31,24 @@ export default function MicroempresaScreen({ route, navigation }) {
       } catch (error) {
         console.error('❌ Error al obtener los datos de la microempresa:', error.message);
         Alert.alert('Error', 'No se pudieron cargar los datos de la microempresa.');
-      } finally {
-        setLoading(false);
+      }
+    };
+
+    const fetchFotoPerfil = async () => {
+      try {
+        console.log(`🔍 Solicitando foto de perfil para la microempresa con ID: ${id}`);
+        const fotoPerfil = await MicroempresaService.getMicroempresaFotoPerfil(id);
+        console.log('📸 Foto de perfil recibida:', fotoPerfil);
+        setFotoPerfilUrl(fotoPerfil);
+      } catch (error) {
+        console.error('❌ Error al obtener la foto de perfil:', error);
       }
     };
 
     fetchMicroempresa();
+    fetchFotoPerfil();
+    setLoading(false);
   }, [id]);
-
-  const renderTrabajador = ({ item }) => (
-    <TouchableOpacity
-      style={styles.card}
-      onPress={() => navigation.navigate('Trabajador', { trabajador: item })}
-    >
-      <Text style={styles.cardTitle}>{item.nombre}</Text>
-      <Text style={styles.cardDetail}>{item.telefono}</Text>
-    </TouchableOpacity>
-  );
 
   if (loading) {
     return (
@@ -67,53 +70,63 @@ export default function MicroempresaScreen({ route, navigation }) {
   return (
     <FlatList
       data={microempresa.trabajadores}
-      renderItem={renderTrabajador}
+      renderItem={({ item }) => (
+        <TouchableOpacity
+          style={styles.card}
+          onPress={() => navigation.navigate('Trabajador', { trabajador: item })}
+        >
+          <Text style={styles.cardTitle}>{item.nombre}</Text>
+          <Text style={styles.cardDetail}>{item.telefono}</Text>
+        </TouchableOpacity>
+      )}
       keyExtractor={(item) => item._id}
-      numColumns={2} // Mostrar en formato de 2 columnas
+      numColumns={2}
       ListHeaderComponent={
         <View style={styles.container}>
+          <View style={styles.imageContainer}>
+            {fotoPerfilUrl ? (
+              <Image
+                source={{ uri: `${fotoPerfilUrl}?time=${new Date().getTime()}` }}
+                style={styles.image}
+                resizeMode="cover"
+                onError={() => console.log("❌ Error al cargar la imagen de perfil")}
+              />
+            ) : (
+              <Text style={styles.placeholderText}>Imagen no disponible</Text>
+            )}
+          </View>
+
           <Text style={styles.title}>{microempresa.nombre || 'Sin nombre'}</Text>
           <Text style={styles.description}>{microempresa.descripcion || 'Sin descripción'}</Text>
-  
+
           <View style={styles.infoRow}>
             <Text style={styles.infoLabel}>Teléfono:</Text>
             <Text style={styles.infoValue}>{microempresa.telefono || 'Sin teléfono'}</Text>
           </View>
-  
+
           <View style={styles.infoRow}>
             <Text style={styles.infoLabel}>Dirección:</Text>
             <Text style={styles.infoValue}>{microempresa.direccion || 'Sin dirección'}</Text>
           </View>
-  
+
           <View style={styles.infoRow}>
             <Text style={styles.infoLabel}>Email:</Text>
             <Text style={styles.infoValue}>{microempresa.email || 'Sin email'}</Text>
           </View>
-  
+
           <View style={styles.infoRow}>
             <Text style={styles.infoLabel}>Categoría:</Text>
             <Text style={styles.infoValue}>{microempresa.categoria || 'Sin categoría'}</Text>
           </View>
-  
+
           <Text style={styles.sectionTitle}>Trabajadores</Text>
         </View>
       }
       ListFooterComponent={
         <View style={styles.buttonContainer}>
-          <Button
-            title="Editar Microempresa"
-            onPress={() => navigation.navigate('EditarMicroempresa', { id, userId })}
-          />
-          <Button
-            title="Reservar"
-            onPress={() => navigation.navigate('Reservar', { id, userId })}
-            color="red"
-          />
-          <Button
-            title="Volver al Inicio"
-            onPress={() => navigation.navigate('HomeNavigator')}
-            color="#007BFF"
-          />
+          <Button title="Editar Microempresa" onPress={() => navigation.navigate('EditarMicroempresa', { id, userId })} />
+          <Button title="Reservar" onPress={() => navigation.navigate('Reservar', { id, userId })} color="red" />
+          <Button title="Volver al Inicio" onPress={() => navigation.navigate('HomeNavigator')} color="#007BFF" />
         </View>
       }
       contentContainerStyle={styles.listContainer}
@@ -128,12 +141,23 @@ const styles = StyleSheet.create({
   listContainer: {
     paddingBottom: 20,
   },
+  image: {
+    width: 200,
+    height: 200,
+    borderRadius: 100,
+    marginBottom: 10,
+  },
+  imageContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 10,
+  },  
   card: {
     backgroundColor: '#fff',
     borderRadius: 8,
     padding: 10,
     margin: 5,
-    width: '45%', // Ajustar tamaño para 2 columnas
+    width: '45%',
     alignItems: 'center',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
@@ -166,29 +190,15 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 18,
     fontWeight: 'bold',
-    marginBottom: 1, // Reducir la distancia del título con las tarjetas
+    marginBottom: 1,
     textAlign: 'left',
   },
-  trabajadorListContainer: {
-    marginTop: 1, // Ajustar separación entre "Trabajadores" y las tarjetas
-  },
-  infoRow: {
-    flexDirection: 'row',
-    justifyContent: 'flex-start',
+  placeholderText: {
+    fontSize: 16,
+    color: '#888',
+    textAlign: 'center',
     marginBottom: 10,
-  },
-  infoLabel: {
-    fontWeight: 'bold',
-    fontSize: 16,
-    marginRight: 5,
-  },
-  infoValue: {
-    fontSize: 16,
-  },
-  buttonContainer: {
-    marginTop: 20,
-    paddingHorizontal: 10,
-  },
+  }  
 });
 
 

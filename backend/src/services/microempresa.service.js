@@ -22,6 +22,23 @@ async function getMicroempresas() {
     }
 }
 
+/**
+ * Obtiene solo la URL de la foto de perfil de una microempresa por su ID
+ * @param {string} id - ID de la microempresa
+ * @returns {Promise} Promesa con la URL de la foto de perfil
+ */
+async function getMicroempresaFotoPerfil(id) {
+    try {
+        const microempresa = await Microempresa.findById(id).exec();
+        if (!microempresa || !microempresa.fotoPerfil) return [null, "No se encontró la foto de perfil"];
+
+        return [microempresa.fotoPerfil.url, null];
+    } catch (error) {
+        handleError(error, "microempresa.service -> getMicroempresaFotoPerfil");
+        return [null, "Error al obtener la foto de perfil"];
+    }
+}
+
 async function getMicroempresasForPage(page = 1, limit = 10) {
     try {
         const skip = (page - 1) * limit; // Cálculo para saltar las microempresas anteriores
@@ -200,7 +217,6 @@ async function getMicroempresasPorCategoria(categoria) {
     }
 } 
 
-
 // getMicromempresaPorNombre  
 
 async function getMicromempresaPorNombre(nombre) { 
@@ -235,6 +251,7 @@ async function getMicroempresasByUser(trabajadorId) {
 
 export default {
     getMicroempresas,
+    getMicroempresaFotoPerfil,
     getMicroempresasForPage,
     createMicroempresa,
     getMicroempresaById,
