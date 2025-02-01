@@ -1,9 +1,10 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { 
-    View, Text, TextInput, Button, StyleSheet, Alert, TouchableOpacity, Modal, FlatList
+    View, Text, TextInput, Button, StyleSheet, Alert, TouchableOpacity 
 } from "react-native";
 import { Image } from "expo-image"; 
 import MicroempresaService from "../services/microempresa.service.js";
+import ActionSheet from "react-native-actions-sheet";
 
 const CATEGORIAS = [
     "Barberia", "Peluqueria", "Estetica", "Masajes", "Manicure",
@@ -23,8 +24,10 @@ const EditarMicroempresaScreen = ({ route, navigation }) => {
     const [email, setEmail] = useState("");
     const [categoria, setCategoria] = useState("");
     const [fotoPerfil, setFotoPerfil] = useState(null);
-    const [modalVisible, setModalVisible] = useState(false);
     const [errors, setErrors] = useState({});
+
+    // 📌 Referencia para ActionSheet
+    const actionSheetRef = useRef(null);
 
     // ⚡ Cargar datos de la microempresa
     useEffect(() => {
@@ -82,7 +85,7 @@ const EditarMicroempresaScreen = ({ route, navigation }) => {
             valid = false;
         }
 
-        if (!email.trim() || !/^[^\s@]+@[^\s@]+$/.test(email)) {
+        if (!email.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
             newErrors.email = "El email no tiene un formato válido.";
             valid = false;
         }
@@ -127,7 +130,7 @@ const EditarMicroempresaScreen = ({ route, navigation }) => {
         <View style={styles.container}>
             <Text style={styles.title}>Editar Microempresa</Text>
 
-            {/* Foto de perfil */}
+            {/* 📷 Foto de perfil */}
             <TouchableOpacity onPress={() => navigation.navigate("SubirFotoPerfil", { id, modo: "editar" })}>
                 {fotoPerfil ? (
                     <Image source={{ uri: fotoPerfil }} style={styles.image} />
@@ -138,82 +141,44 @@ const EditarMicroempresaScreen = ({ route, navigation }) => {
                 )}
             </TouchableOpacity>
 
-            <TextInput 
-                style={styles.input} 
-                value={nombre} 
-                onChangeText={setNombre} 
-                placeholder="Nombre" 
-            />
+            <TextInput style={styles.input} value={nombre} onChangeText={setNombre} placeholder="Nombre" />
             {errors.nombre && <Text style={styles.error}>{errors.nombre}</Text>}
 
-            <TextInput 
-                style={styles.input} 
-                value={descripcion} 
-                onChangeText={setDescripcion} 
-                placeholder="Descripción" 
-            />
+            <TextInput style={styles.input} value={descripcion} onChangeText={setDescripcion} placeholder="Descripción" />
             {errors.descripcion && <Text style={styles.error}>{errors.descripcion}</Text>}
 
-            <TextInput 
-                style={styles.input} 
-                value={telefono} 
-                onChangeText={setTelefono} 
-                placeholder="Teléfono" 
-                keyboardType="phone-pad" 
-            />
+            <TextInput style={styles.input} value={telefono} onChangeText={setTelefono} placeholder="Teléfono" keyboardType="phone-pad" />
             {errors.telefono && <Text style={styles.error}>{errors.telefono}</Text>}
 
-            <TextInput 
-                style={styles.input} 
-                value={direccion} 
-                onChangeText={setDireccion} 
-                placeholder="Dirección" 
-            />
+            <TextInput style={styles.input} value={direccion} onChangeText={setDireccion} placeholder="Dirección" />
             {errors.direccion && <Text style={styles.error}>{errors.direccion}</Text>}
 
-            <TextInput 
-                style={styles.input} 
-                value={email} 
-                onChangeText={setEmail} 
-                placeholder="Email" 
-                keyboardType="email-address" 
-            />
+            <TextInput style={styles.input} value={email} onChangeText={setEmail} placeholder="Email" keyboardType="email-address" />
             {errors.email && <Text style={styles.error}>{errors.email}</Text>}
 
-            <TouchableOpacity 
-                style={styles.selectButton} 
-                onPress={() => setModalVisible(true)}
-            >
-                <Text style={styles.selectButtonText}>{categoria || "Selecciona una categoría"}</Text>
-            </TouchableOpacity>
-            {errors.categoria && <Text style={styles.error}>{errors.categoria}</Text>}
+            {/* 📌 Selector de categoría con ActionSheet */}
+<TouchableOpacity style={styles.pickerButton} onPress={() => actionSheetRef.current?.show()}>
+    <Text>{categoria || "Selecciona una categoría..."}</Text>
+</TouchableOpacity>
+{errors.categoria && <Text style={styles.error}>{errors.categoria}</Text>}
+
+<ActionSheet ref={actionSheetRef}>
+    {CATEGORIAS.map((item) => (
+        <TouchableOpacity
+            key={item}
+            style={styles.option}
+            onPress={() => {
+                setCategoria(item);
+                actionSheetRef.current?.hide();
+            }}
+        >
+            <Text style={styles.optionText}>{item}</Text>
+        </TouchableOpacity>
+    ))}
+</ActionSheet>
+
 
             <Button title="Actualizar Microempresa" onPress={handleSubmit} />
-
-            {/* Modal para seleccionar la categoría */}
-            <Modal visible={modalVisible} animationType="slide">
-                <View style={styles.modalContainer}>
-                    <Text style={styles.modalTitle}>Selecciona una categoría</Text>
-                    <FlatList
-                        data={CATEGORIAS}
-                        keyExtractor={(item) => item}
-                        renderItem={({ item }) => (
-                            <TouchableOpacity
-                                style={styles.modalOption}
-                                onPress={() => {
-                                    setCategoria(item);
-                                    setModalVisible(false);
-                                }}
-                            >
-                                <Text style={styles.modalOptionText}>{item}</Text>
-                            </TouchableOpacity>
-                        )}
-                    />
-                    <TouchableOpacity style={styles.modalCancel} onPress={() => setModalVisible(false)}>
-                        <Text style={styles.modalCancelText}>Cancelar</Text>
-                    </TouchableOpacity>
-                </View>
-            </Modal>
         </View>
     );
 };
@@ -222,34 +187,47 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
         padding: 20,
-        backgroundColor: "#fff"
+        backgroundColor: "#fff",
     },
     title: {
         fontSize: 24,
         fontWeight: "bold",
         marginBottom: 20,
-        textAlign: "center"
+        textAlign: "center",
     },
     input: {
         borderWidth: 1,
         borderColor: "#ccc",
         borderRadius: 5,
         padding: 10,
-        marginBottom: 15
+        marginBottom: 15,
+    },
+    pickerButton: {
+        borderWidth: 1,
+        borderColor: "#ccc",
+        padding: 12,
+        borderRadius: 5,
+        alignItems: "center",
+        backgroundColor: "#f9f9f9",
+        marginBottom: 15,
+    },
+    option: {
+        padding: 15,
+        borderBottomWidth: 1,
+        borderBottomColor: "#ccc",
+        alignItems: "center",
+    },
+    optionText: {
+        fontSize: 16,
     },
     error: {
         color: "red",
         fontSize: 12,
-        marginBottom: 10
+        marginBottom: 10,
     },
-    image: {
-        width: 100,
-        height: 100,
-        borderRadius: 50,
-        alignSelf: "center",
-        marginBottom: 15
-    }
 });
 
+
 export default EditarMicroempresaScreen;
+
 

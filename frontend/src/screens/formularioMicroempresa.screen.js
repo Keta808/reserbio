@@ -172,6 +172,7 @@ const styles = StyleSheet.create({
     borderRadius: 5,
     textAlign: "center",
     backgroundColor: "#f9f9f9",
+    // marginBottom: 15,
   },
   option: {
     padding: 15,
