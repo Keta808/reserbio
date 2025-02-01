@@ -3,8 +3,9 @@ import {
     View, Text, TextInput, Button, StyleSheet, Alert, TouchableOpacity 
 } from "react-native";
 import { Image } from "expo-image"; 
-import MicroempresaService from "../services/microempresa.service.js";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import ActionSheet from "react-native-actions-sheet";
+import MicroempresaService from "../services/microempresa.service.js";
 
 const CATEGORIAS = [
     "Barberia", "Peluqueria", "Estetica", "Masajes", "Manicure",
@@ -26,10 +27,8 @@ const EditarMicroempresaScreen = ({ route, navigation }) => {
     const [fotoPerfil, setFotoPerfil] = useState(null);
     const [errors, setErrors] = useState({});
 
-    // 📌 Referencia para ActionSheet
     const actionSheetRef = useRef(null);
 
-    // ⚡ Cargar datos de la microempresa
     useEffect(() => {
         if (!id) {
             console.error("⚠️ Error: No hay ID de microempresa.");
@@ -48,7 +47,8 @@ const EditarMicroempresaScreen = ({ route, navigation }) => {
                 setDireccion(data.direccion);
                 setEmail(data.email);
                 setCategoria(data.categoria);
-                setFotoPerfil(data.fotoPerfil?.url || null);
+                setFotoPerfil(data.fotoPerfil?.url ?? null);
+                console.log("📸 Foto de perfil cargada en edición:", data.fotoPerfil?.url);
             } catch (error) {
                 console.error("❌ Error al cargar datos de la microempresa:", error);
                 Alert.alert("Error", "No se pudieron cargar los datos.");
@@ -57,7 +57,6 @@ const EditarMicroempresaScreen = ({ route, navigation }) => {
         fetchMicroempresa();
     }, [id]);
 
-    // ✅ Validar y enviar datos al backend
     const handleSubmit = async () => {
         let valid = true;
         const newErrors = {};
@@ -130,7 +129,6 @@ const EditarMicroempresaScreen = ({ route, navigation }) => {
         <View style={styles.container}>
             <Text style={styles.title}>Editar Microempresa</Text>
 
-            {/* 📷 Foto de perfil */}
             <TouchableOpacity onPress={() => navigation.navigate("SubirFotoPerfil", { id, modo: "editar" })}>
                 {fotoPerfil ? (
                     <Image source={{ uri: fotoPerfil }} style={styles.image} />
@@ -156,27 +154,25 @@ const EditarMicroempresaScreen = ({ route, navigation }) => {
             <TextInput style={styles.input} value={email} onChangeText={setEmail} placeholder="Email" keyboardType="email-address" />
             {errors.email && <Text style={styles.error}>{errors.email}</Text>}
 
-            {/* 📌 Selector de categoría con ActionSheet */}
-<TouchableOpacity style={styles.pickerButton} onPress={() => actionSheetRef.current?.show()}>
-    <Text>{categoria || "Selecciona una categoría..."}</Text>
-</TouchableOpacity>
-{errors.categoria && <Text style={styles.error}>{errors.categoria}</Text>}
+            <TouchableOpacity style={styles.pickerButton} onPress={() => actionSheetRef.current?.show()}>
+                <Text>{categoria || "Selecciona una categoría..."}</Text>
+            </TouchableOpacity>
+            {errors.categoria && <Text style={styles.error}>{errors.categoria}</Text>}
 
-<ActionSheet ref={actionSheetRef}>
-    {CATEGORIAS.map((item) => (
-        <TouchableOpacity
-            key={item}
-            style={styles.option}
-            onPress={() => {
-                setCategoria(item);
-                actionSheetRef.current?.hide();
-            }}
-        >
-            <Text style={styles.optionText}>{item}</Text>
-        </TouchableOpacity>
-    ))}
-</ActionSheet>
-
+            <ActionSheet ref={actionSheetRef}>
+                {CATEGORIAS.map((item) => (
+                    <TouchableOpacity
+                        key={item}
+                        style={styles.option}
+                        onPress={() => {
+                            setCategoria(item);
+                            actionSheetRef.current?.hide();
+                        }}
+                    >
+                        <Text style={styles.optionText}>{item}</Text>
+                    </TouchableOpacity>
+                ))}
+            </ActionSheet>
 
             <Button title="Actualizar Microempresa" onPress={handleSubmit} />
         </View>
@@ -225,9 +221,16 @@ const styles = StyleSheet.create({
         fontSize: 12,
         marginBottom: 10,
     },
+    image: {
+        width: 100,
+        height: 100,
+        borderRadius: 50,
+        alignSelf: "center",
+        marginBottom: 15,
+    },
 });
 
-
 export default EditarMicroempresaScreen;
+
 
 

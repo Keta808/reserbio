@@ -105,8 +105,6 @@ async function deleteFotoPerfil(req, res) {
     }
 }
 
-
-
 /**
  * Maneja la subida de imágenes adicionales a galeria de Cloudinary
  */
