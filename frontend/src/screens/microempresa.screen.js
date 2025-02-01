@@ -124,7 +124,13 @@ export default function MicroempresaScreen({ route, navigation }) {
       }
       ListFooterComponent={
         <View style={styles.buttonContainer}>
-          <Button title="Editar Microempresa" onPress={() => navigation.navigate('EditarMicroempresa', { id, userId })} />
+          <Button 
+            title="Editar Microempresa" 
+            onPress={() => {
+            console.log("🛠 Navegando a edición con ID:", id, "y userID:", userId);
+            navigation.navigate('EditarMicroempresa', { id, userId, modo: "editar" });
+            }} 
+        />
           <Button title="Reservar" onPress={() => navigation.navigate('Reservar', { id, userId })} color="red" />
           <Button title="Volver al Inicio" onPress={() => navigation.navigate('HomeNavigator')} color="#007BFF" />
         </View>

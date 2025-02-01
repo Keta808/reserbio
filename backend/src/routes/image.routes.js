@@ -20,10 +20,10 @@ const router = Router();
 // Define el middleware de autenticación para todas las rutas
 router.use(authenticationMiddleware);
 // Define las rutas para las imagenes
-router.post("/fotoPerfil", isAdmin, upload.single("fotoPerfil"), imageController.uploadFotoPerfil);
-router.post("/portafolio", isAdmin, upload.array("imagenes", 5), imageController.uploadImagenes);
-router.post("/eliminar", isAdmin, imageController.eliminarImagen);
-router.post("/eliminarFotoPerfil", isAdmin, imageController.deleteFotoPerfil);
+router.post("/fotoPerfil", upload.single("fotoPerfil"), imageController.uploadFotoPerfil);
+router.post("/portafolio", upload.array("imagenes", 5), imageController.uploadImagenes);
+router.post("/eliminar", imageController.eliminarImagen);
+router.post("/eliminarFotoPerfil", imageController.deleteFotoPerfil);
 
 // router.delete("eliminar", isAdmin, imageController.eliminarImagen);
 

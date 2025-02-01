@@ -8,6 +8,7 @@ import axios from '../services/root.services.js';
 // Importar pantallas
 import MicroempresaInicioScreeen from '../screens/microempresa.screen.js';
 import FormularioMicroempresa from '../screens/formularioMicroempresa.screen.js';
+import SubirFotoPerfilScreen from '../screens/subidaFotoPerfil.screen.js';
 import FormularioEdicionMicroempresa from '../screens/formularioEdicionMicroempresa.screen.js';
 import ListaMicroempresasScreen from '../screens/listaMicroempresas.screen.js';
 import PerfilTrabajadorScreen from '../screens/perfilTrabajador.screen.js';
@@ -55,6 +56,7 @@ const HomeTrabajadorNavigator = () => (
     <Tab.Screen name="HomeTrabajador" component={HomeTrabajadorScreen} /> 
     <Tab.Screen name="Suscripcion" component={SuscripcionScreen} />
     <Tab.Screen name="FormularioMicroempresa" component={FormularioMicroempresa} />
+    <Tab.Screen name="SubirFotoPerfil" component={SubirFotoPerfilScreen} />
     <Tab.Screen name="SeleccionMicroempresa" component={SeleccionMicroempresaScreen} />
     <Tab.Screen name="Horario" component={DisponibilidadScreen} />
     <Tab.Screen name="Calendario" component={CalendarScreen} />
@@ -112,6 +114,7 @@ const AppNavigator = () => {
       <Stack.Screen name="CardForm" component={CardForm} />
       <Stack.Screen name="Microempresa" component={MicroempresaInicioScreeen} />
       <Stack.Screen name="EditarMicroempresa" component={FormularioEdicionMicroempresa} />
+      <Stack.Screen name="SubirFotoPerfil" component={SubirFotoPerfilScreen} />
       <Stack.Screen name="ListaMicroempresas" component={ListaMicroempresasScreen} />
       <Stack.Screen name="Trabajador" component={PerfilTrabajadorScreen} /> 
       <Stack.Screen name="Perfil" component={TrabajadorScreen} /> 
