@@ -16,16 +16,23 @@
       "newArchEnabled": true
     },
     "android": {
-   "permissions": ["INTERNET", "ACCESS_NETWORK_STATE"],
-   "adaptiveIcon": {
-     "foregroundImage": "./assets/adaptive-icon.png",
-     "backgroundColor": "#ffffff"
-   },
-   "newArchEnabled": true
- },
+      "permissions": [
+        "INTERNET",
+        "ACCESS_NETWORK_STATE",
+        "CAMERA",
+        "READ_EXTERNAL_STORAGE",
+        "WRITE_EXTERNAL_STORAGE"
+      ],
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#ffffff"
+      },
+      "newArchEnabled": true
+    },
     "web": {
       "favicon": "./assets/favicon.png"
     },
     "jsEngine": "hermes"
   }
 }
+

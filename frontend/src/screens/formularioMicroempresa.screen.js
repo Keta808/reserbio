@@ -88,9 +88,13 @@ const FormularioMicroempresaScreen = ({ navigation }) => {
       };
 
       const response = await MicroempresaService.createMicroempresa(nuevaMicroempresa);
-      console.log("Datos enviados al backend:", nuevaMicroempresa);
-      Alert.alert("Éxito", "La microempresa fue creada correctamente.");
-      navigation.navigate("Microempresa", { id: response.data._id });
+      const id = response.data._id || response.data.id; // Soporta ambas opciones
+
+      console.log("📦 Respuesta del backend al crear microempresa:", response.data);
+      console.log("🚀 Navegando a SubirFotoPerfil con ID:", id);
+
+      navigation.navigate("SubirFotoPerfil", { id, modo: "crear" });
+
     } catch (error) {
       Alert.alert("Error", "No se pudo crear la microempresa.");
       console.error("❌ Error al crear la microempresa:", error.message);
@@ -168,6 +172,7 @@ const styles = StyleSheet.create({
     borderRadius: 5,
     textAlign: "center",
     backgroundColor: "#f9f9f9",
+    // marginBottom: 15,
   },
   option: {
     padding: 15,

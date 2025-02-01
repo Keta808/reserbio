@@ -14,6 +14,13 @@ async function uploadFotoPerfil(req, res) {
             return respondError(req, res, 400, "No se ha proporcionado ninguna imagen");
         }
 
+        const { microempresaId } = req.body;
+        console.log("🖼️ Recibido microempresaId:", microempresaId);
+
+        if (!microempresaId) {
+            return res.status(400).json({ error: "No se proporcionó el ID de la microempresa." });
+        }
+
         // Subir la imagen a Cloudinary
         const result = await new Promise((resolve, reject) => {
             const stream = cloudinary.uploader.upload_stream(
@@ -97,8 +104,6 @@ async function deleteFotoPerfil(req, res) {
         return respondError(req, res, 500, "Error al eliminar la foto de perfil");
     }
 }
-
-
 
 /**
  * Maneja la subida de imágenes adicionales a galeria de Cloudinary

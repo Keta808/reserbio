@@ -1,5 +1,6 @@
 import instance from './root.services.js';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as ImagePicker from "expo-image-picker";
 
 async function getUserIdFromAsyncStorage() {
   try {
@@ -133,6 +134,117 @@ async function getMicroempresasPorCategoria(categoria) {
   }
 }
 
+const uploadFotoPerfil = async (id, imageUri) => {
+  try {
+    console.log("📤 Subiendo imagen a la microempresa:", id);
+
+    // ✅ Crear objeto FormData
+    const formData = new FormData();
+    formData.append("microempresaId", id);
+    formData.append("fotoPerfil", {
+      uri: imageUri,
+      type: "image/jpeg",
+      name: "profile.jpg",
+    });
+
+    // ✅ Configurar cabeceras correctamente
+    const config = { headers: { "Content-Type": "multipart/form-data" } };
+
+    // ✅ Enviar la solicitud POST al backend con `instance.post`
+    const response = await instance.post("/imagenes/fotoPerfil", formData, config);
+
+    console.log("✅ Foto subida con éxito:", response.data);
+    return response.data;
+  } catch (error) {
+    console.error("❌ Error al subir la foto de perfil:", error.response?.data || error.message);
+    throw new Error("No se pudo subir la imagen.");
+  }
+};
+
+
+const pickImage = async () => {
+  try {
+      // Solicitar permisos explícitamente antes de abrir la galería
+      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (status !== "granted") {
+          alert("Se necesita permiso para acceder a la galería.");
+          return null;
+      }
+
+      const result = await ImagePicker.launchImageLibraryAsync({
+          mediaTypes: ImagePicker.MediaType.Images, // Reemplazamos la opción obsoleta
+          allowsEditing: true,
+          aspect: [4, 4],
+          quality: 1,
+      });
+
+      if (!result.canceled) {
+          console.log("📸 Imagen seleccionada:", result.assets[0].uri);
+          return result.assets[0].uri;
+      }
+      return null;
+  } catch (error) {
+      console.error("❌ Error al seleccionar imagen:", error.message);
+      return null;
+  }
+};
+
+/**
+ * 📤 Sube múltiples imágenes a la galería de una microempresa
+ * @param {string} microempresaId - ID de la microempresa
+ * @param {Array} imagenes - Array de imágenes en formato de archivo
+ */
+async function uploadImagenes(microempresaId, imagenes) {
+  try {
+      const formData = new FormData();
+      imagenes.forEach((imagen) => {
+          formData.append("imagenes", {
+              uri: imagen.uri,
+              type: imagen.type || "image/jpeg",
+              name: imagen.fileName || `imagen_${Date.now()}.jpg`,
+          });
+      });
+
+      formData.append("microempresaId", microempresaId);
+
+      console.log("📤 Subiendo imágenes:", formData);
+
+      const response = await instance.post("/imagenes/portafolio", formData, {
+          headers: {
+              "Content-Type": "multipart/form-data",
+          },
+      });
+
+      console.log("✅ Imágenes subidas con éxito:", response.data);
+      return response.data;
+  } catch (error) {
+      console.error("❌ Error al subir imágenes:", error.response?.data || error.message);
+      throw error;
+  }
+}
+
+/**
+* 🗑 Elimina una imagen de la galería de una microempresa
+* @param {string} microempresaId - ID de la microempresa
+* @param {string} publicId - ID público de la imagen en Cloudinary
+*/
+async function eliminarImagen(microempresaId, publicId) {
+  try {
+      console.log("🗑 Eliminando imagen con public_id:", publicId);
+
+      const response = await instance.post("/imagenes/eliminar", {
+          microempresaId,
+          public_id: publicId,
+      });
+
+      console.log("✅ Imagen eliminada correctamente:", response.data);
+      return response.data;
+  } catch (error) {
+      console.error("❌ Error al eliminar imagen:", error.response?.data || error.message);
+      throw error;
+  }
+}
+
 export default {
   getMicroempresaData,
   getMicroempresasForPage,
@@ -142,4 +254,8 @@ export default {
   createMicroempresa,
   updateMicroempresa,
   getMicroempresasPorCategoria,
+  uploadFotoPerfil,
+  pickImage,
+  uploadImagenes,
+  eliminarImagen,
 };
