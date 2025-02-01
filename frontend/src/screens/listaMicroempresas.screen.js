@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from "react";
-import { View, Text, TextInput, FlatList, TouchableOpacity, Modal, StyleSheet } from "react-native";
+import { View, Text, TextInput, FlatList, TouchableOpacity, Modal, StyleSheet, ActivityIndicator, Alert } from "react-native";
+import { Image } from "expo-image";
 import MicroempresaService from "../services/microempresa.service";
+import { Platform } from "react-native";
 
 const CATEGORIAS = ["Barberia", "Peluqueria", "Estetica", "Masajes", "Manicure", "Pedicure", "Depilacion", "Tatuajes", "Piercing", "Clases particulares", "Consultoria"];
 
@@ -30,9 +32,14 @@ export default function ListaMicroempresasScreen({ navigation }) {
       const data = await MicroempresaService.getMicroempresas();
       console.log("🔍 Datos recibidos del backend:", data);
   
-      // Verifica si `data` tiene la estructura correcta
       if (data && data.state === "Success" && Array.isArray(data.data)) {
-        setMicroempresas(data.data);
+        const microempresasConImagen = await Promise.all(
+          data.data.map(async (micro) => {
+            const fotoPerfil = await MicroempresaService.getMicroempresaFotoPerfil(micro._id);
+            return { ...micro, fotoPerfil };
+          })
+        );
+        setMicroempresas(microempresasConImagen);
       } else {
         setMicroempresas([]);
       }
@@ -43,7 +50,6 @@ export default function ListaMicroempresasScreen({ navigation }) {
       setLoading(false);
     }
   };
-  
 
   const cargarMicroempresasPorCategoria = async () => {
     try {
@@ -122,7 +128,10 @@ export default function ListaMicroempresasScreen({ navigation }) {
 
       {/* Lista de Microempresas */}
       {loading ? (
-        <Text>Cargando microempresas...</Text>
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color="#007BFF" />
+          <Text>Cargando microempresas...</Text>
+        </View>
       ) : filtrarMicroempresas().length > 0 ? (
         <FlatList
           data={filtrarMicroempresas()}
@@ -132,7 +141,15 @@ export default function ListaMicroempresasScreen({ navigation }) {
               style={styles.card}
               onPress={() => navigation.navigate("Microempresa", { id: item._id })}
             >
-              <Text style={styles.cardTitle}>{item.nombre}</Text>
+              <Image
+                source={{ uri: item.fotoPerfil || "https://via.placeholder.com/60" }}
+                style={styles.image}
+              />
+              <View style={styles.infoContainer}>
+                <Text style={styles.cardTitle}>{item.nombre}</Text>
+                <Text style={styles.cardDetail}>{item.direccion}</Text>
+                <Text style={styles.cardDetail}>{item.telefono}</Text>
+              </View>
             </TouchableOpacity>
           )}
         />
@@ -147,6 +164,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     padding: 20,
+    paddingTop: Platform.OS === "ios" ? 50 : 30,
     backgroundColor: "#fff",
   },
   input: {
@@ -209,21 +227,40 @@ const styles = StyleSheet.create({
     fontSize: 18,
     color: "white",
   },
-  card: {
-    backgroundColor: "#f9f9f9",
-    borderRadius: 8,
-    padding: 10,
-    marginBottom: 10,
+  loadingContainer: {
+    flex: 1,
+    justifyContent: "center",
     alignItems: "center",
+  },
+  card: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#f9f9f9",
+    padding: 15,
+    borderRadius: 10,
+    marginBottom: 10,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
+    shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 3,
   },
+  image: {
+    width: 60,
+    height: 60,
+    borderRadius: 10,
+    marginRight: 15,
+  },
+  infoContainer: {
+    flex: 1,
+  },
   cardTitle: {
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: "bold",
+  },
+  cardDetail: {
+    fontSize: 14,
+    color: "#555",
   },
 });
 
