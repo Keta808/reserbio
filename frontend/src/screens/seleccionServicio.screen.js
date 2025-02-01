@@ -20,8 +20,12 @@ const SeleccionServicioScreen = () => {
   const [servicios, setServicios] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+
   const [selectedServicio, setSelectedServicio] = useState(null);
-  const [selectedTrabajadorId, setSelectedTrabajadorId] = useState(null);
+
+  // Usamos undefined para indicar que el usuario no ha elegido nada aún
+  const [selectedTrabajadorId, setSelectedTrabajadorId] = useState(undefined);
+
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [showDatePicker, setShowDatePicker] = useState(false);
 
@@ -44,6 +48,8 @@ const SeleccionServicioScreen = () => {
   }, [microempresaId]);
 
   const handleTrabajadorSelect = (trabajadorId) => {
+    // trabajadorId = null => sin preferencia, 
+    // trabajadorId = 'abc123' => alguno en particular
     setSelectedTrabajadorId(trabajadorId);
   };
 
@@ -52,14 +58,12 @@ const SeleccionServicioScreen = () => {
   };
 
   const handleContinue = () => {
-    
-      navigation.navigate('ConfirmacionReserva', {
-        microempresaId,
-        servicioId: selectedServicio.id || selectedServicio._id,
-        trabajadorId: selectedTrabajadorId, 
-        fecha: selectedDate.toISOString().split('T')[0],
-      });
-    
+    navigation.navigate('ConfirmacionReserva', {
+      microempresaId,
+      servicioId: selectedServicio.id || selectedServicio._id,
+      trabajadorId: selectedTrabajadorId, // Esto puede ser null o un string
+      fecha: selectedDate.toISOString().split('T')[0],
+    });
   };
 
   const handleDateChange = (event, selected) => {
@@ -137,9 +141,9 @@ const SeleccionServicioScreen = () => {
         style={styles.datePickerButton}
         onPress={() => setShowDatePicker(true)}
       >
-        <Text style={styles.datePickerText}> {
-          selectedDate.toISOString().split('T')[0]
-        } </Text>
+        <Text style={styles.datePickerText}>
+          {selectedDate.toISOString().split('T')[0]}
+        </Text>
       </TouchableOpacity>
 
       {showDatePicker && (
@@ -161,7 +165,9 @@ const SeleccionServicioScreen = () => {
         <Button
           title="Continuar"
           onPress={handleContinue}
-          disabled={!selectedServicio || selectedTrabajadorId === null}
+          // Habilita si hay servicio escogido y se eligió algún trabajador
+          // (sea un ID real o null => 'No tengo preferencia')
+          disabled={!selectedServicio || selectedTrabajadorId === undefined}
           color="#007bff"
         />
         <Button
@@ -234,6 +240,19 @@ const styles = StyleSheet.create({
     marginTop: 20,
     alignSelf: 'center',
     width: '80%',
+  },
+  loaderContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  errorContainer: {
+    alignItems: 'center',
+    marginTop: 50,
+  },
+  errorText: {
+    fontSize: 16,
+    color: 'red',
   },
 });
 

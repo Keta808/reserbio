@@ -74,7 +74,12 @@ const CalendarScreen = () => {
         }
 
         const response = await reservaService.getReservasByTrabajadorId(userId);
-        const reservations = response.data;
+        
+        console.log('Reservas:', response.data);
+
+        const reservations = response?.data || [];
+
+        console.log('Reservas:', reservations);
 
         const mappedItems = {};
         reservations.forEach((reserva) => {

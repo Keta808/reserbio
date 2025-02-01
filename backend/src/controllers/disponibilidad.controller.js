@@ -116,6 +116,7 @@ const getHorariosDisponibles = async (req, res) => {
  */
 
 const getHorariosDisponiblesMicroEmpresa = async (req, res) => {
+  console.log('req.body de horarios disponibles por microempresa', req.body);
   const { serviceId, date } = req.body;
   try {
     const availableSlots = await DisponibilidadService.getHorariosDisponiblesMicroEmpresa(serviceId, date);
@@ -128,6 +129,8 @@ const getHorariosDisponiblesMicroEmpresa = async (req, res) => {
 }
 
 const getTrabajadoresDisponiblesPorHora = async (req, res) => {
+  console.log('req.body de trabajadores disponibles por hora', req.body);
+  
   const { serviceId, date, hora } = req.body;
 
   try {

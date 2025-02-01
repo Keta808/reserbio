@@ -130,7 +130,7 @@ export default function ListaMicroempresasScreen({ navigation }) {
           renderItem={({ item }) => (
             <TouchableOpacity
               style={styles.card}
-              onPress={() => navigation.navigate("Microempresa", { id: item._id })}
+              onPress={() => navigation.navigate("MicroempresaCliente", { id: item._id })}
             >
               <Text style={styles.cardTitle}>{item.nombre}</Text>
             </TouchableOpacity>
