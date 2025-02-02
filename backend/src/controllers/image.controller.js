@@ -110,8 +110,9 @@ async function deleteFotoPerfil(req, res) {
  */
 async function uploadImagenes(req, res) {
     try {
-        console.log("Archivos recibidos:", req.files);
-        console.log("Datos recibidos:", req.body);
+        console.log("📥 Petición recibida en /imagenes/portafolio");
+        console.log("📥 Archivos recibidos en el backend:", req.files);
+        console.log("📥 Body recibido:", req.body);
 
         if (!req.files || req.files.length === 0) {
             return respondError(req, res, 400, "No se ha proporcionado ninguna imagen");
@@ -146,6 +147,8 @@ async function uploadImagenes(req, res) {
                 stream.end(file.buffer);
             });
 
+            console.log("✅ Imagen subida con éxito:", result.secure_url);
+
             // Añadir cada imagen subida al array de imágenes
             uploadedImages.push({
                 url: result.secure_url,
@@ -160,6 +163,7 @@ async function uploadImagenes(req, res) {
         }
 
         await microempresa.save();
+        console.log("✅ Microempresa actualizada con nuevas imágenes.");
 
         return respondSuccess(req, res, 200, {
             message: "Imágenes subidas con éxito",

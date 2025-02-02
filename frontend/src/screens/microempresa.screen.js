@@ -1,7 +1,9 @@
 import React, { useEffect, useState } from "react";
-import { View, Text, StyleSheet, ActivityIndicator, Alert, FlatList, Button, TouchableOpacity } from "react-native";
+import { View, Text, StyleSheet, ActivityIndicator, Alert, FlatList, Button, TouchableOpacity, SafeAreaView, Platform, StatusBar } from "react-native";
 import { Image } from "expo-image";
 import MicroempresaService from "../services/microempresa.service";
+import { useFocusEffect } from '@react-navigation/native';
+
 
 export default function MicroempresaScreen({ route, navigation }) {
   const { id, userId } = route.params || {};
@@ -9,46 +11,51 @@ export default function MicroempresaScreen({ route, navigation }) {
   const [fotoPerfilUrl, setFotoPerfilUrl] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    const fetchMicroempresa = async () => {
-      try {
-        if (!id) {
-          Alert.alert("Error", "No se proporcionó el ID de la microempresa.");
-          setLoading(false);
-          return;
-        }
+// Funciones de fetch definidas fuera o dentro del componente...
+const fetchMicroempresa = async () => {
+  try {
+    if (!id) {
+      Alert.alert("Error", "No se proporcionó el ID de la microempresa.");
+      setLoading(false);
+      return;
+    }
 
-        console.log("📥 Fetching microempresa with ID:", id);
-        const response = await MicroempresaService.getMicroempresaData(id);
+    console.log("📥 Fetching microempresa with ID:", id);
+    const response = await MicroempresaService.getMicroempresaData(id);
 
-        if (response) {
-          console.log("📋 Datos de la microempresa obtenidos:", response);
-          setMicroempresa(response.data);
-        } else {
-          console.warn("⚠️ Respuesta inesperada del servicio:", response);
-          Alert.alert("Error", "No se pudieron cargar los datos de la microempresa.");
-        }
-      } catch (error) {
-        console.error("❌ Error al obtener los datos de la microempresa:", error.message);
-        Alert.alert("Error", "No se pudieron cargar los datos de la microempresa.");
-      }
-    };
+    if (response) {
+      console.log("📋 Datos de la microempresa obtenidos:", response);
+      setMicroempresa(response.data);
+    } else {
+      console.warn("⚠️ Respuesta inesperada del servicio:", response);
+      Alert.alert("Error", "No se pudieron cargar los datos de la microempresa.");
+    }
+  } catch (error) {
+    console.error("❌ Error al obtener los datos de la microempresa:", error.message);
+    Alert.alert("Error", "No se pudieron cargar los datos de la microempresa.");
+  }
+};
 
-    const fetchFotoPerfil = async () => {
-      try {
-        console.log(`🔍 Solicitando foto de perfil para la microempresa con ID: ${id}`);
-        const fotoPerfil = await MicroempresaService.getMicroempresaFotoPerfil(id);
-        console.log("📸 Foto de perfil recibida:", fotoPerfil);
-        setFotoPerfilUrl(fotoPerfil);
-      } catch (error) {
-        console.error("❌ Error al obtener la foto de perfil:", error);
-      }
-    };
+const fetchFotoPerfil = async () => {
+  try {
+    console.log(`🔍 Solicitando foto de perfil para la microempresa con ID: ${id}`);
+    const fotoPerfil = await MicroempresaService.getMicroempresaFotoPerfil(id);
+    console.log("📸 Foto de perfil recibida:", fotoPerfil);
+    setFotoPerfilUrl(fotoPerfil);
+  } catch (error) {
+    console.error("❌ Error al obtener la foto de perfil:", error);
+  }
+};
 
-    fetchMicroempresa();
-    fetchFotoPerfil();
-    setLoading(false);
-  }, [id]);
+// Usando useFocusEffect para refrescar cada vez que la pantalla se enfoque
+useFocusEffect(
+  React.useCallback(() => {
+    // Si deseas que se muestre un loading, puedes setearlo aquí
+    setLoading(true);
+    Promise.all([fetchMicroempresa(), fetchFotoPerfil()]).finally(() => setLoading(false));
+  }, [id])
+);
+
 
   if (loading) {
     return (
@@ -68,6 +75,7 @@ export default function MicroempresaScreen({ route, navigation }) {
   }
 
   return (
+    <SafeAreaView style={styles.safeArea}>
     <FlatList
       data={microempresa.trabajadores}
       renderItem={({ item }) => (
@@ -106,24 +114,30 @@ export default function MicroempresaScreen({ route, navigation }) {
         </View>
       }
       ListFooterComponent={
-        <View>
+        <View style={{ paddingHorizontal: 10, marginBottom: 20 }}>
           {/* 📂 Galería */}
           <Text style={styles.sectionTitle}>Galería</Text>
-          {microempresa.imagenes.length > 0 ? (
-            <FlatList
-              data={microempresa.imagenes}
-              horizontal
-              keyExtractor={(item) => item.public_id}
-              renderItem={({ item }) => (
-                <Image source={{ uri: item.url }} style={styles.galleryImage} resizeMode="cover" />
-              )}
-            />
-          ) : (
-            <Text style={styles.noImagesText}>No hay imágenes disponibles</Text>
-          )}
-
-          <Button title="Añadir Imágenes" onPress={() => navigation.navigate("SubirImagenes", { id })} />
-
+          <View style={styles.galleryContainer}>
+            {microempresa.imagenes.length > 0 ? (
+              <FlatList
+                data={microempresa.imagenes}
+                horizontal
+                keyExtractor={(item) => item.public_id}
+                contentContainerStyle={{ paddingHorizontal: 10 }}
+                renderItem={({ item }) => (
+                  <Image source={{ uri: item.url }} style={styles.galleryImage} contentFit="cover" />
+                )}
+              />
+            ) : (
+              <Text style={styles.noImagesText}>No hay imágenes disponibles</Text>
+            )}
+          </View>
+      
+          {/* Botón de Añadir Imágenes con margen superior */}
+          <View style={{ marginTop: 10 }}>
+            <Button title="Añadir Imágenes" onPress={() => navigation.navigate("SubirImagenes", { id })} />
+          </View>
+      
           <View style={styles.buttonContainer}>
             <Button
               title="Editar Microempresa"
@@ -136,18 +150,24 @@ export default function MicroempresaScreen({ route, navigation }) {
       }
       contentContainerStyle={styles.listContainer}
     />
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight : 0,
+  },
   container: {
-    padding: 20,
+    padding: 5,
   },
   listContainer: {
     paddingBottom: 20,
+    paddingHorizontal: 10, // Para dar margen a todo el contenido
   },
   image: {
-    width: 150, // 📏 Reducción del tamaño de la imagen de perfil
+    width: 150,
     height: 150,
     borderRadius: 75,
     marginBottom: 10,
@@ -208,11 +228,14 @@ const styles = StyleSheet.create({
     marginBottom: 10,
     textAlign: "left",
   },
+  galleryContainer: {
+    marginBottom: 10,
+  },
   galleryImage: {
     width: 100,
     height: 100,
     borderRadius: 10,
-    marginRight: 5,
+    marginRight: 10,
   },
   noImagesText: {
     fontSize: 14,
@@ -222,14 +245,37 @@ const styles = StyleSheet.create({
   },
   infoContainer: {
     marginBottom: 10,
-},
-infoLabel: {
-  fontWeight: "bold",
-},
+  },
+  infoLabel: {
+    fontWeight: "bold",
+  },
+  // Estilos faltantes:
+  loadingContainer: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  loadingText: {
+    marginTop: 10,
+    fontSize: 16,
+  },
+  errorContainer: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  error: {
+    color: "red",
+    fontSize: 16,
+  },
+  placeholderText: {
+    fontSize: 16,
+    color: "gray",
+  },
+  buttonContainer: {
+    flexDirection: "column",
+    justifyContent: "space-around",
+    marginTop: 20,
+  },
 });
-
-// export default MicroempresaScreen;
-
-
-
 

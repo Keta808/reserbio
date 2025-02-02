@@ -194,34 +194,22 @@ const pickImage = async () => {
  * @param {string} microempresaId - ID de la microempresa
  * @param {Array} imagenes - Array de imágenes en formato de archivo
  */
-async function uploadImagenes(microempresaId, imagenes) {
+async function uploadImagenes(formData) {
   try {
-      const formData = new FormData();
-      imagenes.forEach((imagen) => {
-          formData.append("imagenes", {
-              uri: imagen.uri,
-              type: imagen.type || "image/jpeg",
-              name: imagen.fileName || `imagen_${Date.now()}.jpg`,
-          });
-      });
-
-      formData.append("microempresaId", microempresaId);
-
-      console.log("📤 Subiendo imágenes:", formData);
-
+      console.log("📤 FormData final antes de enviar:", formData);
       const response = await instance.post("/imagenes/portafolio", formData, {
           headers: {
               "Content-Type": "multipart/form-data",
           },
       });
-
-      console.log("✅ Imágenes subidas con éxito:", response.data);
+      console.log("✅ Respuesta del backend:", response.data);
       return response.data;
   } catch (error) {
       console.error("❌ Error al subir imágenes:", error.response?.data || error.message);
       throw error;
   }
 }
+
 
 /**
 * 🗑 Elimina una imagen de la galería de una microempresa
