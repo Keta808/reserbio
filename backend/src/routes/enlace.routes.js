@@ -11,11 +11,11 @@ const router = Router();
 
 router.use(authentificationMiddleware); 
 
-router.get("/", isAdmin, enlaceController.getEnlaces);
-router.post("/", isAdmin, enlaceController.createEnlace);
-router.delete("/:id", isAdmin, enlaceController.deleteEnlace);
-router.put("/:id", isAdmin, enlaceController.updateEnlace);
-router.get("/microempresa/:id", isAdmin, enlaceController.getTrabajadoresPorMicroempresa);
-router.put("/update/:id", isAdmin, enlaceController.updateEnlaceParcial);
+router.get("/", enlaceController.getEnlaces);
+router.post("/", enlaceController.createEnlace);
+router.delete("/:id", enlaceController.deleteEnlace);
+router.put("/:id", enlaceController.updateEnlace);
+router.get("/microempresa/:id", enlaceController.getTrabajadoresPorMicroempresa);
+router.put("/update/:id", enlaceController.updateEnlaceParcial);
 
 export default router;
