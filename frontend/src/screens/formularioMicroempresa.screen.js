@@ -1,7 +1,10 @@
-import React, { useState } from "react";
-import { View, Text, TextInput, Button, StyleSheet, Alert } from "react-native";
+import React, { useState, useRef } from "react";
+import { View, Text, TextInput, Button, StyleSheet, Alert, TouchableOpacity } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import MicroempresaService from '../services/microempresa.service.js';
+import ActionSheet from "react-native-actions-sheet";
+import MicroempresaService from "../services/microempresa.service.js";
+
+const CATEGORIAS = ["Barberia", "Peluqueria", "Estetica", "Masajes", "Manicure", "Pedicure", "Depilacion", "Tatuajes", "Piercing", "Clases particulares", "Consultoria"];
 
 const FormularioMicroempresaScreen = ({ navigation }) => {
   const [nombre, setNombre] = useState("");
@@ -12,24 +15,24 @@ const FormularioMicroempresaScreen = ({ navigation }) => {
   const [categoria, setCategoria] = useState("");
   const [errors, setErrors] = useState({});
 
-  // Función para obtener el ID del trabajador autenticado
+  // 📌 Creamos una referencia para ActionSheet
+  const actionSheetRef = useRef(null);
+
   const getUserId = async () => {
     try {
-      const userData = await AsyncStorage.getItem('user');
+      const userData = await AsyncStorage.getItem("user");
       if (userData) {
         const parsedData = JSON.parse(userData);
         return parsedData.id;
-      } else {
-        console.error('No se encontraron datos de usuario en AsyncStorage');
-        return null;
       }
+      console.error("No se encontraron datos de usuario en AsyncStorage");
+      return null;
     } catch (error) {
-      console.error('Error al obtener datos de AsyncStorage:', error);
+      console.error("Error al obtener datos de AsyncStorage:", error);
       return null;
     }
   };
 
-  // Función para manejar el envío del formulario
   const handleSubmit = async () => {
     let valid = true;
     const newErrors = {};
@@ -62,13 +65,12 @@ const FormularioMicroempresaScreen = ({ navigation }) => {
       valid = false;
     }
 
-    if (!categoria.trim()) {
-      newErrors.categoria = "La categoría es obligatoria.";
+    if (!categoria) {
+      newErrors.categoria = "Debe seleccionar una categoría.";
       valid = false;
     }
 
     setErrors(newErrors);
-
     if (!valid) return;
 
     try {
@@ -85,11 +87,14 @@ const FormularioMicroempresaScreen = ({ navigation }) => {
         idTrabajador: userId,
       };
 
-      // Usar el servicio para crear la microempresa
       const response = await MicroempresaService.createMicroempresa(nuevaMicroempresa);
-      console.log("Datos enviados al backend:", nuevaMicroempresa);
-      Alert.alert("Éxito", "La microempresa fue creada correctamente.");
-      navigation.navigate("Microempresa", { id: response.data._id }); // Redirige al perfil de la microempresa creada
+      const id = response.data._id || response.data.id; // Soporta ambas opciones
+
+      console.log("📦 Respuesta del backend al crear microempresa:", response.data);
+      console.log("🚀 Navegando a SubirFotoPerfil con ID:", id);
+
+      navigation.navigate("SubirFotoPerfil", { id, modo: "crear" });
+
     } catch (error) {
       Alert.alert("Error", "No se pudo crear la microempresa.");
       console.error("❌ Error al crear la microempresa:", error.message);
@@ -99,55 +104,42 @@ const FormularioMicroempresaScreen = ({ navigation }) => {
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Crear Microempresa</Text>
-      <TextInput
-        style={styles.input}
-        placeholder="Nombre"
-        value={nombre}
-        onChangeText={setNombre}
-      />
+
+      <TextInput style={styles.input} placeholder="Nombre" value={nombre} onChangeText={setNombre} />
       {errors.nombre && <Text style={styles.error}>{errors.nombre}</Text>}
-      
-      <TextInput
-        style={styles.input}
-        placeholder="Descripción"
-        value={descripcion}
-        onChangeText={setDescripcion}
-      />
+
+      <TextInput style={styles.input} placeholder="Descripción" value={descripcion} onChangeText={setDescripcion} />
       {errors.descripcion && <Text style={styles.error}>{errors.descripcion}</Text>}
 
-      <TextInput
-        style={styles.input}
-        placeholder="Teléfono"
-        value={telefono}
-        onChangeText={setTelefono}
-        keyboardType="phone-pad"
-      />
+      <TextInput style={styles.input} placeholder="Teléfono" value={telefono} onChangeText={setTelefono} keyboardType="phone-pad" />
       {errors.telefono && <Text style={styles.error}>{errors.telefono}</Text>}
 
-      <TextInput
-        style={styles.input}
-        placeholder="Dirección"
-        value={direccion}
-        onChangeText={setDireccion}
-      />
+      <TextInput style={styles.input} placeholder="Dirección" value={direccion} onChangeText={setDireccion} />
       {errors.direccion && <Text style={styles.error}>{errors.direccion}</Text>}
 
-      <TextInput
-        style={styles.input}
-        placeholder="Email"
-        value={email}
-        onChangeText={setEmail}
-        keyboardType="email-address"
-      />
+      <TextInput style={styles.input} placeholder="Email" value={email} onChangeText={setEmail} keyboardType="email-address" />
       {errors.email && <Text style={styles.error}>{errors.email}</Text>}
 
-      <TextInput
-        style={styles.input}
-        placeholder="Categoría"
-        value={categoria}
-        onChangeText={setCategoria}
-      />
+      {/* 📌 Selector de categoría con ActionSheet */}
+      <TouchableOpacity style={styles.pickerButton} onPress={() => actionSheetRef.current?.show()}>
+        <Text>{categoria || "Selecciona una categoría..."}</Text>
+      </TouchableOpacity>
       {errors.categoria && <Text style={styles.error}>{errors.categoria}</Text>}
+
+      <ActionSheet ref={actionSheetRef}>
+        {CATEGORIAS.map((item) => (
+          <TouchableOpacity
+            key={item}
+            style={styles.option}
+            onPress={() => {
+              setCategoria(item);
+              actionSheetRef.current?.hide();
+            }}
+          >
+            <Text style={styles.optionText}>{item}</Text>
+          </TouchableOpacity>
+        ))}
+      </ActionSheet>
 
       <Button title="Crear Microempresa" onPress={handleSubmit} />
     </View>
@@ -172,6 +164,24 @@ const styles = StyleSheet.create({
     borderRadius: 5,
     padding: 10,
     marginBottom: 15,
+  },
+  pickerButton: {
+    borderWidth: 1,
+    borderColor: "#ccc",
+    padding: 12,
+    borderRadius: 5,
+    textAlign: "center",
+    backgroundColor: "#f9f9f9",
+    // marginBottom: 15,
+  },
+  option: {
+    padding: 15,
+    borderBottomWidth: 1,
+    borderBottomColor: "#ccc",
+  },
+  optionText: {
+    fontSize: 16,
+    textAlign: "center",
   },
   error: {
     color: "red",

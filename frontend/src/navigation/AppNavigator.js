@@ -8,6 +8,8 @@ import axios from '../services/root.services.js';
 // Importar pantallas
 import MicroempresaInicioScreeen from '../screens/microempresa.screen.js';
 import FormularioMicroempresa from '../screens/formularioMicroempresa.screen.js';
+import SubirFotoPerfilScreen from '../screens/subidaFotoPerfil.screen.js';
+import SubirImagenesScreen from '../screens/subidaImagenes.screen.js';
 import FormularioEdicionMicroempresa from '../screens/formularioEdicionMicroempresa.screen.js';
 import ListaMicroempresasScreen from '../screens/listaMicroempresas.screen.js';
 import PerfilTrabajadorScreen from '../screens/perfilTrabajador.screen.js';
@@ -22,7 +24,10 @@ import CalendarScreen from '../screens/calendario.screen.js';
 import HomeClienteScreen from '../screens/homeCliente.screen.js';
 import MicroempresaClienteScreen from '../screens/microempresaCliente.screen.js';
 import SeleccionServicioScreen from '../screens/seleccionServicio.screen.js';
-
+import ConfirmacionReservaScreen from '../screens/confirmacionReserva.screen.js';
+import TestScreen from '../screens/testimagenes.screen.js';
+import ReservaClienteScreen from '../screens/reservasCliente.screen.js';
+import ValoracionServicioScreen from '../screens/valoracion.screen.js';
 
 // Pantallas para Trabajador
 import gestorSuscripcionScreen from '../screens/gestorSuscripcion.screen.js'; 
@@ -44,10 +49,23 @@ const LoadingScreen = () => (
   </View>
 );
 
+const HomeNavigator = () => (
+  <Tab.Navigator lazy={true}>
+    <Tab.Screen name="Home" component={HomeScreen} />
+    <Tab.Screen name="Suscripcion" component={SuscripcionScreen} />
+    <Tab.Screen name="FormularioMicroempresa" component={FormularioMicroempresa} />
+    <Tab.Screen name="SeleccionMicroempresa" component={SeleccionMicroempresaScreen} />
+    <Tab.Screen name="Horario" component={DisponibilidadScreen} />
+    <Tab.Screen name="Calendario" component={CalendarScreen} />
+   
+  </Tab.Navigator>
+);
 
 const HomeClienteNavigator = () => (
  <Tab.Navigator lazy={true}>
     <Tab.Screen name="HomeCliente" component={HomeClienteScreen} />
+    <Tab.Screen name ="Test" component={TestScreen} />  
+    <Tab.Screen name="Reservas" component={ReservaClienteScreen} />
     
   </Tab.Navigator>
 );
@@ -56,6 +74,7 @@ const HomeTrabajadorNavigator = () => (
     <Tab.Screen name="HomeTrabajador" component={HomeTrabajadorScreen} /> 
    
     <Tab.Screen name="FormularioMicroempresa" component={FormularioMicroempresa} />
+    <Tab.Screen name="SubirFotoPerfil" component={SubirFotoPerfilScreen} />
     <Tab.Screen name="SeleccionMicroempresa" component={SeleccionMicroempresaScreen} />
     <Tab.Screen name="Horario" component={DisponibilidadScreen} />
     <Tab.Screen name="Calendario" component={CalendarScreen} />
@@ -100,6 +119,9 @@ const AppNavigator = () => {
       <Stack.Screen name ="ListaMicroempresas" component={ListaMicroempresasScreen} />  
       <Stack.Screen name="MicroempresaCliente" component={MicroempresaClienteScreen} />
       <Stack.Screen name="SeleccionServicio" component={SeleccionServicioScreen} />
+      <Stack.Screen name="ConfirmacionReserva" component={ConfirmacionReservaScreen} />
+      <Stack.Screen name="Test" component={TestScreen} />
+      <Stack.Screen name="Valoracion" component={ValoracionServicioScreen} />
     </Stack.Navigator>
   );
   
@@ -114,6 +136,8 @@ const AppNavigator = () => {
       <Stack.Screen name="CardScreen" component={CardScreen} />
       <Stack.Screen name="Microempresa" component={MicroempresaInicioScreeen} />
       <Stack.Screen name="EditarMicroempresa" component={FormularioEdicionMicroempresa} />
+      <Stack.Screen name="SubirFotoPerfil" component={SubirFotoPerfilScreen} />
+      <Stack.Screen name="SubirImagenes" component={SubirImagenesScreen} />
       <Stack.Screen name="ListaMicroempresas" component={ListaMicroempresasScreen} />
       <Stack.Screen name="Trabajador" component={PerfilTrabajadorScreen} /> 
       <Stack.Screen name="Perfil" component={TrabajadorScreen} /> 

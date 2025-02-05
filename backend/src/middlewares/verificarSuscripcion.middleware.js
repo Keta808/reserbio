@@ -3,7 +3,8 @@
 /* eslint-disable require-jsdoc */
 
 import Suscripcion from "../models/suscripcion.model.js"; 
-import { User } from "../models/user.model.js";
+import userModels from "../models/user.model.js"; // ✅ Correcto
+const { User } = userModels;
 
 import { respondError } from "../utils/resHandler.js";
 import { handleError } from "../utils/errorHandler.js"; 

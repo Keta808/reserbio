@@ -1,13 +1,15 @@
 import React, { useState, useEffect, memo } from 'react';
 import {
-  FlatList,
   Text,
   StyleSheet,
   TouchableOpacity,
   Alert,
   View,
+  Modal,
+  Platform,
+  KeyboardAvoidingView,
 } from 'react-native';
-import RNPickerSelect from 'react-native-picker-select';
+import { Picker } from '@react-native-picker/picker';
 import disponibilidadService from '../services/disponibilidad.service';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
@@ -25,6 +27,11 @@ const getUserId = async () => {
     console.error('Error al obtener datos de AsyncStorage:', error);
     return null;
   }
+};
+
+const parseTime = (timeStr) => {
+  const [hh, mm] = timeStr.split(':');
+  return parseInt(hh, 10) * 60 + parseInt(mm, 10);
 };
 
 const DayButton = memo(({ day, selected, onPress }) => (
@@ -67,6 +74,10 @@ const FormularioCreacionHorasScreen = ({ route, navigation }) => {
   const [availableDays, setAvailableDays] = useState([]);
   const [loading, setLoading] = useState(false);
 
+  const [iosPickerVisible, setIosPickerVisible] = useState(false);
+  const [iosPickerKey, setIosPickerKey] = useState('');
+  const [tempValue, setTempValue] = useState('');
+
   useEffect(() => {
     const fetchUserData = async () => {
       setLoading(true);
@@ -102,16 +113,86 @@ const FormularioCreacionHorasScreen = ({ route, navigation }) => {
   }, [disponibilidad]);
 
   const handleChange = (key, value) => {
-    setFormData({ ...formData, [key]: value });
+    setFormData((prevFormData) => ({ ...prevFormData, [key]: value }));
   };
 
   const handleExceptionChange = (key, value) => {
-    setNewException({ ...newException, [key]: value });
+    setNewException((prev) => ({ ...prev, [key]: value }));
+  };
+
+  const handleIosPicker = (key) => {
+    setIosPickerKey(key);
+    setTempValue(formData[key]);
+    setIosPickerVisible(true);
+  };
+
+  const confirmIosPicker = () => {
+    handleChange(iosPickerKey, tempValue);
+    setIosPickerVisible(false);
+  };
+
+  const cancelIosPicker = () => {
+    setTempValue('');
+    setIosPickerVisible(false);
+  };
+
+  // Función única para renderizar Picker en iOS y Android con estilos custom
+  const renderPicker = (key, value, placeholder, isException = false) => {
+    const pickerValue = isException ? newException[key] : value;
+
+    if (Platform.OS === 'ios') {
+      return (
+        <TouchableOpacity
+          style={styles.pickerButton}
+          onPress={() => {
+            setIosPickerKey(key);
+            setTempValue(pickerValue);
+            setIosPickerVisible(true);
+          }}
+        >
+          <Text style={styles.pickerButtonText}>{pickerValue || placeholder}</Text>
+        </TouchableOpacity>
+      );
+    } else {
+      return (
+        <View style={styles.androidPickerContainer}>
+          <Picker
+            selectedValue={pickerValue}
+            onValueChange={(itemValue) => {
+              if (isException) {
+                handleExceptionChange(key, itemValue);
+              } else {
+                handleChange(key, itemValue);
+              }
+            }}
+            style={styles.androidPicker}
+            mode="dropdown" // "dialog" o "dropdown"
+            itemStyle={styles.androidPickerItem}
+          >
+            <Picker.Item label={placeholder} value="" />
+            {timeOptions.map((option) => (
+              <Picker.Item key={option.value} label={option.label} value={option.value} />
+            ))}
+          </Picker>
+        </View>
+      );
+    }
   };
 
   const addException = () => {
     if (!newException.inicio_no_disponible || !newException.fin_no_disponible) {
       Alert.alert('Error', 'Debe completar ambos campos para agregar una excepción.');
+      return;
+    }
+
+    if (
+      parseTime(newException.fin_no_disponible) <=
+      parseTime(newException.inicio_no_disponible)
+    ) {
+      Alert.alert(
+        'Error',
+        'La hora de fin de la excepción debe ser mayor que la hora de inicio.'
+      );
       return;
     }
 
@@ -131,9 +212,16 @@ const FormularioCreacionHorasScreen = ({ route, navigation }) => {
 
   const handleSubmit = async () => {
     try {
-      // Validar si el formulario está vacío
       if (!formData.dia || !formData.hora_inicio || !formData.hora_fin) {
         Alert.alert('Error', 'Debe completar todos los campos obligatorios.');
+        return;
+      }
+
+      if (parseTime(formData.hora_fin) <= parseTime(formData.hora_inicio)) {
+        Alert.alert(
+          'Error',
+          'La hora de fin debe ser mayor que la hora de inicio.'
+        );
         return;
       }
 
@@ -158,81 +246,71 @@ const FormularioCreacionHorasScreen = ({ route, navigation }) => {
       navigation.goBack();
     } catch (error) {
       console.error('Error al guardar la disponibilidad:', error);
-      Alert.alert('Error', error?.response?.data?.message || 'No se pudo guardar la disponibilidad.');
+      Alert.alert(
+        'Error',
+        error?.response?.data?.message ||
+          'No se pudo guardar la disponibilidad.'
+      );
     }
   };
 
   return (
-    <View style={styles.container}>
+    <KeyboardAvoidingView
+      style={styles.container}
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+    >
       <Text style={styles.title}>
         {disponibilidad ? 'Editar Disponibilidad' : 'Crear Disponibilidad'}
       </Text>
-  
-      <View style={styles.formContent}>
-        {!disponibilidad && loading ? (
-          <Text style={styles.loadingText}>Cargando días disponibles...</Text>
-        ) : !disponibilidad && availableDays.length > 0 ? (
-          <FlatList
-            data={availableDays}
-            keyExtractor={(item, index) => index.toString()}
-            renderItem={({ item }) => (
-              <DayButton
-                day={item}
-                selected={formData.dia === item}
-                onPress={() => handleChange('dia', item)}
-              />
-            )}
-            numColumns={3}
-            contentContainerStyle={styles.flatListContainer}
-          />
-        ) : null}
-  
-        <RNPickerSelect
-          onValueChange={(value) => handleChange('hora_inicio', value)}
-          items={timeOptions}
-          value={formData.hora_inicio}
-          placeholder={{ label: 'Seleccionar Hora Inicio', value: null }}
-        />
-        <RNPickerSelect
-          onValueChange={(value) => handleChange('hora_fin', value)}
-          items={timeOptions}
-          value={formData.hora_fin}
-          placeholder={{ label: 'Seleccionar Hora Fin', value: null }}
-        />
-  
-        <Text style={styles.subTitle}>Excepciones</Text>
-        {formData.excepciones.map((excepcion, index) => (
-          <View key={index} style={styles.exceptionContainer}>
-            <Text style={styles.exceptionText}>
-              {excepcion.inicio_no_disponible} - {excepcion.fin_no_disponible}
-            </Text>
-            <TouchableOpacity
-              style={styles.deleteButton}
-              onPress={() => removeException(index)}
-            >
-              <Text style={styles.buttonText}>Eliminar</Text>
-            </TouchableOpacity>
-          </View>
-        ))}
-  
-        <RNPickerSelect
-          onValueChange={(value) => handleExceptionChange('inicio_no_disponible', value)}
-          items={timeOptions}
-          value={newException.inicio_no_disponible}
-          placeholder={{ label: 'Seleccionar Inicio no Disponible', value: null }}
-        />
-        <RNPickerSelect
-          onValueChange={(value) => handleExceptionChange('fin_no_disponible', value)}
-          items={timeOptions}
-          value={newException.fin_no_disponible}
-          placeholder={{ label: 'Seleccionar Fin no Disponible', value: null }}
-        />
-  
-        <TouchableOpacity style={styles.addButton} onPress={addException}>
-          <Text style={styles.buttonText}>Agregar Excepción</Text>
-        </TouchableOpacity>
-      </View>
-  
+
+      {loading ? (
+        <Text style={styles.loadingText}>Cargando días disponibles...</Text>
+      ) : (
+        <View style={styles.dayButtonContainer}>
+          {availableDays.map((item, index) => (
+            <DayButton
+              key={index.toString()}
+              day={item}
+              selected={formData.dia === item}
+              onPress={() => handleChange('dia', item)}
+            />
+          ))}
+        </View>
+      )}
+
+      {renderPicker('hora_inicio', formData.hora_inicio, 'Seleccionar Hora Inicio')}
+      {renderPicker('hora_fin', formData.hora_fin, 'Seleccionar Hora Fin')}
+
+      {formData.excepciones.map((excepcion, index) => (
+        <View key={index} style={styles.exceptionContainer}>
+          <Text style={styles.exceptionText}>
+            {excepcion.inicio_no_disponible} - {excepcion.fin_no_disponible}
+          </Text>
+          <TouchableOpacity style={styles.deleteButton} onPress={() => removeException(index)}>
+            <Text style={styles.buttonText}>Eliminar</Text>
+          </TouchableOpacity>
+        </View>
+      ))}
+
+      <Text style={styles.exceptionTitle}>Agregar Excepción (Opcional)</Text>
+
+      {renderPicker(
+        'inicio_no_disponible',
+        newException.inicio_no_disponible,
+        'Seleccionar Inicio no Disponible',
+        true
+      )}
+      {renderPicker(
+        'fin_no_disponible',
+        newException.fin_no_disponible,
+        'Seleccionar Fin no Disponible',
+        true
+      )}
+
+      <TouchableOpacity style={styles.addButton} onPress={addException}>
+        <Text style={styles.buttonText}>Agregar Excepción</Text>
+      </TouchableOpacity>
+
       <View style={styles.buttonContainer}>
         <TouchableOpacity style={styles.submitButton} onPress={handleSubmit}>
           <Text style={styles.buttonText}>Guardar</Text>
@@ -241,103 +319,200 @@ const FormularioCreacionHorasScreen = ({ route, navigation }) => {
           <Text style={styles.buttonText}>Volver</Text>
         </TouchableOpacity>
       </View>
-    </View>
+
+      {/* Picker en iOS (Modal) */}
+      <Modal visible={iosPickerVisible} transparent animationType="slide">
+        <View style={styles.modalContainer}>
+          <View style={styles.modalContent}>
+            <Picker
+              selectedValue={tempValue}
+              onValueChange={(itemValue) => setTempValue(itemValue)}
+              itemStyle={{ color: '#000' }}
+            >
+              {timeOptions.map((option) => (
+                <Picker.Item key={option.value} label={option.label} value={option.value} />
+              ))}
+            </Picker>
+            <View style={styles.modalButtons}>
+              <TouchableOpacity style={styles.modalButton} onPress={confirmIosPicker}>
+                <Text style={styles.modalButtonText}>Confirmar</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.modalButton} onPress={cancelIosPicker}>
+                <Text style={styles.modalButtonText}>Cancelar</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+    </KeyboardAvoidingView>
   );
-  
 };
 
 const styles = StyleSheet.create({
+  // CONTAINER
   container: {
     flex: 1,
-    padding: 10,
+    padding: 20,
     backgroundColor: '#fff',
   },
-  formContent: {
-    flex: 1, // Ocupa el espacio disponible
-    justifyContent: 'center', // Centrar el contenido verticalmente
-  },
+
+  // TITULOS Y TEXTOS
   title: {
     fontSize: 24,
     fontWeight: 'bold',
-    marginBottom: 20,
-    marginTop: 100,
+    marginTop: 50,
     textAlign: 'center',
-  },
-  subTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginVertical: 10,
+    color: '#333',
   },
   loadingText: {
-    textAlign: 'center',
     fontSize: 16,
-    color: '#777',
-    marginBottom: 20,
+    marginTop: 20,
+    textAlign: 'center',
+    color: '#666',
   },
-  flatListContainer: {
+
+  // BOTONES DE DIAS
+  dayButtonContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
     justifyContent: 'center',
-    alignItems: 'center',
+    marginVertical: 20,
   },
   dayButton: {
-    padding: 10,
-    borderWidth: 1,
-    borderColor: '#ccc',
+    paddingVertical: 8,
+    paddingHorizontal: 12,
     borderRadius: 5,
-    marginRight: 10,
-    marginBottom: 10,
+    backgroundColor: '#f2f2f2',
+    margin: 5,
+    alignItems: 'center',
   },
   dayButtonSelected: {
     backgroundColor: '#007bff',
-    borderColor: '#0056b3',
   },
   dayButtonText: {
     color: '#000',
     fontWeight: 'bold',
   },
+
+  // PICKER (GENERAL)
+  pickerButton: {
+    padding: 15,
+    borderRadius: 10,
+    backgroundColor: '#f0f0f0',
+    marginTop: 10,
+  },
+  pickerButtonText: {
+    color: '#007bff',
+    textAlign: 'center',
+  },
+
+  // PICKER ANDROID ESPECIFICO
+  androidPickerContainer: {
+    marginTop: 10,
+    borderWidth: 1,
+    borderColor: '#ccc',
+    borderRadius: 8,
+    overflow: 'hidden',
+  },
+  androidPicker: {
+    width: '100%',
+    height: 50,
+    // Puedes añadir más estilos:
+    // color: '#000',
+    // backgroundColor: '#f9f9f9',
+  },
+  androidPickerItem: {
+    fontSize: 16,
+    color: '#333',
+  },
+
+  // EXCEPCIONES
   exceptionContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 10,
+    marginTop: 10,
+    borderBottomWidth: 0.5,
+    borderBottomColor: '#ccc',
+    paddingBottom: 5,
   },
   exceptionText: {
     fontSize: 16,
+    color: '#555',
+  },
+  exceptionTitle: {
+    marginTop: 20,
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#333',
+    textAlign: 'center',
   },
   deleteButton: {
     backgroundColor: '#dc3545',
-    padding: 5,
     borderRadius: 5,
+    padding: 5,
+    alignSelf: 'center',
   },
+
+  // BOTON AGREGAR
   addButton: {
     backgroundColor: '#007bff',
     padding: 10,
     borderRadius: 5,
     alignItems: 'center',
-    marginBottom: 15,
+    marginTop: 10,
   },
+
+  // BOTONERA FINAL
   buttonContainer: {
     flexDirection: 'row',
-    justifyContent: 'space-around', // Espacio uniforme entre botones
-    marginTop: 20,
+    justifyContent: 'space-between',
+    marginTop: 30,
   },
   submitButton: {
-    backgroundColor: '#28a745',
-    padding: 15,
-    borderRadius: 5,
-    alignItems: 'center',
     flex: 1,
-    marginRight: 10,
+    marginRight: 5,
+    backgroundColor: '#28a745',
+    padding: 10,
+    borderRadius: 5,
   },
   backButton: {
-    backgroundColor: '#6c757d',
-    padding: 15,
-    borderRadius: 5,
-    alignItems: 'center',
     flex: 1,
+    marginLeft: 5,
+    backgroundColor: '#6c757d',
+    padding: 10,
+    borderRadius: 5,
   },
   buttonText: {
+    textAlign: 'center',
     color: '#fff',
     fontWeight: 'bold',
+  },
+
+  // MODAL IOS
+  modalContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    backgroundColor: 'rgba(0,0,0,0.5)',
+  },
+  modalContent: {
+    backgroundColor: '#fff',
+    margin: 20,
+    padding: 10,
+    borderRadius: 10,
+  },
+  modalButtons: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    marginTop: 10,
+  },
+  modalButton: {
+    padding: 10,
+    backgroundColor: '#007bff',
+    borderRadius: 10,
+  },
+  modalButtonText: {
+    color: '#fff',
+    textAlign: 'center',
   },
 });
 

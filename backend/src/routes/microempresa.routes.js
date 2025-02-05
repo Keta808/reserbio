@@ -18,6 +18,7 @@ const router = Router();
 router.use(authenticationMiddleware);
 // Define las rutas para las microempresas
 router.get("/", microempresaController.getMicroempresas);
+router.get("/fotoPerfil/:id", microempresaController.getMicroempresaFotoPerfil);
 router.get("/page/:page/limit/:limit", isTrabajador, microempresaController.getMicroempresasForPage);
 router.get("/:id", microempresaController.getMicroempresaById);
 // router.get("/nombre/:nombre", isAdmin, microempresaController.getMicroempresaByNombre);
