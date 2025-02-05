@@ -11,6 +11,9 @@ import microempresaRoutes from "./microempresa.routes.js";
 /** Enrutador de imagenes */
 import imageRoutes from "./image.routes.js";
 
+/** Enrutador de invitaciones */
+import invitacionRoutes from "./invitacion.routes.js";
+
 /** Enrutador de autenticación */
 import authRoutes from "./auth.routes.js";
 
@@ -57,6 +60,8 @@ router.use("/servicios", authenticationMiddleware, servicioRoutes);
 router.use("/disponibilidad", authenticationMiddleware, disponibilidadRoutes);
 
 router.use("/valoraciones", authenticationMiddleware, valoracionRoutes);
+// Define las rutas para las invitaciones /api/invitaciones
+router.use("/invitaciones", authenticationMiddleware, invitacionRoutes);
 
 // Exporta el enrutador
 export default router;

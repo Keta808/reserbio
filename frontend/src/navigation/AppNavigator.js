@@ -9,6 +9,7 @@ import axios from '../services/root.services.js';
 import MicroempresaInicioScreeen from '../screens/microempresa.screen.js';
 import FormularioMicroempresa from '../screens/formularioMicroempresa.screen.js';
 import SubirFotoPerfilScreen from '../screens/subidaFotoPerfil.screen.js';
+import SubirImagenesScreen from '../screens/subidaImagenes.screen.js';
 import FormularioEdicionMicroempresa from '../screens/formularioEdicionMicroempresa.screen.js';
 import ListaMicroempresasScreen from '../screens/listaMicroempresas.screen.js';
 import PerfilTrabajadorScreen from '../screens/perfilTrabajador.screen.js';
@@ -134,6 +135,7 @@ const AppNavigator = () => {
       <Stack.Screen name="Microempresa" component={MicroempresaInicioScreeen} />
       <Stack.Screen name="EditarMicroempresa" component={FormularioEdicionMicroempresa} />
       <Stack.Screen name="SubirFotoPerfil" component={SubirFotoPerfilScreen} />
+      <Stack.Screen name="SubirImagenes" component={SubirImagenesScreen} />
       <Stack.Screen name="ListaMicroempresas" component={ListaMicroempresasScreen} />
       <Stack.Screen name="Trabajador" component={PerfilTrabajadorScreen} /> 
       <Stack.Screen name="Perfil" component={TrabajadorScreen} /> 
