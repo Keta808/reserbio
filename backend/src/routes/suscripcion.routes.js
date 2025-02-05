@@ -25,7 +25,7 @@ router.get('/buscar-suscripcion/:id', suscripcionController.getSuscripcionById);
 router.put('/update-suscripcion/:id', suscripcionController.updateSuscripcionMP);
 router.get('/datos-suscripcion/:idUser', suscripcionController.getUserSubscription);
 
-router.post('/new-suscripcionCard/:id', suscripcionController.updateSuscripcionCard);
+router.post('/new-suscripcionCard/:preapprovalId', suscripcionController.updateSuscripcionCard);
 router.post('/cancelar-suscripcion', suscripcionController.cancelarSuscripcion);
 // Sincronizar estados con Job
 router.get('/sincronizar-estados', suscripcionController.sincronizarEstados);

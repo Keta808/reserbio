@@ -33,28 +33,48 @@ const GestorSuscripcionScreen = () => {
     fetchSubscription();
   }, []); 
   // cancelar suscripción
-  const handleCancelSubscription = async () => { 
-    try { 
-      const idUser = user.id; 
-      const preapprovalId = suscripcion.id; 
-      console.log("Cancelando suscripción con:", { idUser, preapprovalId });
+  const handleCancelSubscription = async () => {
+    Alert.alert(
+      "Cancelar Suscripción",
+      "¿Estás seguro de que deseas cancelar tu suscripción? Ten en cuenta que no podrás usar la aplicación hasta que consigas una nueva suscripción.",
+      [
+        {
+          text: "Cancelar",
+          style: "cancel",
+        },
+        {
+          text: "Confirmar",
+          onPress: async () => {
+            try {
+              const idUser = user.id;
+              const preapprovalId = suscripcion.id;
+              console.log("Cancelando suscripción con:", { idUser, preapprovalId });
 
-      const response = await cancelarSuscripcion(idUser, preapprovalId);
-      if (response.state === 'Success') {
-        Alert.alert('Éxito', 'Suscripción cancelada con éxito');
-        // Devolver a pantalla de Login
-        setSuscripcion(null);
-      } else {
-        Alert.alert('Error', 'No se pudo cancelar la suscripción');
-      }
-    } catch (error) {
-      console.error("Error cancelling subscription:", error.message || error);
-      Alert.alert('Error', 'No se pudo cancelar la suscripción');
-    }
+              const response = await cancelarSuscripcion(idUser, preapprovalId);
+              if (response.state === 'Success') {
+                Alert.alert('Éxito', 'Suscripción cancelada con éxito');
+                setSuscripcion(null);
+                              // Redirigir a la pantalla de Login
+              navigation.navigate('HomeNavigator');
+
+              } else {
+                Alert.alert('Error', 'No se pudo cancelar la suscripción');
+              }
+            } catch (error) {
+              console.error("Error cancelling subscription:", error.message || error);
+              Alert.alert('Error', 'No se pudo cancelar la suscripción');
+            }
+          },
+          style: "destructive",
+        },
+      ],
+      { cancelable: false }
+    );
   };
+
   // actualizar tarjeta de crédito
   const actualizarPaymentInfo = async () => { 
-    navigation.navigate('CardForm', { suscripcion, user });
+    navigation.navigate('CardScreen', { suscripcion, user });
   };
   const handleVolver = () => {
     navigation.goBack();

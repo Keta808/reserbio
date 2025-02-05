@@ -1,3 +1,4 @@
+/* eslint-disable max-len */
 /* eslint-disable require-jsdoc */
 /* eslint-disable no-unused-vars */
 import Servicio from "../models/servicio.model.js"; 
@@ -18,7 +19,7 @@ async function getServicios() {
 
 async function createServicio(servicio) { 
     try { 
-        const { idMicroempresa, nombre, precio, duracion, descripcion } = servicio; 
+        const { idMicroempresa, nombre, precio, duracion, descripcion, porcentajeAbono } = servicio; 
        const servicioFound = await Servicio.findOne({ nombre: servicio.nombre });
            if (servicioFound) return [null, "El servicio ya existe"]; 
         const newServicio = new Servicio({
@@ -26,7 +27,8 @@ async function createServicio(servicio) {
             nombre, 
             precio, 
             duracion, 
-            descripcion, 
+            descripcion,
+            porcentajeAbono: porcentajeAbono || 0, 
         }); 
         await newServicio.save(); 
         return [newServicio, null]; 
@@ -47,13 +49,14 @@ async function deleteServicio(id) {
 
 async function updateServicio(id, servicio) { 
     try { 
-        const { idMicroempresa, nombre, precio, duracion, descripcion } = servicio; 
+        const { idMicroempresa, nombre, precio, duracion, descripcion, porcentajeAbono } = servicio; 
         const updatedServicio = await Servicio.findByIdAndUpdate(id, { 
             idMicroempresa,
             nombre, 
             precio, 
             duracion, 
-            descripcion, 
+            descripcion,
+            porcentajeAbono: porcentajeAbono || 0, 
         }, { new: true }).exec(); 
         if (!updatedServicio) return [null, "El servicio no existe"]; 
         return [updatedServicio, null]; 
@@ -72,11 +75,6 @@ async function getServicioById(id) {
     }
 }
 
-// añadir get por reserva o microempresa posiblemente segun MER
-
-
-//Get servicios por id de microempresa
-
 async function getServiciosByMicroempresaId(id) {
     try {
         const servicios = await Servicio.find({ idMicroempresa: id }).exec();
@@ -87,4 +85,16 @@ async function getServiciosByMicroempresaId(id) {
     }
 }
 
-export default { getServicios, createServicio, deleteServicio, updateServicio, getServicioById, getServiciosByMicroempresaId };
+async function configurarPorcentajeAbono(id, porcentajeAbono) {
+    try {
+        const servicio = await Servicio.findById(id).exec();
+        if (!servicio) return [null, "El servicio no existe"];
+        servicio.porcentajeAbono = porcentajeAbono;
+        await servicio.save();
+        return [servicio, null];
+    } catch (error) {
+        handleError(error, "servicio.service -> configurarPorcentajeAbono");
+    }
+}
+
+export default { getServicios, createServicio, deleteServicio, updateServicio, getServicioById, getServiciosByMicroempresaId, configurarPorcentajeAbono };

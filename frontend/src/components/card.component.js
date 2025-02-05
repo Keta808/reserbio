@@ -1,8 +1,9 @@
 // Formulario para guardar, eliminar, actualizar y obtener tarjetas de crédito de un cliente 
 import React, { useState, useEffect } from "react";
-import { View, Text, TextInput, Button, Picker, StyleSheet, Alert } from "react-native";
+import { View, Text, TextInput, Button, StyleSheet, Alert } from "react-native"; 
+import { Picker } from '@react-native-picker/picker'; 
 
-const cardForm = ({ onSubmit, fetchDynamicData }) => {
+const CardForm = ({ onSubmit, fetchDynamicData }) => {
   const [cardNumber, setCardNumber] = useState("");
   const [expirationDate, setExpirationDate] = useState("");
   const [securityCode, setSecurityCode] = useState("");
@@ -17,7 +18,7 @@ const cardForm = ({ onSubmit, fetchDynamicData }) => {
   
   const [issuers, setIssuers] = useState([]);
   const [identificationTypes, setIdentificationTypes] = useState([]); 
-
+  const [emailError, setEmailError] = useState("");
 
   useEffect(() => {
     fetchDynamicData()
@@ -112,10 +113,16 @@ const cardForm = ({ onSubmit, fetchDynamicData }) => {
   }; 
   const handleEmailChange = (input) => {
     setCardholderEmail(input);
+    setEmailError(""); // Limpiar el error al cambiar el texto
+  };
+
+  const validateEmail = () => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(input)) {
-      Alert.alert("Error", "Por favor ingrese un correo electrónico válido.");
+    if (!emailRegex.test(cardholderEmail)) {
+      setEmailError("Por favor ingrese un correo electrónico válido.");
+      return false;
     }
+    return true;
   };  
   
 
@@ -175,21 +182,21 @@ const cardForm = ({ onSubmit, fetchDynamicData }) => {
       <TextInput style={styles.input} placeholder="Titular de la tarjeta" value={cardholderName} onChangeText={setCardholderName} />
       
       <Picker selectedValue={issuer} onValueChange={(value) => setIssuer(value)} style={styles.picker}>
-        <Picker.Item label="Seleccione un banco" value="" />
-        {issuers.map((issuer) => (
-          <Picker.Item key={issuer.id} label={issuer.name} value={issuer.id} />
-        ))}
+              <Picker.Item label="Seleccione un banco" value="" />
+              {issuers.map((issuer) => (
+                <Picker.Item key={issuer.id} label={issuer.name} value={issuer.id} />
+              ))}
       </Picker> 
       <Picker selectedValue={identificationType} onValueChange={(value) => setIdentificationType(value)} style={styles.picker}>
-          <Picker.Item label="Seleccione un tipo de documento" value="" />
-          {identificationTypes.map((identificationType) => (
-            <Picker.Item key={identificationType.id} label={identificationType.name} value={identificationType.id} />
-        ))}
-       </Picker> 
+                <Picker.Item label="Seleccione un tipo de documento" value="" />
+                {identificationTypes.map((identificationType) => (
+                  <Picker.Item key={identificationType.id} label={identificationType.name} value={identificationType.id} />
+              ))}
+      </Picker>  
 
       <TextInput style={styles.input} placeholder="Número de documento" value={identificationNumber} onChangeText={handleIdentificationNumberChange} keyboardType="default" autoCapitalize="characters"  />
-      <TextInput style={styles.input} placeholder="Correo electrónico" value={cardholderEmail} onChangeText={handleEmailChange} keyboardType="email-address" />
-
+      <TextInput style={styles.input} placeholder="Correo electrónico" value={cardholderEmail} onChangeText={handleEmailChange} keyboardType="email-address" onBlur={validateEmail} />
+      {emailError ? <Text style={styles.errorText}>{emailError}</Text> : null}
       <Button title="Actualizar" onPress={handleSubmit}/>
     </View>
   );
@@ -217,5 +224,5 @@ const styles = StyleSheet.create({
   },
 });
 
-export default cardForm; 
+export default CardForm; 
 

@@ -12,12 +12,13 @@ const router = Router();
 
 router.use(authentificationMiddleware); 
 
-router.get("/", isAdmin, servicioController.getServicios); 
-router.post("/", isAdmin, servicioController.createServicio);
-router.delete("/:id", isAdmin, servicioController.deleteServicio);
-router.put("/:id", isAdmin, servicioController.updateServicio);
-router.get("/servicio/:id", isAdmin, servicioController.getServicioById); 
+router.get("/", servicioController.getServicios); 
+router.post("/", servicioController.createServicio);
+router.delete("/:id", servicioController.deleteServicio);
+router.put("/:id", servicioController.updateServicio);
+router.get("/servicio/:id", servicioController.getServicioById); 
 router.get("/servicios/:id", servicioController.getServiciosByMicroempresaId);
+router.post("/servicio/:id", servicioController.configurarPorcentajeAbono);
 
 
 export default router; 
