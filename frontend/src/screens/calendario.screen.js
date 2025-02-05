@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import {
   View,
   Text,
@@ -6,6 +6,8 @@ import {
   ActivityIndicator,
   Modal,
   TouchableOpacity,
+  RefreshControl,
+  // OJO: "Memo" no existe en 'react-native'. Si quieres usar React.memo, debes importarlo de 'react'.
 } from 'react-native';
 import { Agenda, LocaleConfig } from 'react-native-calendars';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -14,25 +16,72 @@ import reservaService from '../services/reserva.service';
 // Configurar idioma al español
 LocaleConfig.locales['es'] = {
   monthNames: [
-    'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
-    'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre',
+    'Enero',
+    'Febrero',
+    'Marzo',
+    'Abril',
+    'Mayo',
+    'Junio',
+    'Julio',
+    'Agosto',
+    'Septiembre',
+    'Octubre',
+    'Noviembre',
+    'Diciembre',
   ],
   monthNamesShort: [
-    'Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic',
+    'Ene',
+    'Feb',
+    'Mar',
+    'Abr',
+    'May',
+    'Jun',
+    'Jul',
+    'Ago',
+    'Sep',
+    'Oct',
+    'Nov',
+    'Dic',
   ],
   dayNames: [
-    'Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado',
+    'Domingo',
+    'Lunes',
+    'Martes',
+    'Miércoles',
+    'Jueves',
+    'Viernes',
+    'Sábado',
   ],
   dayNamesShort: ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'],
   today: 'Hoy',
 };
 LocaleConfig.defaultLocale = 'es';
 
+/**
+ * Componente memoizado para mostrar cada reserva en la Agenda,
+ * evitando re-renderizados innecesarios.
+ */
+const ReservationItem = React.memo(({ item, onSelect }) => {
+  return (
+    <TouchableOpacity
+      style={styles.item}
+      onPress={() => onSelect(item)}
+    >
+      <Text style={styles.itemText}>{item.name}</Text>
+      <Text style={styles.itemTime}>Hora: {item.time}</Text>
+      <Text style={styles.itemClient}>Cliente: {item.client}</Text>
+      <Text style={styles.itemStatus}>Estado: {item.status}</Text>
+    </TouchableOpacity>
+  );
+});
+
 const CalendarScreen = () => {
   const [items, setItems] = useState({});
   const [filteredItems, setFilteredItems] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [selectedDay, setSelectedDay] = useState(new Date().toISOString().split('T')[0]);
+  const [selectedDay, setSelectedDay] = useState(
+    new Date().toISOString().split('T')[0]
+  );
   const [modalVisible, setModalVisible] = useState(false);
   const [confirmModalVisible, setConfirmModalVisible] = useState(false);
   const [selectedReservation, setSelectedReservation] = useState(null);
@@ -40,7 +89,8 @@ const CalendarScreen = () => {
   // Función para formatear las horas en HH:MM
   const formatTime = (dateString) => {
     const date = new Date(dateString);
-    return `${date.getHours().toString().padStart(2, '0')}:${date.getMinutes()
+    return `${date.getHours().toString().padStart(2, '0')}:${date
+      .getMinutes()
       .toString()
       .padStart(2, '0')}`;
   };
@@ -62,74 +112,93 @@ const CalendarScreen = () => {
     }
   };
 
-  useEffect(() => {
-    const loadReservations = async () => {
-      setLoading(true);
-      try {
-        const userId = await getUserId();
-        if (!userId) {
-          console.error('No se pudo obtener el ID del usuario');
-          setLoading(false);
-          return;
-        }
-
-        const response = await reservaService.getReservasByTrabajadorId(userId);
-        
-        console.log('Reservas:', response.data);
-
-        const reservations = response?.data || [];
-
-        console.log('Reservas:', reservations);
-
-        const mappedItems = {};
-        reservations.forEach((reserva) => {
-          const date = reserva.fecha.split('T')[0];
-          if (!mappedItems[date]) {
-            mappedItems[date] = [];
-          }
-          mappedItems[date].push({
-            id: reserva._id,
-            name: reserva.servicio.nombre || 'Reserva sin nombre',
-            time: `${formatTime(reserva.hora_inicio)} - ${formatTime(
-              reserva.hora_fin || reserva.hora_inicio,
-            )}`,
-            client: reserva.cliente?.nombre || reserva.cliente?.email || 'Desconocido',
-            status: reserva.estado || 'Sin estado',
-          });
-        });
-
-        setItems(mappedItems);
-        setFilteredItems(mappedItems[selectedDay] || []);
-      } catch (error) {
-        console.error('Error al cargar las reservas:', error);
-      } finally {
+  /**
+   * Función que carga las reservas desde la API y actualiza el estado.
+   * Se declara con useCallback para evitar volver a crearse en cada render.
+   */
+  const loadReservations = useCallback(async () => {
+    setLoading(true);
+    try {
+      const userId = await getUserId();
+      if (!userId) {
+        console.error('No se pudo obtener el ID del usuario');
         setLoading(false);
+        return;
       }
-    };
 
+      const response = await reservaService.getReservasByTrabajadorId(userId);
+      const reservations = response.data;
+     
+      const mappedItems = {};
+      reservations.forEach((reserva) => {
+        const date = reserva.fecha.split('T')[0];
+        if (!mappedItems[date]) {
+          mappedItems[date] = [];
+        }
+      
+        // Convertir `hora_inicio` a un objeto Date
+        const horaInicio = new Date(reserva.hora_inicio);
+      
+        // Obtener duración del servicio en minutos (si no existe, asumimos 0 minutos)
+  
+        const duracionMinutos = reserva.duracion || 0;
+        
+
+        // Calcular la hora de fin sumando la duración en minutos
+        const horaFin = new Date(horaInicio.getTime() + duracionMinutos * 60000);
+        
+       
+        mappedItems[date].push({
+          id: reserva._id,
+          name: reserva.servicio.nombre || 'Reserva sin nombre',
+          time: `${formatTime(horaInicio)} - ${formatTime(horaFin)}`,
+          client:
+            reserva.cliente?.nombre || reserva.cliente?.email || 'Desconocido',
+          status: reserva.estado || 'Sin estado',
+        });
+      });
+      
+      setItems(mappedItems);
+      setFilteredItems(mappedItems[selectedDay] || []);
+    } catch (error) {
+      console.error('Error al cargar las reservas:', error);
+    } finally {
+      setLoading(false);
+    }
+  }, [selectedDay]);
+
+  // Cargar reservas cuando se monta el componente
+  useEffect(() => {
     loadReservations();
-  }, []);
+  }, [loadReservations]);
 
+  // Actualizar la lista filtrada cuando cambie el día seleccionado o las reservas
   useEffect(() => {
     setFilteredItems(items[selectedDay] || []);
   }, [selectedDay, items]);
 
+  // Función que maneja el "pull to refresh"
+  const handleRefresh = async () => {
+    await loadReservations();
+  };
+
   // Función para abrir el modal de confirmación y cerrar el modal de detalles
   const openConfirmModal = () => {
     setModalVisible(false); // Cerrar modal de detalles
-    setTimeout(() => setConfirmModalVisible(true), 300); // Abrir modal de confirmación con un pequeño delay
+    // Abrir modal de confirmación con un pequeño delay
+    setTimeout(() => setConfirmModalVisible(true), 300);
   };
 
   // Función para cancelar la reserva
   const handleCancelReservation = async () => {
     try {
-      await reservaService.cancelReserva(selectedReservation.id); 
+      await reservaService.cancelReserva(selectedReservation.id);
       setConfirmModalVisible(false);
 
-      // Actualizar las reservas después de cancelar
+      // Actualizar las reservas localmente
       const updatedItems = { ...items };
       updatedItems[selectedDay] = updatedItems[selectedDay].filter(
-        (item) => item.id !== selectedReservation.id,
+        (item) => item.id !== selectedReservation.id
       );
       setItems(updatedItems);
       setFilteredItems(updatedItems[selectedDay] || []);
@@ -138,29 +207,32 @@ const CalendarScreen = () => {
     }
   };
 
-  // Renderiza cada ítem en la agenda
-  const renderItem = (item) => (
-    <TouchableOpacity
-      style={styles.item}
-      onPress={() => {
-        setSelectedReservation(item);
-        setModalVisible(true);
-      }}
-    >
-      <Text style={styles.itemText}>{item.name}</Text>
-      <Text style={styles.itemTime}>Hora: {item.time}</Text>
-      <Text style={styles.itemClient}>Cliente: {item.client}</Text>
-      <Text style={styles.itemStatus}>Estado: {item.status}</Text>
-    </TouchableOpacity>
+  // useCallback para la selección de una reserva (evita recrear la función cada vez)
+  const handleSelectReservation = useCallback((item) => {
+    setSelectedReservation(item);
+    setModalVisible(true);
+  }, []);
+
+  // Renderizado de cada reserva en la Agenda
+  const renderItem = useCallback(
+    (reservation) => (
+      <ReservationItem
+        item={reservation}
+        onSelect={handleSelectReservation}
+      />
+    ),
+    [handleSelectReservation]
   );
 
+  // Renderizado cuando no hay reservas en una fecha
   const renderEmptyDate = () => (
     <View style={styles.emptyDate}>
       <Text>No hay reservas para esta fecha.</Text>
     </View>
   );
 
-  if (loading) {
+  if (loading && Object.keys(items).length === 0) {
+    // Muestra un indicador de carga si aún no hay datos
     return (
       <View style={styles.loading}>
         <ActivityIndicator size="large" color="#0000ff" />
@@ -175,12 +247,44 @@ const CalendarScreen = () => {
         items={{ [selectedDay]: filteredItems }}
         renderItem={renderItem}
         renderEmptyDate={renderEmptyDate}
-        rowHasChanged={(r1, r2) => r1.name !== r2.name}
+        // Cambiamos la lógica para comparar IDs en lugar del nombre
+        rowHasChanged={(r1, r2) => r1.id !== r2.id}
         firstDay={1}
         selected={selectedDay}
         onDayPress={(day) => setSelectedDay(day.dateString)}
-        pastScrollRange={12}
-        futureScrollRange={12}
+        pastScrollRange={1}
+        futureScrollRange={1}
+        // "Pull to refresh"
+        refreshControl={
+          <RefreshControl
+            refreshing={loading}
+            onRefresh={handleRefresh}
+          />
+        }
+        markedDates={Object.keys(items).reduce((acc, date) => {
+          acc[date] = {
+            customStyles: {
+              container: {
+                backgroundColor: 'transparent', // Fondo transparente para el día
+                borderRadius: 10, // Hace el fondo más redondeado
+              },
+              text: {
+                color: 'black', // Color del texto del día
+                fontWeight: 'bold',
+              },
+            },
+            dots: [
+              {
+                key: date,
+                color: '#007BFF', // Azul vibrante
+                selectedDotColor: '#007BFF',
+              },
+            ],
+          };
+          return acc;
+        }, {})}
+        markingType="multi-dot" // Permite usar puntos redondos
+
       />
 
       {/* Modal de Detalles */}
@@ -194,11 +298,22 @@ const CalendarScreen = () => {
           <View style={styles.modalContainer}>
             <View style={styles.modalContent}>
               <Text style={styles.modalTitle}>Detalle de la Reserva</Text>
-              <Text style={styles.modalText}>Servicio: {selectedReservation.name}</Text>
-              <Text style={styles.modalText}>Hora: {selectedReservation.time}</Text>
-              <Text style={styles.modalText}>Cliente: {selectedReservation.client}</Text>
-              <Text style={styles.modalText}>Estado: {selectedReservation.status}</Text>
-              <TouchableOpacity style={styles.cancelButton} onPress={openConfirmModal}>
+              <Text style={styles.modalText}>
+                Servicio: {selectedReservation.name}
+              </Text>
+              <Text style={styles.modalText}>
+                Hora: {selectedReservation.time}
+              </Text>
+              <Text style={styles.modalText}>
+                Cliente: {selectedReservation.client}
+              </Text>
+              <Text style={styles.modalText}>
+                Estado: {selectedReservation.status}
+              </Text>
+              <TouchableOpacity
+                style={styles.cancelButton}
+                onPress={openConfirmModal}
+              >
                 <Text style={styles.cancelButtonText}>Cancelar Cita</Text>
               </TouchableOpacity>
               <TouchableOpacity

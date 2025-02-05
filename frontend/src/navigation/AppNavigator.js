@@ -26,6 +26,7 @@ import SeleccionServicioScreen from '../screens/seleccionServicio.screen.js';
 import ConfirmacionReservaScreen from '../screens/confirmacionReserva.screen.js';
 import TestScreen from '../screens/testimagenes.screen.js';
 import ReservaClienteScreen from '../screens/reservasCliente.screen.js';
+import ValoracionServicioScreen from '../screens/valoracion.screen.js';
 
 // Pantallas para Trabajador
 import gestorSuscripcionScreen from '../screens/gestorSuscripcion.screen.js'; 
@@ -118,6 +119,7 @@ const AppNavigator = () => {
       <Stack.Screen name="SeleccionServicio" component={SeleccionServicioScreen} />
       <Stack.Screen name="ConfirmacionReserva" component={ConfirmacionReservaScreen} />
       <Stack.Screen name="Test" component={TestScreen} />
+      <Stack.Screen name="Valoracion" component={ValoracionServicioScreen} />
     </Stack.Navigator>
   );
   

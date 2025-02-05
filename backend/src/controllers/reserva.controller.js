@@ -51,8 +51,10 @@ async function getReservasByTrabajador(req, res) {
 
 async function createReserva(req, res) {
     try {
-        
+        console.log("controller reserva create",req.body);
+
         const { error } = reservaBodySchema.validate(req.body);
+        console.log("error",error);
         if (error) return respondError(req, res, 400, error.message);
         const [newReserva, errorReserva] = await ReservaService.createReserva(req.body);
         if (errorReserva) return respondError(req, res, 400, errorReserva);
@@ -156,5 +158,20 @@ async function getReservasByCliente(req, res) {
 }
 
 
-export default { getReservas, getReservasByTrabajador, createReserva ,deleteReserva ,updateReserva, cancelReserva, getReservasByCliente};
+//actualizar el estado de la reserva a finalizada
+
+async function finalizarReserva(req, res) {
+    try {
+        const { error } = reservaIdSchema.validate(req.params);
+        if (error) return respondError(req, res, 400, error.message);
+        const [updatedReserva, errorReserva] = await ReservaService.finalizarReserva(req.params.id);
+        if (errorReserva) return respondError(req, res, 400, errorReserva);
+        respondSuccess(req, res, 200, updatedReserva);
+    } catch (error) {
+        handleError(error, "reserva.controller -> finalizarReserva");
+        respondError(req, res, 400, error.message);
+    }
+}
+
+export default { getReservas, getReservasByTrabajador, createReserva ,deleteReserva ,updateReserva, cancelReserva, getReservasByCliente, finalizarReserva};
 

@@ -22,6 +22,7 @@ import reservaRoutes from "./reserva.routes.js";
 import servicioRoutes from "./servicio.routes.js";
 import disponibilidadRoutes from "./disponibilidad.routes.js";
 
+import valoracionRoutes from "./valoracion.routes.js";
 
 /** Middleware de autenticación */
 import authenticationMiddleware from "../middlewares/authentication.middleware.js";
@@ -54,6 +55,8 @@ router.use("/imagenes", authenticationMiddleware, imageRoutes);
 router.use("/servicios", authenticationMiddleware, servicioRoutes);
 
 router.use("/disponibilidad", authenticationMiddleware, disponibilidadRoutes);
+
+router.use("/valoraciones", authenticationMiddleware, valoracionRoutes);
 
 // Exporta el enrutador
 export default router;

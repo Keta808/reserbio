@@ -29,6 +29,11 @@ const getUserId = async () => {
   }
 };
 
+const parseTime = (timeStr) => {
+  const [hh, mm] = timeStr.split(':');
+  return parseInt(hh, 10) * 60 + parseInt(mm, 10);
+};
+
 const DayButton = memo(({ day, selected, onPress }) => (
   <TouchableOpacity
     style={[styles.dayButton, selected && styles.dayButtonSelected]}
@@ -131,28 +136,45 @@ const FormularioCreacionHorasScreen = ({ route, navigation }) => {
     setIosPickerVisible(false);
   };
 
-  const renderPicker = (key, value, placeholder) => {
+  // Función única para renderizar Picker en iOS y Android con estilos custom
+  const renderPicker = (key, value, placeholder, isException = false) => {
+    const pickerValue = isException ? newException[key] : value;
+
     if (Platform.OS === 'ios') {
       return (
         <TouchableOpacity
           style={styles.pickerButton}
-          onPress={() => handleIosPicker(key)}
+          onPress={() => {
+            setIosPickerKey(key);
+            setTempValue(pickerValue);
+            setIosPickerVisible(true);
+          }}
         >
-          <Text style={styles.pickerButtonText}>{value || placeholder}</Text>
+          <Text style={styles.pickerButtonText}>{pickerValue || placeholder}</Text>
         </TouchableOpacity>
       );
     } else {
       return (
-        <Picker
-          selectedValue={value}
-          onValueChange={(itemValue) => handleChange(key, itemValue)}
-          style={styles.picker}
-        >
-          <Picker.Item label={placeholder} value="" />
-          {timeOptions.map((option) => (
-            <Picker.Item key={option.value} label={option.label} value={option.value} />
-          ))}
-        </Picker>
+        <View style={styles.androidPickerContainer}>
+          <Picker
+            selectedValue={pickerValue}
+            onValueChange={(itemValue) => {
+              if (isException) {
+                handleExceptionChange(key, itemValue);
+              } else {
+                handleChange(key, itemValue);
+              }
+            }}
+            style={styles.androidPicker}
+            mode="dropdown" // "dialog" o "dropdown"
+            itemStyle={styles.androidPickerItem}
+          >
+            <Picker.Item label={placeholder} value="" />
+            {timeOptions.map((option) => (
+              <Picker.Item key={option.value} label={option.label} value={option.value} />
+            ))}
+          </Picker>
+        </View>
       );
     }
   };
@@ -160,6 +182,17 @@ const FormularioCreacionHorasScreen = ({ route, navigation }) => {
   const addException = () => {
     if (!newException.inicio_no_disponible || !newException.fin_no_disponible) {
       Alert.alert('Error', 'Debe completar ambos campos para agregar una excepción.');
+      return;
+    }
+
+    if (
+      parseTime(newException.fin_no_disponible) <=
+      parseTime(newException.inicio_no_disponible)
+    ) {
+      Alert.alert(
+        'Error',
+        'La hora de fin de la excepción debe ser mayor que la hora de inicio.'
+      );
       return;
     }
 
@@ -184,6 +217,14 @@ const FormularioCreacionHorasScreen = ({ route, navigation }) => {
         return;
       }
 
+      if (parseTime(formData.hora_fin) <= parseTime(formData.hora_inicio)) {
+        Alert.alert(
+          'Error',
+          'La hora de fin debe ser mayor que la hora de inicio.'
+        );
+        return;
+      }
+
       const cleanedFormData = {
         ...formData,
         excepciones: formData.excepciones || [],
@@ -205,7 +246,11 @@ const FormularioCreacionHorasScreen = ({ route, navigation }) => {
       navigation.goBack();
     } catch (error) {
       console.error('Error al guardar la disponibilidad:', error);
-      Alert.alert('Error', error?.response?.data?.message || 'No se pudo guardar la disponibilidad.');
+      Alert.alert(
+        'Error',
+        error?.response?.data?.message ||
+          'No se pudo guardar la disponibilidad.'
+      );
     }
   };
 
@@ -246,16 +291,20 @@ const FormularioCreacionHorasScreen = ({ route, navigation }) => {
           </TouchableOpacity>
         </View>
       ))}
-      <Text style={styles.title}>Agregar Excepción(Opcional)</Text>
+
+      <Text style={styles.exceptionTitle}>Agregar Excepción (Opcional)</Text>
+
       {renderPicker(
         'inicio_no_disponible',
         newException.inicio_no_disponible,
-        'Seleccionar Inicio no Disponible'
+        'Seleccionar Inicio no Disponible',
+        true
       )}
       {renderPicker(
         'fin_no_disponible',
         newException.fin_no_disponible,
-        'Seleccionar Fin no Disponible'
+        'Seleccionar Fin no Disponible',
+        true
       )}
 
       <TouchableOpacity style={styles.addButton} onPress={addException}>
@@ -271,13 +320,14 @@ const FormularioCreacionHorasScreen = ({ route, navigation }) => {
         </TouchableOpacity>
       </View>
 
+      {/* Picker en iOS (Modal) */}
       <Modal visible={iosPickerVisible} transparent animationType="slide">
         <View style={styles.modalContainer}>
           <View style={styles.modalContent}>
             <Picker
               selectedValue={tempValue}
               onValueChange={(itemValue) => setTempValue(itemValue)}
-              itemStyle={{ color: '#000' }} // Forzar color de los ítems
+              itemStyle={{ color: '#000' }}
             >
               {timeOptions.map((option) => (
                 <Picker.Item key={option.value} label={option.label} value={option.value} />
@@ -299,34 +349,171 @@ const FormularioCreacionHorasScreen = ({ route, navigation }) => {
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: 20, backgroundColor: '#fff' },
+  // CONTAINER
+  container: {
+    flex: 1,
+    padding: 20,
+    backgroundColor: '#fff',
+  },
 
-  title: { fontSize: 24, fontWeight: 'bold', marginTop: 100, textAlign: 'center' },
+  // TITULOS Y TEXTOS
+  title: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    marginTop: 50,
+    textAlign: 'center',
+    color: '#333',
+  },
+  loadingText: {
+    fontSize: 16,
+    marginTop: 20,
+    textAlign: 'center',
+    color: '#666',
+  },
 
-  dayButtonContainer: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', marginTop: 50 },
-  dayButton: { padding: 10, borderRadius: 5, backgroundColor: '#f2f2f2', margin: 5, alignItems: 'center' },
-  dayButtonSelected: { backgroundColor: '#007bff' },
-  dayButtonText: { color: '#000', fontWeight: 'bold' },
+  // BOTONES DE DIAS
+  dayButtonContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'center',
+    marginVertical: 20,
+  },
+  dayButton: {
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 5,
+    backgroundColor: '#f2f2f2',
+    margin: 5,
+    alignItems: 'center',
+  },
+  dayButtonSelected: {
+    backgroundColor: '#007bff',
+  },
+  dayButtonText: {
+    color: '#000',
+    fontWeight: 'bold',
+  },
 
-  picker: { width: '100%', height: 50 },
-  pickerButton: { padding: 15, borderRadius: 10, backgroundColor: '#f0f0f0', marginBottom: 10 },
-  pickerButtonText: { color: '#007bff', textAlign: 'center' },
+  // PICKER (GENERAL)
+  pickerButton: {
+    padding: 15,
+    borderRadius: 10,
+    backgroundColor: '#f0f0f0',
+    marginTop: 10,
+  },
+  pickerButtonText: {
+    color: '#007bff',
+    textAlign: 'center',
+  },
 
-  exceptionContainer: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 10 },
-  exceptionText: { fontSize: 16 },
+  // PICKER ANDROID ESPECIFICO
+  androidPickerContainer: {
+    marginTop: 10,
+    borderWidth: 1,
+    borderColor: '#ccc',
+    borderRadius: 8,
+    overflow: 'hidden',
+  },
+  androidPicker: {
+    width: '100%',
+    height: 50,
+    // Puedes añadir más estilos:
+    // color: '#000',
+    // backgroundColor: '#f9f9f9',
+  },
+  androidPickerItem: {
+    fontSize: 16,
+    color: '#333',
+  },
 
-  deleteButton: { backgroundColor: '#dc3545', borderRadius: 5, padding: 5 },
-  addButton: { backgroundColor: '#007bff', padding: 10, borderRadius: 5, alignItems: 'center' },
-  buttonContainer: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 20 },
-  submitButton: { flex: 1, marginRight: 5, backgroundColor: '#28a745', padding: 10, borderRadius: 5 },
-  backButton: { flex: 1, marginLeft: 5, backgroundColor: '#6c757d', padding: 10, borderRadius: 5 },
-  buttonText: { textAlign: 'center', color: '#fff', fontWeight: 'bold' },
+  // EXCEPCIONES
+  exceptionContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 10,
+    borderBottomWidth: 0.5,
+    borderBottomColor: '#ccc',
+    paddingBottom: 5,
+  },
+  exceptionText: {
+    fontSize: 16,
+    color: '#555',
+  },
+  exceptionTitle: {
+    marginTop: 20,
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#333',
+    textAlign: 'center',
+  },
+  deleteButton: {
+    backgroundColor: '#dc3545',
+    borderRadius: 5,
+    padding: 5,
+    alignSelf: 'center',
+  },
 
-  modalContainer: { flex: 1, justifyContent: 'center', backgroundColor: 'rgba(0,0,0,0.5)' },
-  modalContent: { backgroundColor: '#fff', margin: 20, padding: 10, borderRadius: 10 },
-  modalButtons: { flexDirection: 'row', justifyContent: 'space-around', marginTop: 10 },
-  modalButton: { padding: 10, backgroundColor: '#007bff', borderRadius: 10 },
-  modalButtonText: { color: '#fff', textAlign: 'center' },
+  // BOTON AGREGAR
+  addButton: {
+    backgroundColor: '#007bff',
+    padding: 10,
+    borderRadius: 5,
+    alignItems: 'center',
+    marginTop: 10,
+  },
+
+  // BOTONERA FINAL
+  buttonContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 30,
+  },
+  submitButton: {
+    flex: 1,
+    marginRight: 5,
+    backgroundColor: '#28a745',
+    padding: 10,
+    borderRadius: 5,
+  },
+  backButton: {
+    flex: 1,
+    marginLeft: 5,
+    backgroundColor: '#6c757d',
+    padding: 10,
+    borderRadius: 5,
+  },
+  buttonText: {
+    textAlign: 'center',
+    color: '#fff',
+    fontWeight: 'bold',
+  },
+
+  // MODAL IOS
+  modalContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    backgroundColor: 'rgba(0,0,0,0.5)',
+  },
+  modalContent: {
+    backgroundColor: '#fff',
+    margin: 20,
+    padding: 10,
+    borderRadius: 10,
+  },
+  modalButtons: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    marginTop: 10,
+  },
+  modalButton: {
+    padding: 10,
+    backgroundColor: '#007bff',
+    borderRadius: 10,
+  },
+  modalButtonText: {
+    color: '#fff',
+    textAlign: 'center',
+  },
 });
 
 export default FormularioCreacionHorasScreen;

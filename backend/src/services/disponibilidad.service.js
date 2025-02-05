@@ -231,16 +231,16 @@ async function getHorariosDisponiblesMicroEmpresa(serviceId, date) {
         const fechaConsulta =  stringToDateOnly(date); // 31 de enero de 2025, es viernes
         const diaSemana = diasSemana[fechaConsulta.getDay()];
 
-// diaSemana === "viernes" (con la tilde si fuera "miércoles", "sábado", etc.)
-console.log("Día de la semana:", diaSemana);
-        console.log("Dia de la semana:", diaSemana);
+        // diaSemana === "viernes" (con la tilde si fuera "miércoles", "sábado", etc.)
+        // console.log("Día de la semana:", diaSemana);
+        // console.log("Dia de la semana:", diaSemana);
 
 
         // 1. Obtén el servicio y su duración
         //console.log("Fecha de consulta:", fechaConsulta);
         //console.log("ID del servicio:", serviceId);
         const servicio = await Servicio.findById(serviceId);
-        console.log("Servicio encontrado:", servicio);
+        //console.log("Servicio encontrado:", servicio);
         if (!servicio) {
             return [null, "El servicio no existe"];
         }
@@ -268,9 +268,9 @@ console.log("Día de la semana:", diaSemana);
         // 3. Itera sobre cada trabajador
         for (const enlace of trabajadores) {
             const trabajador = enlace.id_trabajador;
-            console.log("Trabajador encontrado:", trabajador);
-            console.log("ID del trabajador:", trabajador._id);
-            console.log("diaSemana:", diaSemana);
+            //console.log("Trabajador encontrado:", trabajador);
+            //console.log("ID del trabajador:", trabajador._id);
+            //console.log("diaSemana:", diaSemana);
             // a) Obtén disponibilidad del trabajador para el día
             const disponibilidad = await Disponibilidad.findOne({
                 trabajador: trabajador._id,

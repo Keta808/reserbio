@@ -8,7 +8,9 @@ import {
   StyleSheet,
   Button,
 } from 'react-native';
+
 import DateTimePicker from '@react-native-community/datetimepicker';
+
 import { useNavigation, useRoute } from '@react-navigation/native';
 import servicioService from '../services/servicio.service.js';
 
@@ -50,12 +52,13 @@ const SeleccionServicioScreen = () => {
   const handleTrabajadorSelect = (trabajadorId) => {
     // trabajadorId = null => sin preferencia, 
     // trabajadorId = 'abc123' => alguno en particular
+    console.log('Trabajador seleccionado:', trabajadorId);
     setSelectedTrabajadorId(trabajadorId);
   };
 
-  const handleServicioSelect = (servicioId) => {
-    setSelectedServicio(servicioId);
-  };
+  // const handleServicioSelect = (servicioId) => {
+  //  setSelectedServicio(servicioId);
+  // };
 
   const handleContinue = () => {
     navigation.navigate('ConfirmacionReserva', {
@@ -68,14 +71,18 @@ const SeleccionServicioScreen = () => {
 
   const handleDateChange = (event, selected) => {
     setShowDatePicker(false);
+    console.log('Fecha seleccionada:', selected);
     if (selected) {
       const today = new Date();
       today.setHours(0, 0, 0, 0);
       const oneWeekLater = new Date();
       oneWeekLater.setDate(today.getDate() + 7);
       oneWeekLater.setHours(23, 59, 59, 999);
+     // console.log('Hoy:', today);
+
 
       if (selected >= today && selected <= oneWeekLater) {
+        
         setSelectedDate(selected);
       } else {
         alert('Por favor selecciona una fecha entre hoy y una semana en el futuro.');

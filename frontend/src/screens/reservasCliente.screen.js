@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react'; 
 import { View, Text, StyleSheet, ActivityIndicator, FlatList, Button } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import reservaService from '../services/reserva.service';
@@ -9,6 +9,9 @@ const ReservaClienteScreen = () => {
   const [clienteId, setClienteId] = useState(null);
   const [reservas, setReservas] = useState([]);
   const [loading, setLoading] = useState(true);
+  
+  // Estado para el filtro actual ('Activas' o 'Finalizadas')
+  const [filtro, setFiltro] = useState('Activas');
 
   useEffect(() => {
     const fetchClienteId = async () => {
@@ -16,7 +19,7 @@ const ReservaClienteScreen = () => {
         const userData = await AsyncStorage.getItem('user');
         if (userData) {
           const parsedData = JSON.parse(userData);
-          setClienteId(parsedData.id); // ✅ Guardamos el clienteId en el estado
+          setClienteId(parsedData.id);
           fetchReservas(parsedData.id);
         } else {
           console.error('⚠️ No se encontraron datos de usuario en AsyncStorage');
@@ -25,7 +28,6 @@ const ReservaClienteScreen = () => {
         console.error('Error al obtener datos de AsyncStorage:', error);
       }
     };
-
     fetchClienteId();
   }, []);
 
@@ -49,6 +51,18 @@ const ReservaClienteScreen = () => {
     return `${formattedDate} - ${formattedTime}`;
   };
 
+  // Filtrar en tiempo real según el estado y siempre excluir "Cancelada"
+  const reservasFiltradas = reservas.filter((reserva) => {
+    if (reserva.estado === 'Cancelada') return false; // excluye las canceladas
+
+    if (filtro === 'Activas') {
+      return reserva.estado === 'Activa';
+    } else if (filtro === 'Finalizadas') {
+      return reserva.estado === 'Finalizada';
+    }
+    return false;
+  });
+
   if (loading) {
     return (
       <View style={styles.loaderContainer}>
@@ -62,23 +76,57 @@ const ReservaClienteScreen = () => {
     <View style={styles.container}>
       <Text style={styles.header}>Mis Reservas</Text>
 
-      {reservas.length > 0 ? (
+      {/* Botones para cambiar el filtro */}
+      <View style={styles.filterContainer}>
+        <Button
+          title="Mostrar Activas"
+          onPress={() => setFiltro('Activas')}
+        />
+        <Button
+          title="Mostrar Finalizadas"
+          onPress={() => setFiltro('Finalizadas')}
+        />
+      </View>
+
+      {reservasFiltradas.length > 0 ? (
         <FlatList
-          data={reservas}
+          data={reservasFiltradas}
           keyExtractor={(item) => item._id}
           renderItem={({ item }) => (
             <View style={styles.reservaItem}>
-              <Text style={styles.reservaText}>{formatDateTime(item.fecha, item.hora_inicio)}</Text>
-              <Text style={styles.reservaSubText}>Servicio: {item.servicio.nombre}</Text>
-              <Text style={styles.reservaSubText}>Trabajador: {item.trabajador.nombre} {item.trabajador.apellido}</Text>
-              <Text style={[styles.estado, item.estado === 'Activa' ? styles.estadoActiva : styles.estadoCancelada]}>
+              <Text style={styles.reservaText}>
+                {formatDateTime(item.fecha, item.hora_inicio)}
+              </Text>
+              <Text style={styles.reservaSubText}>
+                Servicio: {item.servicio.nombre}
+              </Text>
+              <Text style={styles.reservaSubText}>
+                Trabajador: {item.trabajador.nombre} {item.trabajador.apellido}
+              </Text>
+              <Text
+                style={[
+                  styles.estado,
+                  item.estado === 'Activa' ? styles.estadoActiva : styles.estadoFinalizada
+                ]}
+              >
                 {item.estado}
               </Text>
+          
+              {/* Mostrar botón solo si la reserva está finalizada */}
+              {item.estado === 'Finalizada' && (
+                <Button
+                  title="Valorar Servicio"
+                  onPress={() => navigation.navigate('Valoracion', { reserva: item })}
+                  color="#28a745"
+                />
+              )}
             </View>
           )}
         />
       ) : (
-        <Text style={styles.noReservas}>No tienes reservas activas.</Text>
+        <Text style={styles.noReservas}>
+          No tienes reservas {filtro.toLowerCase()}.
+        </Text>
       )}
 
       <View style={styles.buttonContainer}>
@@ -99,6 +147,11 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     marginBottom: 16,
     textAlign: 'center',
+  },
+  filterContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-evenly',
+    marginBottom: 16,
   },
   reservaItem: {
     backgroundColor: '#fff',
@@ -128,8 +181,8 @@ const styles = StyleSheet.create({
   estadoActiva: {
     color: 'green',
   },
-  estadoCancelada: {
-    color: 'red',
+  estadoFinalizada: {
+    color: 'blue',
   },
   noReservas: {
     textAlign: 'center',
