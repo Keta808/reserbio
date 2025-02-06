@@ -33,7 +33,7 @@ async function getValoracionesPorTrabajador(trabajadorId) {
 
 async function crearValoracion(valoracionData) {
     try {
-        const response = await instance.post("/valoraciones", valoracionData);
+        const response = await instance.post("/valoraciones", valoracionData); 
         return response.data.data;
     } catch (error) {
         console.error(
@@ -76,12 +76,30 @@ async function getValoracionPromedioPorMicroempresa(microempresaId) {
     }
 }
 
+//verifica si existe una valoracion para un servicio por un cliente
+
+const existeValoracionPorReserva = async (reservaId) => {
+    try {
+      
+      //console.log("reserva id en valoracion a", reservaId);
+
+      const response = await instance.get(`/valoraciones/reserva/${reservaId}`);
+     // console.log("response", response.data);
+      return response.data; // Retorna `true` si ya está valorado, `false` si no.
+    } catch (error) {
+      console.error('Error al verificar valoración:', error);
+      return false; // En caso de error, asumimos que no tiene valoración
+    }
+  };
+  
+
 export default {
     getValoracionesPorMicroempresa,
     getValoracionesPorTrabajador,
     crearValoracion,
     eliminarValoracion,
-    getValoracionPromedioPorMicroempresa
+    getValoracionPromedioPorMicroempresa,
+    existeValoracionPorReserva
 };
 
 

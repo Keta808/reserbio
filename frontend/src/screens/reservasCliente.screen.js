@@ -3,6 +3,9 @@ import { View, Text, StyleSheet, ActivityIndicator, FlatList, Button } from 'rea
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import reservaService from '../services/reserva.service';
 import { useNavigation } from '@react-navigation/native';
+import valoracionService from '../services/valoracion.service';
+import { useFocusEffect } from '@react-navigation/native';
+import { useCallback } from 'react';
 
 const ReservaClienteScreen = () => {
   const navigation = useNavigation();
@@ -13,36 +16,45 @@ const ReservaClienteScreen = () => {
   // Estado para el filtro actual ('Activas' o 'Finalizadas')
   const [filtro, setFiltro] = useState('Activas');
 
-  useEffect(() => {
-    const fetchClienteId = async () => {
-      try {
-        const userData = await AsyncStorage.getItem('user');
-        if (userData) {
-          const parsedData = JSON.parse(userData);
-          setClienteId(parsedData.id);
-          fetchReservas(parsedData.id);
-        } else {
-          console.error('⚠️ No se encontraron datos de usuario en AsyncStorage');
+  useFocusEffect(
+    useCallback(() => {
+      const fetchClienteId = async () => {
+        try {
+          const userData = await AsyncStorage.getItem('user');
+          if (userData) {
+            const parsedData = JSON.parse(userData);
+            setClienteId(parsedData.id);
+            fetchReservas(parsedData.id); // 🔹 Recargar reservas al volver
+          }
+        } catch (error) {
+          console.error('Error al obtener datos de AsyncStorage:', error);
         }
-      } catch (error) {
-        console.error('Error al obtener datos de AsyncStorage:', error);
-      }
-    };
-    fetchClienteId();
-  }, []);
-
+      };
+      fetchClienteId();
+    }, [])
+  );
+  
   const fetchReservas = async (id) => {
     try {
       setLoading(true);
       const response = await reservaService.getReservasByCliente(id);
-      console.log('Reservas del cliente:', response);
-      setReservas(response.data || []);
+    
+      // Recorrer las reservas y verificar si tienen una valoración
+      const reservasConValoracion = await Promise.all(response.data.map(async (reserva) => {
+        const valoracionResponse  = await valoracionService.existeValoracionPorReserva(reserva._id);
+        return { ...reserva, tieneValoracion: valoracionResponse.existe }; // Usamos `existe` del response
+
+      }));
+  
+      //console.log('Reservas del cliente con valoración:', reservasConValoracion);
+      setReservas(reservasConValoracion || []);
     } catch (error) {
       console.error('Error al obtener las reservas del cliente:', error);
     } finally {
       setLoading(false);
     }
   };
+  
 
   const formatDateTime = (fechaISO, hora) => {
     const dateObj = new Date(fechaISO);
@@ -113,10 +125,10 @@ const ReservaClienteScreen = () => {
               </Text>
           
               {/* Mostrar botón solo si la reserva está finalizada */}
-              {item.estado === 'Finalizada' && (
+              {item.estado === 'Finalizada' && !item.tieneValoracion && (
                 <Button
                   title="Valorar Servicio"
-                  onPress={() => navigation.navigate('Valoracion', { reserva: item })}
+                  onPress={() => navigation.navigate('Valoracion', { reserva: item, clienteId })}
                   color="#28a745"
                 />
               )}

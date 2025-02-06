@@ -249,6 +249,19 @@ async function getMicroempresasByUser(trabajadorId) {
     }
 }
 
+//servicio que retorna SOLO el id de la microempresa por el id de su trabajador
+
+async function getMicroempresaIdByTrabajadorId(trabajadorId) {
+    try {
+        const microempresa = await Microempresa.findOne({ idTrabajador: trabajadorId });
+        if (!microempresa) return [null, "No hay microempresas"];
+        return [microempresa._id, null];
+    } catch (error) {
+        handleError(error, "microempresa.service -> getMicroempresaIdByTrabajadorId");
+    }
+}
+
+
 export default {
     getMicroempresas,
     getMicroempresaFotoPerfil,
@@ -260,5 +273,6 @@ export default {
     getMicroempresasPorCategoria, 
     getMicromempresaPorNombre,
     getMicroempresasByUser,
+    getMicroempresaIdByTrabajadorId
 };
 
