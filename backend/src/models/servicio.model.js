@@ -26,9 +26,13 @@ const ServicioSchema = new mongoose.Schema({
     descripcion: {
         type: String,
         required: true,
+    }, 
+    porcentajeAbono: {
+        type: Number,
+        min: 0,
+        max: 100,
     },
     },   
 );
-
 const Servicio = mongoose.model("Servicio", ServicioSchema); 
 export default Servicio; 

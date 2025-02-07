@@ -27,6 +27,10 @@ const servicioBodySchema = Joi.object({
             "any.required": "La descripcion es obligatoria.",
             "string.base": "La descripcion debe ser de tipo string.",
         }),
+        porcentajeAbono: Joi.number().required().messages({
+            "number.base": "El porcentajeAbono debe ser de tipo number.",
+            "any.required": "El porcentajeAbono es obligatorio.",
+        }),
     }).messages({
         "object.unknown": "No se permiten propiedades adicionales.",
     }); 

@@ -31,9 +31,10 @@ import ValoracionServicioScreen from '../screens/valoracion.screen.js';
 
 // Pantallas para Trabajador
 import gestorSuscripcionScreen from '../screens/gestorSuscripcion.screen.js'; 
-import CardForm from '../screens/cardForm.screen.js'; 
+import CardScreen from '../screens/cardForm.screen.js'; 
 import TrabajadorScreen from '../screens/trabajador.screen.js';
 import HomeTrabajadorScreen from '../screens/homeTrabajador.screen.js';
+import ServicioScreen from '../screens/servicio.screen.js';
 // Contexto de autenticación
 import { AuthContext } from '../context/auth.context';
 
@@ -71,7 +72,7 @@ const HomeClienteNavigator = () => (
 const HomeTrabajadorNavigator = () => (
 <Tab.Navigator lazy={true}>
     <Tab.Screen name="HomeTrabajador" component={HomeTrabajadorScreen} /> 
-    <Tab.Screen name="Suscripcion" component={SuscripcionScreen} />
+   
     <Tab.Screen name="FormularioMicroempresa" component={FormularioMicroempresa} />
     <Tab.Screen name="SubirFotoPerfil" component={SubirFotoPerfilScreen} />
     <Tab.Screen name="SeleccionMicroempresa" component={SeleccionMicroempresaScreen} />
@@ -128,10 +129,11 @@ const AppNavigator = () => {
     <Stack.Navigator screenOptions={{ headerShown: false }}>
       <Stack.Screen name="HomeNavigator" component={HomeTrabajadorNavigator} />
       <Stack.Screen name="Pago" component={PaymentScreen} />
+      <Stack.Screen name="Suscripcion" component={SuscripcionScreen} />
       <Stack.Screen name="FormularioCreacionHoras" component={FormularioCreacionHorasScreen} />
       <Stack.Screen name="SeleccionMicroempresa" component={SeleccionMicroempresaScreen} /> 
       <Stack.Screen name="GestorSuscripcion" component={gestorSuscripcionScreen} /> 
-      <Stack.Screen name="CardForm" component={CardForm} />
+      <Stack.Screen name="CardScreen" component={CardScreen} />
       <Stack.Screen name="Microempresa" component={MicroempresaInicioScreeen} />
       <Stack.Screen name="EditarMicroempresa" component={FormularioEdicionMicroempresa} />
       <Stack.Screen name="SubirFotoPerfil" component={SubirFotoPerfilScreen} />
@@ -139,6 +141,7 @@ const AppNavigator = () => {
       <Stack.Screen name="ListaMicroempresas" component={ListaMicroempresasScreen} />
       <Stack.Screen name="Trabajador" component={PerfilTrabajadorScreen} /> 
       <Stack.Screen name="Perfil" component={TrabajadorScreen} /> 
+      <Stack.Screen name="Servicio" component={ServicioScreen} />
       
     </Stack.Navigator>
   );

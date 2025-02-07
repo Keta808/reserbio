@@ -17,7 +17,7 @@ const PaymentForm = ({ onSubmit, fetchDynamicData, selectedPlan }) => {
   
   const [issuers, setIssuers] = useState([]);
   const [identificationTypes, setIdentificationTypes] = useState([]); 
-
+  const [emailError, setEmailError] = useState("");
 
   useEffect(() => {
     fetchDynamicData()
@@ -112,11 +112,17 @@ const PaymentForm = ({ onSubmit, fetchDynamicData, selectedPlan }) => {
   }; 
   const handleEmailChange = (input) => {
     setCardholderEmail(input);
+    setEmailError(""); // Limpiar el error al cambiar el texto
+  };
+
+  const validateEmail = () => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(input)) {
-      Alert.alert("Error", "Por favor ingrese un correo electrónico válido.");
+    if (!emailRegex.test(cardholderEmail)) {
+      setEmailError("Por favor ingrese un correo electrónico válido.");
+      return false;
     }
-  };  
+    return true;
+  };   
   
 
   const handleSubmit = () => { 
@@ -195,7 +201,8 @@ const PaymentForm = ({ onSubmit, fetchDynamicData, selectedPlan }) => {
        </Picker> 
 
       <TextInput style={styles.input} placeholder="Número de documento" value={identificationNumber} onChangeText={handleIdentificationNumberChange} keyboardType="default" autoCapitalize="characters"  />
-      <TextInput style={styles.input} placeholder="Correo electrónico" value={cardholderEmail} onChangeText={handleEmailChange} keyboardType="email-address" />
+      <TextInput style={styles.input} placeholder="Correo electrónico" value={cardholderEmail} onChangeText={handleEmailChange} keyboardType="email-address" onBlur={validateEmail} />
+      {emailError ? <Text style={styles.errorText}>{emailError}</Text> : null}
 
       <Button title="Pagar" onPress={handleSubmit}/>
     </View>

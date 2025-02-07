@@ -176,6 +176,7 @@ async function updateSuscripcionCard(preapprovalId, newCardTokenId, idUser){
             }
 
         );
+        console.log("Respuesta de Mercado Pago:", response.data);
         if (!response.data) {
             console.error("Error al actualizar la suscripción:", response.data);
             return [null, "Error al actualizar la suscripción."];

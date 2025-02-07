@@ -81,8 +81,6 @@ async function getServicioById(req, res) {
 } 
 
 
-//get servicios por ID microempresa
-
 async function getServiciosByMicroempresaId(req, res) {
     try {
         const { error } = servicioIdSchema.validate(req.params);
@@ -99,6 +97,30 @@ async function getServiciosByMicroempresaId(req, res) {
         respondError(req, res, 400, error.message);
     }
 }
-
-
-export default { getServicios, createServicio, deleteServicio, updateServicio, getServicioById, getServiciosByMicroempresaId }; 
+async function configurarPorcentajeAbono(req, res) {
+    try {
+        const { error } = servicioIdSchema.validate(req.params);
+        if (error) return respondError(req, res, 400, error.message);
+        const { porcentajeAbono } = req.body;
+        const [servicio, errorServicio] = await servicioService.configurarPorcentajeAbono(req.params.id, porcentajeAbono);
+        if (errorServicio) return respondError(req, res, 404, errorServicio);
+        respondSuccess(req, res, 200, servicio);
+    } catch (error) {
+        handleError(error, "servicio.controller -> configurarPorcentajeAbono");
+        respondError(req, res, 400, error.message);
+    }
+}
+async function calcularMontoAbono(req, res) { 
+    try {
+        const { error } = servicioIdSchema.validate(req.params);
+        if (error) return respondError(req, res, 400, error.message);
+        const { precio, porcentajeAbono } = req.body;
+        const [montoAbono, errorMontoAbono] = await servicioService.calcularMontoAbono(req.params.id, precio, porcentajeAbono);
+        if (errorMontoAbono) return respondError(req, res, 404, errorMontoAbono);
+        respondSuccess(req, res, 200, montoAbono);
+    } catch (error) {
+        handleError(error, "servicio.controller -> calcularMontoAbono");
+        respondError(req, res, 400, error.message);
+    }
+}
+export default { getServicios, createServicio, deleteServicio, updateServicio, getServicioById, getServiciosByMicroempresaId, configurarPorcentajeAbono, calcularMontoAbono }; 
