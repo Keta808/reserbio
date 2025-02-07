@@ -110,5 +110,17 @@ async function configurarPorcentajeAbono(req, res) {
         respondError(req, res, 400, error.message);
     }
 }
-
-export default { getServicios, createServicio, deleteServicio, updateServicio, getServicioById, getServiciosByMicroempresaId, configurarPorcentajeAbono }; 
+async function calcularMontoAbono(req, res) { 
+    try {
+        const { error } = servicioIdSchema.validate(req.params);
+        if (error) return respondError(req, res, 400, error.message);
+        const { precio, porcentajeAbono } = req.body;
+        const [montoAbono, errorMontoAbono] = await servicioService.calcularMontoAbono(req.params.id, precio, porcentajeAbono);
+        if (errorMontoAbono) return respondError(req, res, 404, errorMontoAbono);
+        respondSuccess(req, res, 200, montoAbono);
+    } catch (error) {
+        handleError(error, "servicio.controller -> calcularMontoAbono");
+        respondError(req, res, 400, error.message);
+    }
+}
+export default { getServicios, createServicio, deleteServicio, updateServicio, getServicioById, getServiciosByMicroempresaId, configurarPorcentajeAbono, calcularMontoAbono }; 

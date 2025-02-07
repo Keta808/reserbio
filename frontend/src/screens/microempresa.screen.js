@@ -14,6 +14,7 @@ import {
 } from "react-native";
 import { Image } from "expo-image";
 import MicroempresaService from "../services/microempresa.service";
+import { getServiciosByMicroempresaId } from "../services/servicio.service";
 import { useFocusEffect } from "@react-navigation/native";
 
 export default function MicroempresaScreen({ route, navigation }) {
@@ -21,6 +22,7 @@ export default function MicroempresaScreen({ route, navigation }) {
   const [microempresa, setMicroempresa] = useState(null);
   const [fotoPerfilUrl, setFotoPerfilUrl] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [servicios, setServicios] = useState([]);
 
   // Funciones de fetch definidas fuera o dentro del componente...
   const fetchMicroempresa = async () => {
@@ -46,6 +48,7 @@ export default function MicroempresaScreen({ route, navigation }) {
       Alert.alert("Error", "No se pudieron cargar los datos de la microempresa.");
     }
   };
+  
 
   const fetchFotoPerfil = async () => {
     try {
@@ -56,6 +59,19 @@ export default function MicroempresaScreen({ route, navigation }) {
     } catch (error) {
       console.error("❌ Error al obtener la foto de perfil:", error);
     }
+  };
+  // Fetch servicios
+  const fetchServicios = async () => { 
+    try {
+      
+      const response = await getServiciosByMicroempresaId(id);
+      if (response.state === "Success" && Array.isArray(response.data)) {
+        setServicios(response.data);
+      }
+    } catch (error) {
+      console.error("Error al obtener los servicios:", error.message);
+    }
+
   };
 
   // Función para eliminar una imagen
@@ -97,7 +113,7 @@ export default function MicroempresaScreen({ route, navigation }) {
   useFocusEffect(
     React.useCallback(() => {
       setLoading(true);
-      Promise.all([fetchMicroempresa(), fetchFotoPerfil()]).finally(() => setLoading(false));
+      Promise.all([fetchMicroempresa(), fetchFotoPerfil(), fetchServicios()]).finally(() => setLoading(false));
     }, [id])
   );
 
@@ -174,7 +190,23 @@ export default function MicroempresaScreen({ route, navigation }) {
             </View>
 
             {/* 🏢 Trabajadores */}
-            <Text style={styles.sectionTitle}>Trabajadores</Text>
+            <Text style={styles.sectionTitle}>Trabajadores</Text> 
+            {/*  Sección de Servicios (Solo si hay servicios) */}
+            {servicios.length > 0 && (
+              <>
+                <Text style={styles.sectionTitle}>Servicios Ofrecidos</Text>
+                {servicios.map((servicio) => (
+                  <View key={servicio._id} style={styles.servicioItem}>
+                    <Text style={styles.servicioName}>{servicio.nombre}</Text>
+                    <Text style={styles.servicioDetail}>${servicio.precio}</Text>
+                    <Text style={styles.servicioDetail}>{servicio.descripcion}</Text>
+                    
+                  </View>
+                ))}
+              </>
+            )}
+          
+          
           </View>
         }
         ListFooterComponent={
@@ -231,6 +263,11 @@ export default function MicroempresaScreen({ route, navigation }) {
                 title="Volver al Inicio"
                 onPress={() => navigation.navigate("HomeNavigator")}
                 color="#007BFF"
+              />
+              <Button
+                title="Configurar Servicios"
+                onPress={() => navigation.navigate("Servicio", { id })}
+                color="green"
               />
             </View>
           </View>
@@ -384,6 +421,36 @@ const styles = StyleSheet.create({
     flexDirection: "column",
     justifyContent: "space-around",
     marginTop: 20,
+  },
+  sectionTitle: {
+    fontSize: 20,
+    fontWeight: "bold",
+    marginTop: 20,
+    marginBottom: 10,
+  },
+  servicioItem: {
+    backgroundColor: "#fff", // Fondo blanco
+    borderWidth: 1, // Borde visible
+    borderColor: "#ddd", // Color del borde
+    borderRadius: 10, // Bordes redondeados
+    padding: 10, // Espaciado interno
+    marginVertical: 5, // Separación entre elementos
+    marginHorizontal: 10, // Márgenes laterales
+    width: "95%", // Ocupa casi todo el ancho de la pantalla
+    alignSelf: "center", // Centra el elemento horizontalmente
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 3,
+    elevation: 3, // Sombra en Android
+  },
+  servicioName: {
+    fontSize: 15,
+    fontWeight: "bold",
+  },
+  servicioDetail: {
+    fontSize: 14,
+    color: "#666",
   },
 });
 

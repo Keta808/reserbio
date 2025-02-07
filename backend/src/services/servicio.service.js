@@ -95,6 +95,17 @@ async function configurarPorcentajeAbono(id, porcentajeAbono) {
     } catch (error) {
         handleError(error, "servicio.service -> configurarPorcentajeAbono");
     }
-}
+} 
 
-export default { getServicios, createServicio, deleteServicio, updateServicio, getServicioById, getServiciosByMicroempresaId, configurarPorcentajeAbono };
+async function calcularMontoAbono(id, precio, porcentajeAbono) {
+    try {
+        const servicio = await Servicio.findById(id).exec();
+        if (!servicio) return [null, "El servicio no existe"];
+        if (porcentajeAbono < 0 ) return [null, "Debes configurar el porcentaje de abono antes de realizar esta accion."];
+        const montoAbono = precio * porcentajeAbono;
+        return [montoAbono, null];
+    } catch (error) {
+        handleError(error, "servicio.service -> calcularMontoAbono");
+    }
+}
+export default { getServicios, createServicio, deleteServicio, updateServicio, getServicioById, getServiciosByMicroempresaId, configurarPorcentajeAbono, calcularMontoAbono };

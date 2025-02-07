@@ -1,10 +1,10 @@
 // Pantalla para configurar servicios 
-import React, { useEffect, useState, useContext } from 'react'; 
-import { View, Text, StyleSheet, ActivityIndicator, Alert, TouchableOpacity, TextInput } from 'react-native';
+import React, { useEffect, useState} from 'react'; 
+import { View, Text, StyleSheet, Alert, TouchableOpacity, ScrollView, TextInput, Modal } from 'react-native';
 // import { AuthContext } from '../context/auth.context';
-import { useNavigation } from '@react-navigation/native';
-import { getServiciosByMicroempresaId, deleteServicio, createServicio, configurarPorcentajeAbono, updateServicio   } from '../services/servicio.service';
-
+// import { useNavigation } from '@react-navigation/native';
+import { getServiciosByMicroempresaId, deleteServicio, createServicio, updateServicio  } from '../services/servicio.service';
+import AntDesign from '@expo/vector-icons/AntDesign';
 
 const ServicioScreen = ({ route }) => {
 
@@ -17,16 +17,18 @@ const ServicioScreen = ({ route }) => {
     const [descripcion, setDescripcion] = useState('');
     const [porcentajeAbono, setPorcentajeAbono] = useState(''); 
     const [editingServicioId, setEditingServicioId] = useState(null);
-    const navigation = useNavigation();
+    // const navigation = useNavigation();
     // const { user } = useContext(AuthContext);   
-    const { microempresaId } = route.params;
+    const { id } = route.params;
 
     useEffect(() => {
         const fetchServicios = async () => {
             try { 
                 setLoading(true); 
-                console.log("Microempresa ID: ", microempresaId)
-                if (!id) {
+                
+                const microempresaId = id;
+
+                if (!microempresaId) {
                     Alert.alert('Error', 'No se proporcionó el ID de la microempresa.');
                     setLoading(false);
                     return;
@@ -42,7 +44,7 @@ const ServicioScreen = ({ route }) => {
             }
         };
         fetchServicios();
-    }, [microempresaId]);
+    }, [id]);
     const handleEliminarServicio = async (id) => {
         try { 
             console.log("ID servicio: ", id)
@@ -58,12 +60,27 @@ const ServicioScreen = ({ route }) => {
         }
     }; 
     const handleAgregarServicio = async () => {
+        console.log("FRONT: Agregar servicio");
         if (!nombre || !precio || !duracion || !descripcion) {
             Alert.alert('Error', 'Por favor, complete todos los campos obligatorios.');
             return;
         } 
+        if (isNaN(precio) || parseFloat(precio) <= 0) {
+            Alert.alert('Error', 'El precio debe ser un número mayor a 0.');
+            return;
+        }
+    
+        if (isNaN(duracion) || parseInt(duracion, 10) <= 0) {
+            Alert.alert('Error', 'La duración debe ser un número mayor a 0.');
+            return;
+        } 
+
+        if (porcentajeAbono !== '' && (parseFloat(porcentajeAbono) < 0 || parseFloat(porcentajeAbono) > 100)) {
+            Alert.alert('Error', 'El porcentaje de abono debe estar entre 0 y 100.');
+            return;
+        } 
         const nuevoServicio = {
-            idMicroempresa: microempresaId,
+            idMicroempresa: id,
             nombre,
             precio: parseFloat(precio), 
             duracion: parseInt(duracion, 10), // Minutos
@@ -99,8 +116,21 @@ const ServicioScreen = ({ route }) => {
             Alert.alert('Error', 'Todos los campos son obligatorios.');
             return;
         }  
+        if (porcentajeAbono !== '' && (parseFloat(porcentajeAbono) < 0 || parseFloat(porcentajeAbono) > 100)) {
+            Alert.alert('Error', 'El porcentaje de abono debe estar entre 0 y 100.');
+            return;
+        } 
+        if (isNaN(precio) || parseFloat(precio) <= 0) {
+            Alert.alert('Error', 'El precio debe ser un número mayor a 0.');
+            return;
+        }
+    
+        if (isNaN(duracion) || parseInt(duracion, 10) <= 0) {
+            Alert.alert('Error', 'La duración debe ser un número mayor a 0.');
+            return;
+        } 
         const servicioActualizado = {
-            idMicroempresa: microempresaId,
+            idMicroempresa: id,
             nombre,
             precio: parseFloat(precio),
             duracion: parseInt(duracion, 10),
@@ -134,45 +164,8 @@ const ServicioScreen = ({ route }) => {
         setEditingServicioId(null);
         setShowForm(false);
     };
-    const handleVolver = () => {
-        navigation.goBack();
-    };
-    const handleConfigurarPorcentajeAbono = async (id, porcentaje) => {
-        let newPorcentaje = porcentaje ? String(porcentaje) : '';
-
-        Alert.prompt(
-            "Configurar Porcentaje de Abono",
-            "Ingrese el porcentaje de abono (0-100):",
-            [ 
-                {text: "Cancelar", style: "cancel"},
-                { text: "Guardar",
-                    onPress: async (valorIngresado) => {
-                        const porcentaje = parseFloat(valorIngresado);
-                        if (isNaN(porcentaje) || porcentaje < 0 || porcentaje > 100) {
-                            Alert.alert('Error', 'Por favor, ingrese un porcentaje válido.');
-                            return;
-                        }
-                        try {
-                            const response = await configurarPorcentajeAbono(id, { porcentajeAbono: porcentaje });
-                            if (response.state === 'Success'){
-                                setServicios(servicios.map(servicio => 
-                                    servicio._id === id ? { ...servicio, porcentajeAbono: porcentaje } : servicio
-                                ));
-                                Alert.alert('Éxito', 'El porcentaje de abono se ha configurado correctamente.');
-                            } else {
-                                Alert.alert('Error', response.message);
-                            }   
-                        } catch (error) {
-                            console.error('Error al configurar el porcentaje de abono:', error.message);
-                            Alert.alert('Error', 'Hubo un problema al configurar el porcentaje de abono.');
-                        }
-                    }
-                }
-            ],
-            "plain-text",
-            newPorcentaje
-        );    
-    };
+   
+    
     if (loading) {
         return (
           <View style={styles.loadingContainer}>
@@ -182,60 +175,112 @@ const ServicioScreen = ({ route }) => {
     } 
     return (
         <View style={styles.container}>
-            {servicios.length === 0 ? (
-                <Text style={styles.noServicesText}>No hay servicios agregados.</Text>
-            ) : (
-                <View>
-                    {servicios.map(servicio => (
-                        <View key={servicio._id} style={styles.servicioItem}>
-                            <Text style={styles.servicioName}>{servicio.nombre}</Text>
-                            <Text style={styles.servicioDetail}>Precio: ${servicio.precio}</Text>
-                            <Text style={styles.servicioDetail}>Duración: {servicio.duracion} minutos</Text>
-                            <Text style={styles.servicioDetail}>Descripción: {servicio.descripcion}</Text>
-                            {servicio.porcentajeAbono && (
-                                <Text style={styles.servicioDetail}>Porcentaje de Abono: {servicio.porcentajeAbono}%</Text>
-                            )}
-                            <View style={styles.buttonContainer}>
-                                <TouchableOpacity onPress={() => handleEditarServicio(servicio)}>
-                                    <Text style={styles.editButton}>Editar</Text>
-                                </TouchableOpacity>
-                                <TouchableOpacity onPress={() => handleEliminarServicio(servicio._id)}>
-                                    <Text style={styles.deleteButton}>Eliminar</Text>
-                                </TouchableOpacity>
-                            </View>
+            <View style={styles.header}>
+                <Text style={styles.title}>Servicios</Text>
+                <TouchableOpacity onPress={() => setShowForm(true)}>
+                    <AntDesign name="plus" size={24} color="black" />
+                </TouchableOpacity>
+            </View>
+
+            <ScrollView style={styles.scrollContainer}>
+                {servicios.length === 0 && <Text style={styles.noServicesText}>No hay servicios agregados.</Text>}
+
+                {servicios.map(servicio => (
+                    <View key={servicio._id} style={styles.servicioItem}>
+                        <Text style={styles.servicioName}>{servicio.nombre}</Text>
+                        <Text style={styles.servicioDetail}>Precio: ${servicio.precio}</Text>
+                        <Text style={styles.servicioDetail}>Duración: {servicio.duracion} minutos</Text>
+                        <Text style={styles.servicioDetail}>Descripción: {servicio.descripcion}</Text>
+                        {servicio.porcentajeAbono !== undefined && (
+                            <Text style={styles.servicioDetail}>Porcentaje de Abono: {servicio.porcentajeAbono}%</Text>
+                        )} 
+                        <View style={styles.buttonContainer}>
+                            <TouchableOpacity onPress={() => handleEditarServicio(servicio)}>
+                                <Text style={styles.editButton}>Editar</Text>
+                            </TouchableOpacity>
+                            <TouchableOpacity onPress={() => handleEliminarServicio(servicio._id)}>
+                                <Text style={styles.deleteButton}>Eliminar</Text>
+                            </TouchableOpacity>  
+                        </View>  
+                    </View>
+                ))}
+            </ScrollView>
+
+            {/* MODAL PARA FORMULARIO */}
+            <Modal
+                animationType="slide"
+                transparent={true}
+                visible={showForm}
+                onRequestClose={() => setShowForm(false)}
+            >
+                <View style={styles.modalContainer}>
+                    <View style={styles.modalContent}>
+                        <Text style={styles.modalTitle}>Agrega un Servicio</Text>
+
+                        <TextInput style={styles.input} placeholder="Nombre" value={nombre} onChangeText={setNombre} />
+                        <TextInput style={styles.input} placeholder="Precio" keyboardType="numeric" value={precio} onChangeText={(text) => { const numericValue = text.replace(/[^0-9.]/g, '');  setPrecio(numericValue);}} />
+                        <TextInput style={styles.input} placeholder="Duración (en minutos)" keyboardType="numeric" value={duracion} onChangeText={(text) => { const numericValue = text.replace(/[^0-9.]/g, '');  setDuracion(numericValue);}} />
+                        <TextInput style={styles.input} placeholder="Descripción" value={descripcion} onChangeText={setDescripcion} />
+                        <TextInput style={styles.input} placeholder="Porcentaje Abono para reserva (Opcional)" keyboardType="numeric" value={porcentajeAbono} onChangeText={(text) => {
+                            let num = text.replace(/[^0-9]/g, ''); // Permitir solo números
+                            if (num !== '' && parseInt(num, 10) > 100) {
+                            num = '100'; } setPorcentajeAbono(num);}} />
+
+                        <View style={styles.formButtonsContainer}>
+                            <TouchableOpacity style={styles.cancelButton} onPress={limpiarFormulario}>
+                                <Text style={styles.cancelButtonText}>Cancelar</Text>
+                            </TouchableOpacity>
+                            <TouchableOpacity style={styles.submitButton} onPress={editingServicioId ? handleGuardar : handleAgregarServicio}>
+                                <Text style={styles.submitButtonText}>{editingServicioId ? 'Guardar Cambios' : 'Agregar'}</Text>
+                            </TouchableOpacity>
                         </View>
-                    ))}
+                    </View>
                 </View>
-            )}
-
-            <TouchableOpacity style={styles.addButton} onPress={() => setShowForm(!showForm)}>
-                <Text style={styles.addButtonText}>{showForm ? 'Cancelar' : 'Agregar Servicio'}</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.backButton} onPress={handleVolver}> </TouchableOpacity>
-            {showForm && (
-                <View style={styles.formContainer}>
-                    <TextInput style={styles.input} placeholder="Nombre" value={nombre} onChangeText={setNombre} />
-                    <TextInput style={styles.input} placeholder="Precio" keyboardType="numeric" value={precio} onChangeText={setPrecio} />
-                    <TextInput style={styles.input} placeholder="Duración" keyboardType="numeric" value={duracion} onChangeText={setDuracion} />
-                    <TextInput style={styles.input} placeholder="Descripción" value={descripcion} onChangeText={setDescripcion} />
-                    <TextInput style={styles.input} placeholder="Porcentaje Abono" keyboardType="numeric" value={porcentajeAbono} onChangeText={setPorcentajeAbono} />
-
-                    <TouchableOpacity style={styles.submitButton} onPress={editingServicioId ? handleGuardar : handleAgregarServicio}>
-                        <Text style={styles.submitButtonText}>{editingServicioId ? 'Guardar Cambios' : 'Agregar'}</Text>
-                    </TouchableOpacity> 
-                    <TouchableOpacity onPress={() => handleConfigurarPorcentajeAbono(servicio._id, servicio.porcentajeAbono)}>
-                        <Text style={styles.configPorcentajeButton}>Configurar Abono</Text>
-                    </TouchableOpacity>
-                </View>
-            )}
+            </Modal>
         </View>
     );
 }; 
 
 const styles = StyleSheet.create({
+    title: {
+        fontSize: 30,
+        fontWeight: 'bold',
+        textAlign: 'center',
+        color: '#696969',
+        letterSpacing: 1,
+    }, 
+    header: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginBottom: 10,
+        marginTop: 15,
+    },
+    scrollContainer: {
+        flexGrow: 1,
+    },
     container: {
         flex: 1,
         padding: 20,
+    },
+    modalContainer: {
+        flex: 1,
+        backgroundColor: 'rgba(0, 0, 0, 0.5)',
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    modalContent: {
+        width: '90%',
+        backgroundColor: '#fff',
+        padding: 20,
+        borderRadius: 10,
+        elevation: 5,
+    },
+    modalTitle: {
+        fontSize: 22,
+        fontWeight: 'bold',
+        textAlign: 'center',
+        marginBottom: 15,
     },
     loadingContainer: {
         flex: 1,
@@ -251,7 +296,7 @@ const styles = StyleSheet.create({
         padding: 10,
         borderBottomWidth: 1,
         borderBottomColor: '#ccc',
-        marginBottom: 10,
+        marginBottom: 20,
     },
     servicioName: {
         fontSize: 18,
@@ -268,7 +313,7 @@ const styles = StyleSheet.create({
         marginTop: 10,
     },
     editButton: {
-        color: 'blue',
+        color: 'green',
         marginRight: 10,
     },
     deleteButton: {
@@ -280,7 +325,7 @@ const styles = StyleSheet.create({
         marginRight: 10,
     },
     addButton: {
-        backgroundColor: '#007bff',
+        backgroundColor: 'green',
         padding: 10,
         borderRadius: 5,
         alignItems: 'center',
@@ -303,6 +348,7 @@ const styles = StyleSheet.create({
     },
     formContainer: {
         marginTop: 20,
+        marginBottom: 30,
     },
     input: {
         borderWidth: 1,
@@ -315,9 +361,28 @@ const styles = StyleSheet.create({
         backgroundColor: '#28a745',
         padding: 10,
         borderRadius: 5,
+        flex: 1,
         alignItems: 'center',
+        marginLeft: 5,
     },
     submitButtonText: {
+        color: '#fff',
+        fontSize: 16,
+    }, 
+    formButtonsContainer: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        marginTop: 10,
+    },
+    cancelButton: {
+        backgroundColor: '#dc3545',
+        padding: 10,
+        borderRadius: 5,
+        flex: 1,
+        alignItems: 'center',
+        marginRight: 5,
+    },
+    cancelButtonText: {
         color: '#fff',
         fontSize: 16,
     },
