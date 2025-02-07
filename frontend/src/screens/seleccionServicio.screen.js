@@ -190,64 +190,72 @@ const SeleccionServicioScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: 'center',
+    justifyContent: 'flex-start', // Asegura que los elementos empiecen desde arriba
     padding: 16,
-   
-    backgroundColor: '#f9f9f9',
+    backgroundColor: '#f5f5f5', // Fondo más claro y moderno
   },
   card: {
     backgroundColor: '#fff',
     padding: 16,
-    borderRadius: 8,
-    marginVertical: 8,
+    borderRadius: 12, // Bordes más redondeados
+    marginVertical: 10, // Mayor separación entre tarjetas
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 2,
+    shadowRadius: 6,
+    elevation: 3, // Sombra más destacada en Android
   },
   selectedCard: {
-    backgroundColor: '#d1e7dd',
+    backgroundColor: '#e0f7fa', // Color de selección más agradable
     borderColor: '#007bff',
     borderWidth: 1,
   },
   cardTitle: {
-    fontSize: 16,
-    fontWeight: 'bold',
+    fontSize: 18, // Títulos más grandes
+    fontWeight: '600',
     textAlign: 'center',
+    color: '#333', // Texto más oscuro
   },
   cardSubtitle: {
     fontSize: 14,
-    color: '#555',
+    color: '#666', // Texto más suave
     textAlign: 'center',
+    marginTop: 4,
   },
   header: {
-    fontSize: 24,
+    fontSize: 26, // Cabecera principal más grande
     fontWeight: 'bold',
-    marginTop: 100,
+    marginTop: 40, // Espaciado ajustado
+    marginBottom: 20, // Espaciado adicional debajo
     textAlign: 'center',
+    color: '#007bff', // Azul para destacar
   },
   subHeader: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    marginVertical: 16,
+    fontSize: 22,
+    fontWeight: '600',
+    marginVertical: 12,
     textAlign: 'center',
+    color: '#444', // Texto más definido
   },
   datePickerButton: {
-    backgroundColor: '#e8e8e8',
+    backgroundColor: '#fff',
     padding: 12,
     borderRadius: 8,
     alignItems: 'center',
-    marginVertical: 16,
+    borderColor: '#ccc', // Borde ligero para definir
+    borderWidth: 1,
+    marginVertical: 20,
   },
   datePickerText: {
     fontSize: 16,
-    color: '#333',
+    color: '#007bff', // Azul para el texto
   },
   buttonContainer: {
-    marginTop: 20,
+    marginTop: 30, // Mayor separación con la parte superior
     alignSelf: 'center',
-    width: '80%',
+    width: '90%', // Botones más anchos
+    flexDirection: 'row', // Coloca los botones en línea
+    justifyContent: 'space-between', // Espaciado uniforme entre los botones
   },
   loaderContainer: {
     flex: 1,
@@ -263,5 +271,6 @@ const styles = StyleSheet.create({
     color: 'red',
   },
 });
+
 
 export default SeleccionServicioScreen;

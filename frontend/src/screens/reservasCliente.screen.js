@@ -5,6 +5,9 @@ import reservaService from '../services/reserva.service';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import valoracionService from '../services/valoracion.service';
 
+// test 
+import { AntDesign } from '@expo/vector-icons';
+
 const ReservaClienteScreen = () => {
   const navigation = useNavigation();
   const [clienteId, setClienteId] = useState(null);
@@ -72,6 +75,17 @@ const ReservaClienteScreen = () => {
     }).start();
   };
 
+  // Cancelar reservas
+  const cancelarReserva = async (id) => {
+    try {
+      await reservaService.cancelReserva(id);
+      console.log('Reserva cancelada:', id);
+      fetchReservas(clienteId);
+    } catch (error) {
+      console.error('Error al cancelar la reserva:', error);
+    }
+  };
+
   if (loading) {
     return (
       <View style={styles.loaderContainer}>
@@ -131,7 +145,12 @@ const ReservaClienteScreen = () => {
               >
                 {item.estado}
               </Text>
-          
+              
+              {item.estado === 'Activa' && (
+              <TouchableOpacity onPress={() => cancelarReserva(item._id)} style={styles.cancelButton}>
+                <AntDesign name="closecircle" size={24} color="red" />
+              </TouchableOpacity>
+            )}
               {item.estado === 'Finalizada' && !item.tieneValoracion && (
                 <Button
                   title="Valorar Servicio"
@@ -237,6 +256,12 @@ const styles = StyleSheet.create({
     marginTop: 20,
     alignSelf: 'center',
     width: '80%',
+  },
+  cancelButton: {
+    alignSelf: 'flex-end',
+    position: 'absolute',
+    right: 10,
+    top: 10,
   },
 });
 
