@@ -90,10 +90,25 @@ async function getValoracionPromedioPorMicroempresa(req, res) {
     }
 }
 
+// verificar si existe una valoracion para una reserva
+
+async function existeValoracionPorReserva(req, res) {
+    try {
+        const { reservaId } = req.params;
+        const existe = await valoracionService.existeValoracionPorReserva(reservaId);
+        return res.status(200).json({ existe });
+    } catch (error) {
+        console.error("Error en existeValoracionPorReserva:", error);
+        return res.status(500).json({ message: "Error interno al verificar la existencia de la valoración" });
+    }
+}
+
 export default {
     getValoracionPromedioPorMicroempresa,
     getValoracionesPorMicroempresa,
     getValoracionesPorTrabajador,
     crearValoracion,
-    eliminarValoracion
+    eliminarValoracion,
+    existeValoracionPorReserva,
+    
 };

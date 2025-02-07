@@ -22,5 +22,7 @@ router.delete("/:valoracionId", valoracionController.eliminarValoracion);
 // Obtener valoración promedio de una microempresa
 router.get("/microempresa/:microempresaId/promedio", valoracionController.getValoracionPromedioPorMicroempresa);
 
+// verificar si existe una valoracion para una reserva
+router.get("/reserva/:reservaId", valoracionController.existeValoracionPorReserva);
 
 export default router;

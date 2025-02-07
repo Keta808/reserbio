@@ -127,10 +127,25 @@ async function getValoracionPromedioPorMicroempresa(microempresaId) {
     }
 }
 
+
+// verificar si existe una valoracion para una reserva
+
+async function existeValoracionPorReserva(reservaId) {
+    try {
+        const valoracion = await Valoracion.findOne({ reserva: reservaId });
+        return valoracion ? true : false;
+    } catch (error) {
+        handleError(error, "valoracion.service -> existeValoracionPorReserva");
+        return false;
+    }
+} 
+
+
 export default {
     getValoracionPromedioPorMicroempresa,
     getValoracionesPorMicroempresa,
     getValoracionesPorTrabajador,
     crearValoracion,
-    eliminarValoracion
+    eliminarValoracion,
+    existeValoracionPorReserva
 };
