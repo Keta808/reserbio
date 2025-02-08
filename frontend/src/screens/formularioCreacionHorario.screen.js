@@ -63,11 +63,10 @@ const FormularioCreacionHorasScreen = ({ route, navigation }) => {
     fin_no_disponible: '',
   });
 
-  const [showExcepcionForm, setShowExcepcionForm] = useState(false);
+  const [showExceptionPickers, setShowExceptionPickers] = useState(false);
 
   const [availableDays, setAvailableDays] = useState([]);
   const [loading, setLoading] = useState(false);
-
   const [iosPickerVisible, setIosPickerVisible] = useState(false);
   const [iosPickerKey, setIosPickerKey] = useState('');
   const [tempValue, setTempValue] = useState('');
@@ -224,41 +223,40 @@ const FormularioCreacionHorasScreen = ({ route, navigation }) => {
   
   return (
     <KeyboardAvoidingView
-    style={styles.container}
-    behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-  >
-    <Text style={styles.title}>
-      {disponibilidad ? 'Editar Disponibilidad' : 'Crear Disponibilidad'}
-    </Text>
-  
-    {loading ? (
-      <Text style={styles.loadingText}>Cargando días disponibles...</Text>
-    ) : (
-      <View style={styles.dayButtonContainer}>
-      {availableDays.map((item, index) => (
-        <TouchableOpacity
-          key={index.toString()}
-          style={[
-            styles.dayButton,
-            formData.dia === item && styles.dayButtonSelected, // Aplica estilo si está seleccionado
-          ]}
-          onPress={() => handleChange('dia', item)}
-        >
-          <Text
-            style={[
-              styles.dayButtonText,
-              formData.dia === item && styles.dayButtonTextSelected, // Cambia el color si está seleccionado
-            ]}
-          >
-            {capitalizeFirstLetter(item)}
-          </Text>
-        </TouchableOpacity>
-      ))}
-    </View>
-    
-    )}
-  
-   {/* Botones para abrir modales */}
+      style={styles.container}
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+    >
+      <Text style={styles.title}>
+        {disponibilidad ? 'Editar Disponibilidad' : 'Crear Disponibilidad'}
+      </Text>
+
+      {loading ? (
+        <Text style={styles.loadingText}>Cargando días disponibles...</Text>
+      ) : (
+        <View style={styles.dayButtonContainer}>
+          {availableDays.map((item, index) => (
+            <TouchableOpacity
+              key={index.toString()}
+              style={[
+                styles.dayButton,
+                formData.dia === item && styles.dayButtonSelected,
+              ]}
+              onPress={() => handleChange('dia', item)}
+            >
+              <Text
+                style={[
+                  styles.dayButtonText,
+                  formData.dia === item && styles.dayButtonTextSelected,
+                ]}
+              >
+                {capitalizeFirstLetter(item)}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+      )}
+
+      {/* Botones para abrir modales */}
       <TouchableOpacity
         style={styles.pickerButton}
         onPress={() => {
@@ -285,56 +283,65 @@ const FormularioCreacionHorasScreen = ({ route, navigation }) => {
         </Text>
       </TouchableOpacity>
 
+      {/* Botón para mostrar/ocultar pickers de excepciones */}
+      <TouchableOpacity
+        style={styles.pickerButton}
+        onPress={() => setShowExceptionPickers(!showExceptionPickers)}
+      >
+        <Text style={styles.pickerButtonText}>
+          {showExceptionPickers ? 'Ocultar Excepciones' : 'Mostrar Excepciones'}
+        </Text>
+      </TouchableOpacity>
 
-        {/* Excepciones */}
+      {showExceptionPickers && (
+        <>
+          {/* Excepciones */}
+          {formData.excepciones.map((excepcion, index) => (
+            <View key={index} style={styles.exceptionContainer}>
+              <Text style={styles.exceptionText}>
+                {excepcion.inicio_no_disponible} - {excepcion.fin_no_disponible}
+              </Text>
+              <TouchableOpacity style={styles.deleteButton} onPress={() => removeException(index)}>
+                <Text style={styles.buttonText}>Eliminar</Text>
+              </TouchableOpacity>
+            </View>
+          ))}
 
-      {formData.excepciones.map((excepcion, index) => (
-        <View key={index} style={styles.exceptionContainer}>
-          <Text style={styles.exceptionText}>
-            {excepcion.inicio_no_disponible} - {excepcion.fin_no_disponible}
-          </Text>
-          <TouchableOpacity style={styles.deleteButton} onPress={() => removeException(index)}>
-            <Text style={styles.buttonText}>Eliminar</Text>
+          <Text style={styles.exceptionTitle}>Agregar Excepción (Opcional)</Text>
+
+          <TouchableOpacity
+            style={styles.pickerButton}
+            onPress={() => {
+              setIosPickerKey('inicio_no_disponible');
+              setTempValue(newException.inicio_no_disponible);
+              setIosPickerVisible(true);
+            }}
+          >
+            <Text style={styles.pickerButtonText}>
+              {newException.inicio_no_disponible || 'Seleccionar Inicio no Disponible'}
+            </Text>
           </TouchableOpacity>
-        </View>
-      ))}
 
-      <Text style={styles.exceptionTitle}>Agregar Excepción (Opcional)</Text>
+          <TouchableOpacity
+            style={styles.pickerButton}
+            onPress={() => {
+              setIosPickerKey('fin_no_disponible');
+              setTempValue(newException.fin_no_disponible);
+              setIosPickerVisible(true);
+            }}
+          >
+            <Text style={styles.pickerButtonText}>
+              {newException.fin_no_disponible || 'Seleccionar Fin no Disponible'}
+            </Text>
+          </TouchableOpacity>
 
-      <TouchableOpacity
-        style={styles.pickerButton}
-        onPress={() => {
-          setIosPickerKey('inicio_no_disponible');
+          <TouchableOpacity style={styles.addButton} onPress={addException}>
+            <Text style={styles.buttonText}>Agregar Excepción</Text>
+          </TouchableOpacity>
+        </>
+      )}
 
-          setTempValue(newException.inicio_no_disponible);
-          setIosPickerVisible(true);
-        }}
-      >
-        <Text style={styles.pickerButtonText}>
-          {newException.inicio_no_disponible || 'Seleccionar Inicio no Disponible'}
-        </Text>
-      </TouchableOpacity>
-
-      <TouchableOpacity
-        style={styles.pickerButton}
-        onPress={() => {
-          setIosPickerKey('fin_no_disponible');
-          setTempValue(newException.fin_no_disponible);
-          setIosPickerVisible(true);
-        }}
-      >
-        <Text style={styles.pickerButtonText}>
-          {newException.fin_no_disponible || 'Seleccionar Fin no Disponible'}
-        </Text>
-      </TouchableOpacity>
-
-      <TouchableOpacity style={styles.addButton} onPress={addException}>
-        <Text style={styles.buttonText}>Agregar Excepción</Text>
-      </TouchableOpacity>
-
-  
-    <View style={styles.buttonContainer}>
-
+      <View style={styles.buttonContainer}>
         <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
           <Text style={styles.buttonText}>Volver</Text>
         </TouchableOpacity>
@@ -342,59 +349,55 @@ const FormularioCreacionHorasScreen = ({ route, navigation }) => {
         <TouchableOpacity style={styles.submitButton} onPress={handleSubmit}>
           <Text style={styles.buttonText}>Guardar</Text>
         </TouchableOpacity>
-      
-    </View>
-  
-    {/* Modal para iOS y Android */}
-    <Modal visible={iosPickerVisible} transparent animationType="slide">
-      <View style={styles.modalContainer}>
-        <View style={styles.modalContent}>
-          <Picker
-            selectedValue={tempValue}
-            onValueChange={(itemValue) => setTempValue(itemValue)}
-          >
-            {timeOptions.map((option) => (
-              <Picker.Item
-                key={option.value}
-                label={option.label}
-                value={option.value}
-                color={Platform.OS === 'ios' ? '#000000' : undefined}
-              />
-            ))}
-          </Picker>
+      </View>
 
-
-          <View style={styles.modalButtons}>
-          <TouchableOpacity
-                  style={styles.cancelButton}
-                  onPress={() => {
-                    cancelIosPicker();
-                    if (Platform.OS === 'android') {
-                      setIosPickerVisible(false);
-                    }
-                  }}
-                >
-           <Text style={styles.cancelButtonText}>Volver</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={styles.confirmButton}
-              onPress={() => {
-                confirmIosPicker();
-                if (Platform.OS === 'android') {
-                  setIosPickerVisible(false);
-                }
-              }}
+      {/* Modal para iOS y Android */}
+      <Modal visible={iosPickerVisible} transparent animationType="slide">
+        <View style={styles.modalContainer}>
+          <View style={styles.modalContent}>
+            <Picker
+              selectedValue={tempValue}
+              onValueChange={(itemValue) => setTempValue(itemValue)}
             >
-          <Text style={styles.confirmButtonText}>Confirmar</Text>
-            </TouchableOpacity>
+              {timeOptions.map((option) => (
+                <Picker.Item
+                  key={option.value}
+                  label={option.label}
+                  value={option.value}
+                  color={Platform.OS === 'ios' ? '#000000' : undefined}
+                />
+              ))}
+            </Picker>
 
-
+            <View style={styles.modalButtons}>
+              <TouchableOpacity
+                style={styles.cancelButton}
+                onPress={() => {
+                  cancelIosPicker();
+                  if (Platform.OS === 'android') {
+                    setIosPickerVisible(false);
+                  }
+                }}
+              >
+                <Text style={styles.cancelButtonText}>Volver</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.confirmButton}
+                onPress={() => {
+                  confirmIosPicker();
+                  if (Platform.OS === 'android') {
+                    setIosPickerVisible(false);
+                  }
+                }}
+              >
+                <Text style={styles.confirmButtonText}>Confirmar</Text>
+              </TouchableOpacity>
+            </View>
           </View>
         </View>
-      </View>
-    </Modal>
-  </KeyboardAvoidingView>
-  );  
+      </Modal>
+    </KeyboardAvoidingView>
+  );
 };
 
 const styles = StyleSheet.create({
@@ -402,22 +405,24 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     padding: 20,
-    backgroundColor: '#fff',
+    // Un color de fondo más claro y suave
+    backgroundColor: '#F3F4F6',
   },
 
   // TITULOS Y TEXTOS
   title: {
-    fontSize: 24,
+    fontSize: 26,
     fontWeight: 'bold',
-    marginTop: '20%',
+    marginTop: '15%',
+    marginBottom: 10,
     textAlign: 'center',
-    color: '#333',
+    color: '#1F2937',
   },
   loadingText: {
     fontSize: 16,
     marginTop: 20,
     textAlign: 'center',
-    color: '#666',
+    color: '#6B7280',
   },
 
   // BOTONES DE DIAS
@@ -425,36 +430,34 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
     justifyContent: 'center',
-    marginVertical: 20,
+    marginVertical: 15,
     paddingHorizontal: 10,
   },
   dayButton: {
-    backgroundColor: '#f2f2f2', // Fondo gris claro
-    paddingVertical: 10,
+    backgroundColor: '#E5E7EB',
+    paddingVertical: 12,
     paddingHorizontal: 15,
-    borderRadius: 8,
+    borderRadius: 10,
     margin: 5,
-    lignItems: 'center',
+    alignItems: 'center',
     justifyContent: 'center',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
+    shadowOpacity: 0.05,
     shadowRadius: 4,
-    elevation: 3, // Sombra en Android
+    elevation: 2,
   },
   dayButtonSelected: {
-    backgroundColor: '#007bff', // Azul cuando está seleccionado
+    backgroundColor: '#3B82F6',
   },
   dayButtonText: {
-    color: '#333',
+    color: '#374151',
     fontSize: 15,
-    fontWeight: 'bold',
+    fontWeight: '600',
   },
   dayButtonTextSelected: {
-    color: '#fff', // Texto blanco cuando está seleccionado
+    color: '#fff',
   },
-
-
 
   // ESTILOS ESPECIFICOS PARA iOS
   iosPickerContainer: {
@@ -469,16 +472,15 @@ const styles = StyleSheet.create({
     elevation: 5,
   },
   iosPickerItem: {
-    color: '#000000', // Aseguramos que el texto sea visible en iOS
+    color: '#000000',
     fontSize: 18,
-    
   },
 
   pickerButton: {
-    backgroundColor: '#ffffff', // Fondo blanco
+    backgroundColor: '#FFFFFF',
     borderWidth: 1,
-    borderColor: '#007bff', // Borde azul
-    borderRadius: 10,
+    borderColor: '#3B82F6',
+    borderRadius: 12,
     paddingVertical: 12,
     paddingHorizontal: 15,
     alignItems: 'center',
@@ -486,19 +488,19 @@ const styles = StyleSheet.create({
     marginVertical: 8,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
+    shadowOpacity: 0.05,
     shadowRadius: 4,
-    elevation: 2, // Sombra en Android
+    elevation: 2,
   },
   pickerButtonText: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#007bff', // Azul
+    color: '#3B82F6',
     textAlign: 'center',
   },
   addButton: {
-    backgroundColor: '#28a745', // Verde
-    borderRadius: 10,
+    backgroundColor: '#10B981',
+    borderRadius: 12,
     paddingVertical: 12,
     paddingHorizontal: 15,
     alignItems: 'center',
@@ -506,12 +508,12 @@ const styles = StyleSheet.create({
     marginVertical: 10,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 5,
-    elevation: 3, // Sombra en Android
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 2,
   },
   buttonText: {
-    color: '#fff',
+    color: '#FFFFFF',
     fontSize: 16,
     fontWeight: 'bold',
     textAlign: 'center',
@@ -520,33 +522,33 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    backgroundColor: '#fff',
+    backgroundColor: '#FFFFFF',
     borderRadius: 10,
     paddingVertical: 10,
     paddingHorizontal: 15,
     marginTop: 10,
     borderWidth: 1,
-    borderColor: '#ddd',
+    borderColor: '#E5E7EB',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
+    shadowOpacity: 0.05,
     shadowRadius: 4,
-    elevation: 2, // Sombra en Android
+    elevation: 1,
   },
   exceptionText: {
     fontSize: 16,
     fontWeight: '500',
-    color: '#333',
+    color: '#4B5563',
   },
   exceptionTitle: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#444',
+    color: '#1F2937',
     textAlign: 'center',
     marginVertical: 10,
   },
   deleteButton: {
-    backgroundColor: '#dc3545', // Rojo
+    backgroundColor: '#EF4444',
     borderRadius: 8,
     paddingVertical: 8,
     paddingHorizontal: 12,
@@ -554,9 +556,9 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
+    shadowOpacity: 0.05,
     shadowRadius: 4,
-    elevation: 2, // Sombra en Android
+    elevation: 2,
   },
 
   // BOTONERA FINAL
@@ -568,21 +570,26 @@ const styles = StyleSheet.create({
   submitButton: {
     flex: 1,
     marginRight: 5,
-    backgroundColor: '#28a745',
-    padding: 10,
-    borderRadius: 5,
+    backgroundColor: '#10B981',
+    padding: 12,
+    borderRadius: 10,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 2,
   },
   backButton: {
     flex: 1,
     marginLeft: 5,
-    backgroundColor: '#6c757d',
-    padding: 10,
-    borderRadius: 5,
-  },
-  buttonText: {
-    textAlign: 'center',
-    color: '#fff',
-    fontWeight: 'bold',
+    backgroundColor: '#6B7280',
+    padding: 12,
+    borderRadius: 10,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 2,
   },
 
   // MODAL GENERAL
@@ -605,7 +612,7 @@ const styles = StyleSheet.create({
     marginTop: 15,
   },
   cancelButton: {
-    backgroundColor: '#dc3545', // Rojo para Cancelar
+    backgroundColor: '#EF4444',
     borderRadius: 10,
     paddingVertical: 12,
     paddingHorizontal: 20,
@@ -614,7 +621,7 @@ const styles = StyleSheet.create({
     marginRight: 5,
   },
   confirmButton: {
-    backgroundColor: '#007bff', // Azul para Confirmar
+    backgroundColor: '#3B82F6',
     borderRadius: 10,
     paddingVertical: 12,
     paddingHorizontal: 20,
@@ -634,7 +641,6 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     textAlign: 'center',
   },
-
 });
 
 export default FormularioCreacionHorasScreen;

@@ -86,6 +86,9 @@ const CalendarScreen = () => {
   const [confirmModalVisible, setConfirmModalVisible] = useState(false);
   const [selectedReservation, setSelectedReservation] = useState(null);
 
+
+
+
   // Función para formatear las horas en HH:MM
   const formatTime = (dateString) => {
     const date = new Date(dateString);
