@@ -52,8 +52,8 @@ async function updateServicio(id, servicio) {
 }
 async function getServicioById(id) {
     try {
-        const response = await instance.get(`servicios/servicio/${id}`);
-        return response.data;
+        const response = await instance.get(`servicios/servicio/${id}`); 
+        return response.data.data;
     } catch (error) {
         console.error(`Error al obtener el servicio con ID ${id}:`, error.response?.data || error.message);
         throw error;
@@ -79,4 +79,4 @@ async function calcularMontoAbono(id, precio, porcentaje) {
     }
 }   
 
-export { getServiciosByMicroempresaId, getServicios, createServicio, deleteServicio, updateServicio, getServicioById, configurarPorcentajeAbono, calcularMontoAbono };    
+export default  {  getServiciosByMicroempresaId, getServicios, createServicio, deleteServicio, updateServicio, getServicioById, configurarPorcentajeAbono, calcularMontoAbono };    
