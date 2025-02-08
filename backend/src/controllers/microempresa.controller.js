@@ -249,6 +249,25 @@ async function getMicroempresasByUser(req, res) {
   }
 }
 
+//
+//controlador que retorna SOLO el id de la microempresa por el id de su trabajador
+
+async function getMicroempresaIdByTrabajadorId(req, res) {
+  try {
+    const { trabajadorId } = req.params;
+    const microempresa = await MicroempresaService.getMicroempresaIdByTrabajadorId(trabajadorId);
+
+    if (!microempresa) {
+      return res.status(404).json({ state: 'Error', message: 'No se encontró la microempresa' });
+    }
+
+    res.status(200).json({ state: "Success", data: microempresa });
+  } catch (error) {
+    res.status(500).json({ state: "Error", message: error.message });
+  }
+}
+
+
 export default {
     getMicroempresas,
     getMicroempresaFotoPerfil,
@@ -260,4 +279,5 @@ export default {
     getMicroempresasPorCategoria,
     getMicromempresaPorNombre,
     getMicroempresasByUser,
+    getMicroempresaIdByTrabajadorId
 };

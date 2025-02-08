@@ -15,7 +15,7 @@ import { setupDB } from "./config/configDB.js";
 // Importa el handler de errores
 import { handleFatalError, handleError } from "./utils/errorHandler.js";
 import { createState, createUsers, createRoles } from "./config/initialSetup.js";
-
+import { startActualizarReservasJob } from "./jobs/actualizarReservas.js";
 /**
  * Inicia el servidor web
  */
@@ -68,6 +68,8 @@ async function setupAPI() {
     await setupDB();
     // Inicia el servidor web
     await setupServer();
+     // Inicia el cron job para actualizar reservas vencidas
+     startActualizarReservasJob();
     // Inicia la creación de los estados
     await createState();
     // Inicia la creación del usuario admin y user

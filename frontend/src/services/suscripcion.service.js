@@ -94,7 +94,7 @@ async function cardForm(paymentData) {
 
 async function updateSuscripcionCard(preapprovalId, newCardTokenId, idUser){
   try {
-      const response = await instance.post(`/suscripcion/new-suscripcionCard/${preapprovalId}`, {newCardTokenId, idUser});
+      const response = await instance.post(`/suscripcion/new-suscripcionCard/${preapprovalId}`, {idUser, newCardTokenId});
       return response.data;
   } catch (error) {
     console.error(`Error al actualizar la suscripción con ID ${preapprovalId}:`, error.response?.data || error.message);

@@ -100,8 +100,10 @@ async function deleteDisponibilidad(req, res) {
 
 const getHorariosDisponibles = async (req, res) => {
   const { workerId, date } = req.body;
+ 
   try {
     const availableSlots = await DisponibilidadService.getAvailableSlots(workerId, date);
+    console.log('availableSlots', availableSlots);
     res.status(200).json({ availableSlots });
   } catch (error) {
     res.status(500).json({ message: 'Error al obtener los horarios disponibles', error });
@@ -114,6 +116,7 @@ const getHorariosDisponibles = async (req, res) => {
  */
 
 const getHorariosDisponiblesMicroEmpresa = async (req, res) => {
+  console.log('req.body de horarios disponibles por microempresa', req.body);
   const { serviceId, date } = req.body;
   try {
     const availableSlots = await DisponibilidadService.getHorariosDisponiblesMicroEmpresa(serviceId, date);
@@ -126,6 +129,8 @@ const getHorariosDisponiblesMicroEmpresa = async (req, res) => {
 }
 
 const getTrabajadoresDisponiblesPorHora = async (req, res) => {
+  console.log('req.body de trabajadores disponibles por hora', req.body);
+  
   const { serviceId, date, hora } = req.body;
 
   try {

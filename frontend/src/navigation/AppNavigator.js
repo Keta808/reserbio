@@ -26,13 +26,18 @@ import MicroempresaClienteScreen from '../screens/microempresaCliente.screen.js'
 import SeleccionServicioScreen from '../screens/seleccionServicio.screen.js';
 import InvitarTrabajadorScreen from '../screens/invitarTrabajadores.screen.js';
 import ResponderInvitacionScreen from '../screens/responderInvitacion.screen.js';
+import ConfirmacionReservaScreen from '../screens/confirmacionReserva.screen.js';
+import TestScreen from '../screens/testimagenes.screen.js';
+import ReservaClienteScreen from '../screens/reservasCliente.screen.js';
+import ValoracionServicioScreen from '../screens/valoracion.screen.js';
 
 // Pantallas para Trabajador
 import gestorSuscripcionScreen from '../screens/gestorSuscripcion.screen.js'; 
-import CardForm from '../screens/cardForm.screen.js'; 
+import CardScreen from '../screens/cardForm.screen.js'; 
 import TrabajadorScreen from '../screens/trabajador.screen.js';
 import HomeTrabajadorScreen from '../screens/homeTrabajador.screen.js';
 
+import ServicioScreen from '../screens/servicio.screen.js';
 // Contexto de autenticación
 import { AuthContext } from '../context/auth.context';
 
@@ -49,44 +54,37 @@ const LoadingScreen = () => {
   );
 };
 
-const HomeClienteNavigator = () => {
-  const { theme } = useTheme();
-  return (
-    <Tab.Navigator
-      screenOptions={{
-        headerStyle: { backgroundColor: theme.background },
-        headerTintColor: theme.text,
-        tabBarStyle: { backgroundColor: theme.background },
-        tabBarActiveTintColor: theme.primary,
-      }}
-    >
-      <Tab.Screen name="HomeCliente" component={HomeClienteScreen} />
-      <Tab.Screen name="ListaMicroempresas" component={ListaMicroempresasScreen} />
-    </Tab.Navigator>
-  );
-};
+const HomeNavigator = () => (
+  <Tab.Navigator lazy={true}>
+    <Tab.Screen name="Home" component={HomeScreen} />
+    <Tab.Screen name="Suscripcion" component={SuscripcionScreen} />
+    <Tab.Screen name="FormularioMicroempresa" component={FormularioMicroempresa} />
+    <Tab.Screen name="SeleccionMicroempresa" component={SeleccionMicroempresaScreen} />
+    <Tab.Screen name="Horario" component={DisponibilidadScreen} />
+    <Tab.Screen name="Calendario" component={CalendarScreen} />
+   
+  </Tab.Navigator>
+);
 
-const HomeTrabajadorNavigator = () => {
-  const { theme } = useTheme();
-  return (
-    <Tab.Navigator
-      screenOptions={{
-        headerStyle: { backgroundColor: theme.background },
-        headerTintColor: theme.text,
-        tabBarStyle: { backgroundColor: theme.background },
-        tabBarActiveTintColor: theme.primary,
-      }}
-    >
-      <Tab.Screen name="HomeTrabajador" component={HomeTrabajadorScreen} />
-      <Tab.Screen name="Suscripcion" component={SuscripcionScreen} />
-      <Tab.Screen name="FormularioMicroempresa" component={FormularioMicroempresa} />
-      <Tab.Screen name="SubirFotoPerfil" component={SubirFotoPerfilScreen} />
-      <Tab.Screen name="SeleccionMicroempresa" component={SeleccionMicroempresaScreen} />
-      <Tab.Screen name="Horario" component={DisponibilidadScreen} />
-      <Tab.Screen name="Calendario" component={CalendarScreen} />
-    </Tab.Navigator>
-  );
-};
+const HomeClienteNavigator = () => (
+ <Tab.Navigator lazy={true}>
+    <Tab.Screen name="HomeCliente" component={HomeClienteScreen} />
+    <Tab.Screen name ="Test" component={TestScreen} />  
+    <Tab.Screen name="Reservas" component={ReservaClienteScreen} />
+    
+  </Tab.Navigator>
+);
+const HomeTrabajadorNavigator = () => (
+<Tab.Navigator lazy={true}>
+    <Tab.Screen name="HomeTrabajador" component={HomeTrabajadorScreen} /> 
+   
+    <Tab.Screen name="FormularioMicroempresa" component={FormularioMicroempresa} />
+    <Tab.Screen name="SubirFotoPerfil" component={SubirFotoPerfilScreen} />
+    <Tab.Screen name="SeleccionMicroempresa" component={SeleccionMicroempresaScreen} />
+    <Tab.Screen name="Horario" component={DisponibilidadScreen} />
+    <Tab.Screen name="Calendario" component={CalendarScreen} />
+  </Tab.Navigator>
+);
 
 const AppNavigator = () => {
   const { setIsAuthenticated, isAuthenticated, user } = useContext(AuthContext);
@@ -123,6 +121,9 @@ const AppNavigator = () => {
       <Stack.Screen name="HomeNavigator" component={HomeClienteNavigator} />
       <Stack.Screen name="MicroempresaCliente" component={MicroempresaClienteScreen} />
       <Stack.Screen name="SeleccionServicio" component={SeleccionServicioScreen} />
+      <Stack.Screen name="ConfirmacionReserva" component={ConfirmacionReservaScreen} />
+      <Stack.Screen name="Test" component={TestScreen} />
+      <Stack.Screen name="Valoracion" component={ValoracionServicioScreen} />
     </Stack.Navigator>
   );
 
@@ -130,10 +131,14 @@ const AppNavigator = () => {
     <Stack.Navigator screenOptions={{ headerShown: false }}>
       <Stack.Screen name="HomeNavigator" component={HomeTrabajadorNavigator} />
       <Stack.Screen name="Pago" component={PaymentScreen} />
+      <Stack.Screen name="Suscripcion" component={SuscripcionScreen} />
       <Stack.Screen name="FormularioCreacionHoras" component={FormularioCreacionHorasScreen} />
       <Stack.Screen name="SeleccionMicroempresa" component={SeleccionMicroempresaScreen} />
       <Stack.Screen name="GestorSuscripcion" component={gestorSuscripcionScreen} />
       <Stack.Screen name="CardForm" component={CardForm} />
+      <Stack.Screen name="SeleccionMicroempresa" component={SeleccionMicroempresaScreen} /> 
+      <Stack.Screen name="GestorSuscripcion" component={gestorSuscripcionScreen} /> 
+      <Stack.Screen name="CardScreen" component={CardScreen} />
       <Stack.Screen name="Microempresa" component={MicroempresaInicioScreeen} />
       <Stack.Screen name="EditarMicroempresa" component={FormularioEdicionMicroempresa} />
       <Stack.Screen name="SubirImagenes" component={SubirImagenesScreen} />
@@ -142,6 +147,10 @@ const AppNavigator = () => {
       <Stack.Screen name="Perfil" component={TrabajadorScreen} />
       <Stack.Screen name="InvitarTrabajador" component={InvitarTrabajadorScreen} />
       <Stack.Screen name="ResponderInvitacion" component={ResponderInvitacionScreen} />
+      <Stack.Screen name="Trabajador" component={PerfilTrabajadorScreen} /> 
+      <Stack.Screen name="Perfil" component={TrabajadorScreen} /> 
+      <Stack.Screen name="Servicio" component={ServicioScreen} />
+      
     </Stack.Navigator>
   );
 

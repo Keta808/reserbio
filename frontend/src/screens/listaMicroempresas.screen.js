@@ -139,7 +139,7 @@ export default function ListaMicroempresasScreen({ navigation }) {
           renderItem={({ item }) => (
             <TouchableOpacity
               style={styles.card}
-              onPress={() => navigation.navigate("Microempresa", { id: item._id })}
+              onPress={() => navigation.navigate("MicroempresaCliente", { id: item._id })}
             >
               <Image
                 source={{ uri: item.fotoPerfil || "https://via.placeholder.com/60" }}

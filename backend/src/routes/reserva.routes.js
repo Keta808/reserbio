@@ -24,6 +24,9 @@ router.post("/", reservaController.createReserva);
 router.delete("/:id", reservaController.deleteReserva);
 router.put("/:id", reservaController.updateReserva);
 router.put("/cancelar/:id", reservaController.cancelReserva);
+router.get("/cliente/:id", reservaController.getReservasByCliente);
+
+router.put("/finalizar/:id", reservaController.finalizarReserva);   // Actualiza el estado de la reserva a finalizada
 
 // Exporta el enrutador
 

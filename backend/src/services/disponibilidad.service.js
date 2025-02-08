@@ -142,30 +142,25 @@ function formatTimeToString(time) {
 }
 
 
-  async function getAvailableSlots(workerId, date) {
+async function getAvailableSlots(workerId, date) {
     try {
         const fechaConsulta = stringToDateOnly(date);
-        //console.log("Fecha de consulta:", fechaConsulta);
-
         const diasSemana = ["domingo", "lunes", "martes", "miércoles", "jueves", "viernes", "sábado"];
         const diaSemana = diasSemana[fechaConsulta.getDay()];
-        //console.log("Día de la semana:", diaSemana);
 
         // Obtener la disponibilidad del trabajador
         const disponibilidad = await Disponibilidad.findOne({ trabajador: workerId, dia: diaSemana });
+
         if (!disponibilidad) {
             return [null, "El trabajador no tiene disponibilidad en este día"];
         }
 
         const horaInicioDisponible = disponibilidad.hora_inicio;
         const horaFinDisponible = disponibilidad.hora_fin;
-        //console.log("Hora de inicio disponible:", horaInicioDisponible);
-        //console.log("Hora de fin disponible:", horaFinDisponible);
-
 
         // Obtener las reservas del trabajador en la fecha consultada
-        const reservas = await Reserva.find({ trabajador: workerId, fecha: fechaConsulta,estado: 'Activa' }).sort({ "hora_inicio": 1 });
-        //console.log("Reservas encontradas:", reservas);
+        const reservas = await Reserva.find({ trabajador: workerId, fecha: fechaConsulta, estado: 'Activa' })
+            .sort({ "hora_inicio": 1 });
 
         let slotsDisponibles = [];
         let tiempoLibre = horaInicioDisponible;
@@ -174,12 +169,11 @@ function formatTimeToString(time) {
         for (let i = 0; i < reservas.length; i++) {
             const reserva = reservas[i];
             const horaInicioReserva = new Date(reserva.hora_inicio);
-            const horaInicioStr = formatTimeToString(horaInicioReserva);  // Convertimos la hora a "HH:MM"
-            
+            const horaInicioStr = formatTimeToString(horaInicioReserva);
+
             // Obtener la duración del servicio asociado
-            const duracionReserva = reserva.duracion;  // 60 minutos por defecto si no se encuentra
+            const duracionReserva = reserva.duracion;
             const horaFinReserva = calcularHoraFin(horaInicioStr, duracionReserva);
-            //console.log("Reserva - Hora inicio:", horaInicioStr, "Hora fin:", horaFinReserva);
 
             // Verificamos si hay un intervalo libre antes de la reserva
             if (timeToMinutes(tiempoLibre) < timeToMinutes(horaInicioStr)) {
@@ -201,19 +195,24 @@ function formatTimeToString(time) {
             });
         }
 
+        // Obtener excepciones para la fecha consultada
+        const excepciones = disponibilidad.excepciones.map(excepcion => ({
+            inicio_no_disponible: excepcion.inicio_no_disponible,
+            fin_no_disponible: excepcion.fin_no_disponible
+        }));
 
-        // Retornar los intervalos disponibles encontrados
-        if (slotsDisponibles.length === 0) {
-            return [null, "No hay intervalos disponibles en el día seleccionado"];
-        }
+        console.log("Intervalos disponibles:", slotsDisponibles);
+        console.log("Excepciones del día:", excepciones);
 
-        return [slotsDisponibles, null];
+        // Retornar los intervalos disponibles junto con las excepciones
+        return [{ availableSlots: slotsDisponibles, excepciones }, null];
 
     } catch (error) {
         console.error("Error al obtener los intervalos disponibles:", error);
         return [null, "Ocurrió un error al calcular los horarios disponibles"];
     }
 }
+
 
 function normalizeString(str) {
     return str.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
@@ -223,9 +222,19 @@ function normalizeString(str) {
 
 async function getHorariosDisponiblesMicroEmpresa(serviceId, date) {
     try {
-        const fechaConsulta = stringToDateOnly(date);
+
+        //console.log("Fecha de consulta en el servicio:", date);
+        //console.log("tipo de date", typeof date);
+        
+
         const diasSemana = ["domingo", "lunes", "martes", "miércoles", "jueves", "viernes", "sábado"];
-        const diaSemana = normalizeString(diasSemana[fechaConsulta.getDay()]);
+        const fechaConsulta =  stringToDateOnly(date); // 31 de enero de 2025, es viernes
+        const diaSemana = diasSemana[fechaConsulta.getDay()];
+
+        // diaSemana === "viernes" (con la tilde si fuera "miércoles", "sábado", etc.)
+        // console.log("Día de la semana:", diaSemana);
+        // console.log("Dia de la semana:", diaSemana);
+
 
         // 1. Obtén el servicio y su duración
         //console.log("Fecha de consulta:", fechaConsulta);
@@ -246,6 +255,7 @@ async function getHorariosDisponiblesMicroEmpresa(serviceId, date) {
             estado: true
         }).populate('id_trabajador');
         
+        console.log("Trabajadores encontrados: servicio backend", trabajadores);
         if (!trabajadores.length) {
             return [null, "No hay trabajadores activos en esta microempresa"];
         }
@@ -267,7 +277,7 @@ async function getHorariosDisponiblesMicroEmpresa(serviceId, date) {
                 dia: diaSemana
             });
 
-            //console.log("Disponibilidad encontrada:", disponibilidad);
+            console.log("Disponibilidad encontrada:", disponibilidad);
             if (!disponibilidad) continue; // Si no hay disponibilidad, pasa al siguiente trabajador
 
             const horaInicioDisponible = disponibilidad.hora_inicio;
@@ -325,12 +335,15 @@ async function getHorariosDisponiblesMicroEmpresa(serviceId, date) {
                 });
             }
         }
+        console.log('Disponibilidad global:', disponibilidadGlobal);
+        disponibilidadGlobal.forEach((item, i) => {
+          console.log(`Slots del trabajador #${i}:`, item.slots);
+        });
 
         // 4. Verifica si hay disponibilidad global
         if (disponibilidadGlobal.length === 0) {
             return [null, "No hay disponibilidad para este servicio en la fecha seleccionada"];
         }
-
         return [disponibilidadGlobal, null];
 
     } catch (error) {
@@ -342,6 +355,10 @@ async function getHorariosDisponiblesMicroEmpresa(serviceId, date) {
 async function getTrabajadoresDisponiblesPorHora(serviceId, date, hora) {
     try {
         // Usa la función para obtener los horarios disponibles
+        console.log("Fecha de consulta en getTrabajadoresDisponiblesPorHora:", date);
+        console.log("Hora de consulta en getTrabajadoresDisponiblesPorHora:", hora);
+        console.log("ID del servicio en getTrabajadoresDisponiblesPorHora:", serviceId);
+        
         const [availableSlots, error] = await getHorariosDisponiblesMicroEmpresa(serviceId, date);
 
         if (error) {
