@@ -179,6 +179,14 @@ export default function MicroempresaScreen({ route, navigation }) {
         }
         ListFooterComponent={
           <View style={{ paddingHorizontal: 10, marginBottom: 20 }}>
+    {/* ✅ Botón para Invitar Trabajadores */}
+    <View style={{ marginBottom: 10 }}>
+      <Button
+        title="Invitar Trabajador"
+        onPress={() => navigation.navigate("InvitarTrabajador", { idMicroempresa: id })}
+        color="#28a745" // Verde
+      />
+    </View>
             {/* 📂 Galería */}
             <Text style={styles.sectionTitle}>Galería</Text>
             <View style={styles.galleryContainer}>
