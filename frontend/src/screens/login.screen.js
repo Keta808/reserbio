@@ -30,7 +30,8 @@ export default function LoginScreen() {
           const userInfo = await login(dataUser); 
           //console.log("userInfo", userInfo);
         
-          //console.log('Usuario autenticado:', userInfo);
+          console.log('Usuario autenticado:', userInfo); 
+          
           
         
           Alert.alert('Inicio de sesión exitoso', `Bienvenido, ${email}`);

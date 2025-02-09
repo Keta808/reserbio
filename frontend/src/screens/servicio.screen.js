@@ -3,7 +3,7 @@ import React, { useEffect, useState} from 'react';
 import { View, Text, StyleSheet, Alert, TouchableOpacity, ScrollView, TextInput, Modal } from 'react-native';
 // import { AuthContext } from '../context/auth.context';
 // import { useNavigation } from '@react-navigation/native';
-import { getServiciosByMicroempresaId, deleteServicio, createServicio, updateServicio  } from '../services/servicio.service';
+import ServicioServices from '../services/servicio.service';
 import AntDesign from '@expo/vector-icons/AntDesign';
 
 const ServicioScreen = ({ route }) => {
@@ -33,7 +33,7 @@ const ServicioScreen = ({ route }) => {
                     setLoading(false);
                     return;
                 }
-                const data = await getServiciosByMicroempresaId(microempresaId);
+                const data = await ServicioServices.getServiciosByMicroempresaId(microempresaId);
                 if (data.state === 'Success' && Array.isArray(data.data)) {
                     setServicios(data.data);
                 }
@@ -48,7 +48,7 @@ const ServicioScreen = ({ route }) => {
     const handleEliminarServicio = async (id) => {
         try { 
             console.log("ID servicio: ", id)
-            const response = await deleteServicio(id);
+            const response = await ServicioServices.deleteServicio(id);
             if (response.state === 'Success') {
                 Alert.alert('Servicio eliminado', 'El servicio se ha eliminado correctamente.');
                 setServicios(servicios.filter(servicio => servicio._id !== id));
@@ -60,7 +60,7 @@ const ServicioScreen = ({ route }) => {
         }
     }; 
     const handleAgregarServicio = async () => {
-        console.log("FRONT: Agregar servicio");
+        
         if (!nombre || !precio || !duracion || !descripcion) {
             Alert.alert('Error', 'Por favor, complete todos los campos obligatorios.');
             return;
@@ -88,7 +88,7 @@ const ServicioScreen = ({ route }) => {
             porcentajeAbono: porcentajeAbono ? parseFloat(porcentajeAbono) : 0,
         };
         try{
-            const response = await createServicio(nuevoServicio); 
+            const response = await ServicioServices.createServicio(nuevoServicio); 
             if(response.state === 'Success'){
                 setServicios([...servicios, response.data]);
                 limpiarFormulario();
@@ -139,7 +139,7 @@ const ServicioScreen = ({ route }) => {
         }; 
 
         try {
-            const response = await updateServicio(editingServicioId, servicioActualizado); 
+            const response = await ServicioServices.updateServicio(editingServicioId, servicioActualizado); 
             if (response.state === 'Success') {
                 setServicios(servicios.map(servicio => 
                     servicio._id === editingServicioId ? response.data : servicio

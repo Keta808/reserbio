@@ -16,17 +16,21 @@ export const login = async (dataUser) => {
 
         const { status, data } = response;
         if (status === 200) {
-            const { accessToken } = data.data;
+            const { accessToken, user } = data.data;
             if (!accessToken) {
                 throw new Error('Token no recibido o inválido');
             }
 
             const decodedToken = decodeToken(accessToken);
 
-            const userInfo = {
-                email: decodedToken.email,
-                kind: decodedToken.kind,
-                id: decodedToken.id,
+              // 🔹 Fusionar los datos de `user` con los del token
+              const userInfo = {
+                id: decodedToken.id, 
+                email: decodedToken.email, 
+                kind: decodedToken.kind, 
+                nombre: user.nombre || null,
+                apellido: user.apellido || null,
+                telefono: user.telefono || null,
             };
 
             await AsyncStorage.setItem('token', accessToken); // Guardar token

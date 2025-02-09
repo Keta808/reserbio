@@ -345,6 +345,7 @@ async function userChange(id){
             email: user.email,
             password: user.password,
             state: user.state,
+            kind: "Trabajador",
         });
         await newTrabajador.save(); 
         console.log("Usuario cambiado a trabajador:", newTrabajador);

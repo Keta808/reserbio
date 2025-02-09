@@ -20,7 +20,7 @@ async function login(req, res) {
     const { error: bodyError } = authLoginBodySchema.validate(body);
     if (bodyError) return respondError(req, res, 400, bodyError.message);
 
-    const [accessToken, refreshToken, errorToken, userInfo] =
+    const [accessToken, refreshToken, errorToken, kind, userFound] =
       await AuthService.login(body);
 
     if (errorToken) return respondError(req, res, 400, errorToken);
@@ -30,7 +30,15 @@ async function login(req, res) {
       httpOnly: true,
       maxAge: 7 * 24 * 60 * 60 * 1000, // 7 días
     });
-
+    const userInfo = {
+      id: userFound._id,
+      email: userFound.email,
+      kind,
+      nombre: userFound.nombre || null, 
+      apellido: userFound.apellido || null, 
+      telefono: userFound.telefono || null,
+    };
+    
     respondSuccess(req, res, 200, { accessToken, user: userInfo });
   } catch (error) {
     handleError(error, "auth.controller -> login");

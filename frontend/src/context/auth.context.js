@@ -41,8 +41,11 @@ export const AuthProvider = ({ children }) => {
   // Función para iniciar sesión
   const login = async (dataUser) => {
     try {
-      const userInfo = await loginService(dataUser); // Simula el servicio de login
-
+      const userInfo = await loginService(dataUser); // Simula el servicio de login 
+      
+      if (!userInfo) {
+        throw new Error('Error al obtener los datos del usuario');
+      } 
       await AsyncStorage.setItem('user', JSON.stringify(userInfo)); // Guarda el usuario en AsyncStorage
       setUser(userInfo);
       setIsAuthenticated(true);
