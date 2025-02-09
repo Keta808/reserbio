@@ -4,7 +4,6 @@ import { createStackNavigator } from '@react-navigation/stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from '../services/root.services.js';
-import { useTheme } from '../context/theme.context';
 
 // Importar pantallas
 import MicroempresaInicioScreeen from '../screens/microempresa.screen.js';
@@ -20,12 +19,11 @@ import SeleccionMicroempresaScreen from '../screens/seleccionMicroempresa.screen
 import SuscripcionScreen from '../screens/suscripcion.screen.js';
 import PaymentScreen from '../screens/pago.screen.js';
 import LoginScreen from '../screens/login.screen.js';
+// import HomeScreen from '../screens/home.screen.js';
 import CalendarScreen from '../screens/calendario.screen.js'; 
 import HomeClienteScreen from '../screens/homeCliente.screen.js';
 import MicroempresaClienteScreen from '../screens/microempresaCliente.screen.js';
 import SeleccionServicioScreen from '../screens/seleccionServicio.screen.js';
-import InvitarTrabajadorScreen from '../screens/invitarTrabajadores.screen.js';
-import ResponderInvitacionScreen from '../screens/responderInvitacion.screen.js';
 import ConfirmacionReservaScreen from '../screens/confirmacionReserva.screen.js';
 import TestScreen from '../screens/testimagenes.screen.js';
 import ReservaClienteScreen from '../screens/reservasCliente.screen.js';
@@ -36,23 +34,20 @@ import gestorSuscripcionScreen from '../screens/gestorSuscripcion.screen.js';
 import CardScreen from '../screens/cardForm.screen.js'; 
 import TrabajadorScreen from '../screens/trabajador.screen.js';
 import HomeTrabajadorScreen from '../screens/homeTrabajador.screen.js';
-
 import ServicioScreen from '../screens/servicio.screen.js';
 // Contexto de autenticación
 import { AuthContext } from '../context/auth.context';
 
+
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
 
-const LoadingScreen = () => {
-  const { theme } = useTheme();
-  return (
-    <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: theme.background }}>
-      <ActivityIndicator size="large" color={theme.primary} />
-      <Text style={{ color: theme.text }}>Verificando autenticación...</Text>
-    </View>
-  );
-};
+const LoadingScreen = () => (
+  <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+    <ActivityIndicator size="large" color="#0000ff" />
+    <Text>Verificando autenticación...</Text>
+  </View>
+);
 
 const HomeNavigator = () => (
   <Tab.Navigator lazy={true}>
@@ -88,17 +83,18 @@ const HomeTrabajadorNavigator = () => (
 );
 
 const AppNavigator = () => {
-  const { setIsAuthenticated, isAuthenticated, user } = useContext(AuthContext);
-  const [isLoading, setIsLoading] = useState(true);
-  const { theme } = useTheme();
+  const { setIsAuthenticated, isAuthenticated ,user} = useContext(AuthContext); // Asumimos que el contexto tiene este método
+  const [isLoading, setIsLoading] = useState(true); // Estado de carga local
 
   useEffect(() => {
     const checkAuth = async () => {
       try {
+        // Recuperar el token desde AsyncStorage
         const token = await AsyncStorage.getItem('token');
         if (token) {
+          // Configurar axios con el token recuperado
           axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-          setIsAuthenticated(true);
+          setIsAuthenticated(true); // Establecer como autenticado en el contexto
         } else {
           setIsAuthenticated(false);
         }
@@ -106,20 +102,22 @@ const AppNavigator = () => {
         console.error('Error verificando el token:', error);
         setIsAuthenticated(false);
       } finally {
-        setIsLoading(false);
+        setIsLoading(false); // Finalizar carga
       }
     };
 
-    checkAuth();
+    checkAuth(); // Ejecutar la verificación al montar el componente
   }, [setIsAuthenticated]);
 
   if (isLoading) {
+    // Mostrar pantalla de carga mientras se verifica la autenticación
     return <LoadingScreen />;
   }
 
   const ClienteStack = () => (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
       <Stack.Screen name="HomeNavigator" component={HomeClienteNavigator} />
+      <Stack.Screen name ="ListaMicroempresas" component={ListaMicroempresasScreen} />  
       <Stack.Screen name="MicroempresaCliente" component={MicroempresaClienteScreen} />
       <Stack.Screen name="SeleccionServicio" component={SeleccionServicioScreen} />
       <Stack.Screen name="ConfirmacionReserva" component={ConfirmacionReservaScreen} />
@@ -129,42 +127,40 @@ const AppNavigator = () => {
       <Stack.Screen name="Pago" component={PaymentScreen} />
     </Stack.Navigator>
   );
-
+  
   const TrabajadorStack = () => (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
       <Stack.Screen name="HomeNavigator" component={HomeTrabajadorNavigator} />
       <Stack.Screen name="Pago" component={PaymentScreen} />
       <Stack.Screen name="Suscripcion" component={SuscripcionScreen} />
       <Stack.Screen name="FormularioCreacionHoras" component={FormularioCreacionHorasScreen} />
-      <Stack.Screen name="SeleccionMicroempresa" component={SeleccionMicroempresaScreen} />
-      <Stack.Screen name="GestorSuscripcion" component={gestorSuscripcionScreen} />
-      <Stack.Screen name="CardForm" component={CardForm} />
       <Stack.Screen name="SeleccionMicroempresa" component={SeleccionMicroempresaScreen} /> 
       <Stack.Screen name="GestorSuscripcion" component={gestorSuscripcionScreen} /> 
       <Stack.Screen name="CardScreen" component={CardScreen} />
       <Stack.Screen name="Microempresa" component={MicroempresaInicioScreeen} />
       <Stack.Screen name="EditarMicroempresa" component={FormularioEdicionMicroempresa} />
+      <Stack.Screen name="SubirFotoPerfil" component={SubirFotoPerfilScreen} />
       <Stack.Screen name="SubirImagenes" component={SubirImagenesScreen} />
       <Stack.Screen name="ListaMicroempresas" component={ListaMicroempresasScreen} />
-      <Stack.Screen name="Trabajador" component={PerfilTrabajadorScreen} />
-      <Stack.Screen name="Perfil" component={TrabajadorScreen} />
-      <Stack.Screen name="InvitarTrabajador" component={InvitarTrabajadorScreen} />
-      <Stack.Screen name="ResponderInvitacion" component={ResponderInvitacionScreen} />
       <Stack.Screen name="Trabajador" component={PerfilTrabajadorScreen} /> 
       <Stack.Screen name="Perfil" component={TrabajadorScreen} /> 
       <Stack.Screen name="Servicio" component={ServicioScreen} />
       
     </Stack.Navigator>
   );
-
+  
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
       {isAuthenticated ? (
-        user?.kind === 'Cliente' ? (
-          <Stack.Screen name="Cliente" component={ClienteStack} />
-        ) : (
-          <Stack.Screen name="Worker" component={TrabajadorStack} />
-        )
+        (() => {
+          console.log('Valor de user:', user); // Verifica si `user` existe y muestra su contenido
+          console.log('Valor de user.kind:', user?.kind); // Verifica el valor de `kind`
+          return user?.kind === 'Cliente' ? ( 
+            <Stack.Screen name="Cliente" component={ClienteStack} />
+          ) : (
+            <Stack.Screen name="Worker" component={TrabajadorStack} />
+          );
+        })()
       ) : (
         <Stack.Screen name="Login" component={LoginScreen} />
       )}

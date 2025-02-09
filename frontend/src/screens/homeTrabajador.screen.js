@@ -3,7 +3,7 @@ import { View, Text, Button, StyleSheet } from "react-native";
 import { AuthContext } from "../context/auth.context";
 import { useNavigation } from "@react-navigation/native";
 import { useTheme } from "../context/theme.context";
-import * as Linking from "expo-linking";
+// import * as Linking from "expo-linking";
 
 export default function HomeTrabajadorScreen() {
     const { theme, toggleTheme } = useTheme();
@@ -19,18 +19,6 @@ export default function HomeTrabajadorScreen() {
     const handleGoToListaMicroempresas = () => navigation.navigate("ListaMicroempresas");
     const handleGoToSuscripcion = () => navigation.navigate("Suscripcion");
 
-    // 📩 Función para probar el deep linking manualmente
-    const handleDeepLinkTest = () => {
-        const token = "70f29620dc57c4478c9dadd7864f0936de2e93927a5d7456554c76196c50295d";
-        const deepLink = `myapp://invitaciones/aceptar/${token}`;
-        console.log("🔗 Intentando abrir deep link:", deepLink);
-    
-        Linking.openURL(deepLink)
-          .then(() => console.log("✅ Deep link abierto correctamente"))
-          .catch((err) => console.error("❌ Error al abrir deep link:", err));
-    };
-    
-
     return (
         <View style={[styles.container, { backgroundColor: theme.background }]}>
             <Text style={[styles.title, { color: theme.text }]}>Bienvenido Trabajador</Text>
@@ -45,9 +33,6 @@ export default function HomeTrabajadorScreen() {
                 onPress={toggleTheme}
                 color={theme.secondary}
             />
-
-            {/* Botón para probar el deep linking */}
-            <Button title="Probar Deep Link" onPress={handleDeepLinkTest} color="#28a745" />
 
             <Button title="Cerrar Sesión" onPress={handleLogout} color="red" />
         </View>
