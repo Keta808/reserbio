@@ -4,6 +4,8 @@ import instance from "./root.services";
 
 async function getServiciosByMicroempresaId(microempresaId) {
     try {
+        
+        console.log("microempresaId aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", microempresaId);
         const response = await instance.get(`/servicios/servicios/${microempresaId}`);
         return response.data;
     } catch (error) {

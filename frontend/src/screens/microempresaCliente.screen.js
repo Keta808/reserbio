@@ -1,51 +1,91 @@
-import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, ActivityIndicator, Alert, FlatList, Button, TouchableOpacity } from 'react-native';
-import MicroempresaService from '../services/microempresa.service';
+import React, { useEffect, useState } from "react";
+import {
+  View,
+  Text,
+  StyleSheet,
+  ActivityIndicator,
+  Alert,
+  FlatList,
+  Button,
+  TouchableOpacity,
+  SafeAreaView,
+  Platform,
+  StatusBar
+} from "react-native";
+import { Image } from "expo-image";
+import MicroempresaService from "../services/microempresa.service";
+import ServiciosService from "../services/servicio.service";
+import { useFocusEffect } from "@react-navigation/native";
 
-export default function MicroempresaScreen({ route, navigation }) {
-  const { id } = route.params || {};
+export default function MicroempresaClienteScreen({ route, navigation }) {
+  const { id, userId } = route.params || {};
   const [microempresa, setMicroempresa] = useState(null);
+  const [fotoPerfilUrl, setFotoPerfilUrl] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [servicios, setServicios] = useState([]);
+  const [montoAbono, setMontoAbono] = useState({});
 
-  console.log('🔍 Buscando microempresa con ID:', id);
-  useEffect(() => {
-    const fetchMicroempresa = async () => {
-      try {
-        if (!id) {
-          Alert.alert('Error', 'No se proporcionó el ID de la microempresa.');
-          setLoading(false);
-          return;
-        }
-
-       // console.log('📥 Fetching microempresa with ID:', id);
-        const response = await MicroempresaService.getMicroempresaData(id);
-
-        if (response) {
-         // console.log('📋 Datos de la microempresa obtenidos:', response);
-          setMicroempresa(response.data);
-        } else {
-          console.warn('⚠️ Respuesta inesperada del servicio:', response);
-          Alert.alert('Error', 'No se pudieron cargar los datos de la microempresa.');
-        }
-      } catch (error) {
-        console.error('❌ Error al obtener los datos de la microempresa:', error.message);
-        Alert.alert('Error', 'No se pudieron cargar los datos de la microempresa.');
-      } finally {
+  const fetchMicroempresa = async () => {
+    try {
+      if (!id) {
+        Alert.alert("Error", "No se proporcionó el ID de la microempresa.");
         setLoading(false);
+        return;
       }
+      const response = await MicroempresaService.getMicroempresaData(id);
+      if (response) {
+        setMicroempresa(response.data);
+      } else {
+        Alert.alert("Error", "No se pudieron cargar los datos de la microempresa.");
+      }
+    } catch (error) {
+      Alert.alert("Error", "No se pudieron cargar los datos de la microempresa.");
+    }
+  };
+
+  const fetchFotoPerfil = async () => {
+    try {
+      const fotoPerfil = await MicroempresaService.getMicroempresaFotoPerfil(id);
+      setFotoPerfilUrl(fotoPerfil);
+    } catch (error) {
+      console.error("❌ Error al obtener la foto de perfil:", error);
+    }
+  };
+
+  const fetchServicios = async () => { 
+    try {
+      const response = await ServiciosService.getServiciosByMicroempresaId(id);
+      if (response.state === "Success" && Array.isArray(response.data)) {
+        setServicios(response.data);
+      }
+    } catch (error) {
+      console.error("Error al obtener los servicios:", error.message);
+    }
+  };
+
+  useEffect(() => {
+    const obtenerMontosAbono = async () => {
+      let newMontos = {}; 
+      for (let servicio of servicios) {
+        if (servicio.porcentajeAbono && servicio.porcentajeAbono > 0) {
+          try {
+            const monto = await ServiciosService.calcularMontoAbono(servicio._id, servicio.precio, servicio.porcentajeAbono);
+            newMontos[servicio._id] = monto.data;
+          } catch (error) {
+            console.error("Error al calcular el monto de abono:", error.message);
+          }
+        }
+      }
+      setMontoAbono(newMontos);
     };
+    obtenerMontosAbono();
+  }, [servicios]);
 
-    fetchMicroempresa();
-  }, [id]);
-
-  const renderTrabajador = ({ item }) => (
-    <TouchableOpacity
-      style={styles.card}
-      onPress={() => navigation.navigate('Trabajador', { trabajador: item })}
-    >
-      <Text style={styles.cardTitle}>{item.nombre}</Text>
-      <Text style={styles.cardDetail}>{item.telefono}</Text>
-    </TouchableOpacity>
+  useFocusEffect(
+    React.useCallback(() => {
+      setLoading(true);
+      Promise.all([fetchMicroempresa(), fetchFotoPerfil(), fetchServicios()]).finally(() => setLoading(false));
+    }, [id])
   );
 
   if (loading) {
@@ -66,73 +106,178 @@ export default function MicroempresaScreen({ route, navigation }) {
   }
 
   return (
-    <FlatList
-      data={microempresa.trabajadores}
-      renderItem={renderTrabajador}
-      keyExtractor={(item) => item._id}
-      numColumns={2} // Mostrar en formato de 2 columnas
-      ListHeaderComponent={
-        <View style={styles.container}>
-          <Text style={styles.title}>{microempresa.nombre || 'Sin nombre'}</Text>
-          <Text style={styles.description}>{microempresa.descripcion || 'Sin descripción'}</Text>
-  
-          <View style={styles.infoRow}>
-            <Text style={styles.infoLabel}>Teléfono:</Text>
-            <Text style={styles.infoValue}>{microempresa.telefono || 'Sin teléfono'}</Text>
+    <SafeAreaView style={styles.safeArea}>
+      <FlatList
+        data={[]} // Evita duplicaciones
+        keyExtractor={() => "flatlist_microempresa_cliente"} 
+        ListHeaderComponent={
+          <View style={styles.container}>
+            {/* 📸 Foto de perfil */}
+            <View style={styles.imageContainer}>
+              {fotoPerfilUrl ? (
+                <Image
+                  source={{ uri: `${fotoPerfilUrl}?time=${new Date().getTime()}` }}
+                  style={styles.image}
+                  resizeMode="cover"
+                />
+              ) : (
+                <Text style={styles.placeholderText}>Imagen no disponible</Text>
+              )}
+            </View>
+
+            {/* 📝 Datos de la microempresa */}
+            <View style={styles.sectionContainer}>
+              <Text style={styles.title}>{microempresa.nombre || "Sin nombre"}</Text>
+              <Text style={styles.description}>{microempresa.descripcion || "Sin descripción"}</Text>
+
+              <View style={styles.infoContainer}>
+                <Text style={styles.infoText}>📞 <Text style={styles.infoLabel}>Teléfono:</Text> {microempresa.telefono || "Sin teléfono"}</Text>
+                <Text style={styles.infoText}>📍 <Text style={styles.infoLabel}>Dirección:</Text> {microempresa.direccion || "Sin dirección"}</Text>
+                <Text style={styles.infoText}>✉️ <Text style={styles.infoLabel}>Correo:</Text> {microempresa.email || "Sin email"}</Text>
+                <Text style={styles.infoText}>🏷️ <Text style={styles.infoLabel}>Categoría:</Text> {microempresa.categoria || "Sin categoría"}</Text>
+              </View>
+            </View>
+
+            {/* ✅ Servicios Ofrecidos */}
+            {servicios.length > 0 && (
+              <View style={styles.sectionContainer}>
+                <Text style={styles.sectionTitle}>Servicios Ofrecidos</Text>
+                {servicios.map((servicio) => (
+                  <View key={servicio._id} style={styles.servicioItem}>
+                    <Text style={styles.servicioName}>{servicio.nombre}</Text>
+                    <Text style={styles.servicioDetail}>Precio: ${servicio.precio}</Text>
+                    <Text style={styles.servicioDetail}>{servicio.descripcion}</Text>
+                  </View>
+                ))}
+              </View>
+            )}
           </View>
-  
-          <View style={styles.infoRow}>
-            <Text style={styles.infoLabel}>Dirección:</Text>
-            <Text style={styles.infoValue}>{microempresa.direccion || 'Sin dirección'}</Text>
+        }
+        ListFooterComponent={
+          <View style={{ paddingHorizontal: 10, marginBottom: 20 }}>
+            {/* 🏢 Trabajadores */}
+            <View style={styles.sectionContainer}>
+              <Text style={styles.sectionTitle}>Trabajadores</Text>
+              {microempresa.trabajadores.length > 0 ? (
+                <FlatList
+                  data={microempresa.trabajadores}
+                  key={"flatlist_trabajadores_cliente"} 
+                  renderItem={({ item }) => (
+                    <TouchableOpacity
+                      style={styles.card}
+                      onPress={() => navigation.navigate("Trabajador", { trabajador: item })}
+                    >
+                      <Text style={styles.cardTitle}>{item.nombre}</Text>
+                      <Text style={styles.cardDetail}>{item.telefono}</Text>
+                    </TouchableOpacity>
+                  )}
+                  keyExtractor={(item) => item._id}
+                  numColumns={2} // 📌 Para mostrar 2 trabajadores por fila
+                />
+              ) : (
+                <Text style={styles.noImagesText}>No hay trabajadores aún.</Text>
+              )}
+            </View>
+
+            {/* 📂 Galería */}
+            <View style={styles.sectionContainer}>
+              <Text style={styles.sectionTitle}>Galería</Text>
+              <View style={styles.galleryContainer}>
+                {microempresa.imagenes.length > 0 ? (
+                  <FlatList
+                    data={microempresa.imagenes}
+                    horizontal
+                    keyExtractor={(item) => item.public_id}
+                    contentContainerStyle={{ paddingHorizontal: 10 }}
+                    renderItem={({ item }) => (
+                      <View style={styles.galleryImageContainer}>
+                        <Image
+                          source={{ uri: item.url }}
+                          style={styles.galleryImage}
+                          contentFit="cover"
+                        />
+                      </View>
+                    )}
+                  />
+                ) : (
+                  <Text style={styles.noImagesText}>No hay imágenes disponibles</Text>
+                )}
+              </View>
+            </View>
+
+            {/* 📌 Botones finales */}
+            <View style={styles.buttonContainer}>
+              <Button
+                title="Reservar"
+                onPress={() => navigation.navigate("Reservar", { id, userId })}
+                color="red"
+              />
+              <Button
+                title="Volver al Inicio"
+                onPress={() => navigation.navigate("HomeNavigator")}
+                color="#007BFF"
+              />
+            </View>
           </View>
-  
-          <View style={styles.infoRow}>
-            <Text style={styles.infoLabel}>Email:</Text>
-            <Text style={styles.infoValue}>{microempresa.email || 'Sin email'}</Text>
-          </View>
-  
-          <View style={styles.infoRow}>
-            <Text style={styles.infoLabel}>Categoría:</Text>
-            <Text style={styles.infoValue}>{microempresa.categoria || 'Sin categoría'}</Text>
-          </View>
-  
-          <Text style={styles.sectionTitle}>Trabajadores</Text>
-        </View>
-      }
-      ListFooterComponent={
-        <View style={styles.buttonContainer}>
-          <Button
-            title="Reservar"
-            onPress={() => navigation.navigate('SeleccionServicio', { microempresaId: id, trabajadores: microempresa.trabajadores })}
-            color="red"
-          />
-          <Button
-            title="Volver al Inicio"
-            onPress={() => navigation.navigate('HomeNavigator')}
-            color="#007BFF"
-          />
-        </View>
-      }
-      contentContainerStyle={styles.listContainer}
-    />
+        }
+        contentContainerStyle={styles.listContainer}
+      />
+    </SafeAreaView>
   );
 }
 
+
 const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    paddingTop: Platform.OS === "android" ? StatusBar.currentHeight : 0,
+  },
   container: {
-    padding: 20,
+    padding: 5,
   },
   listContainer: {
     paddingBottom: 20,
+    paddingHorizontal: 10, // Para dar margen a todo el contenido
+  },
+  sectionContainer: {
+    marginBottom: 1, // 📌 Espaciado uniforme entre secciones
+    paddingHorizontal: 10,
+  },
+  image: {
+    width: 150,
+    height: 150,
+    borderRadius: 75,
+    marginBottom: 10,
+  },
+  imageContainer: {
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 10,
+  },
+  infoContainer: {
+    marginBottom: 10,
+  },
+  infoRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginBottom: 5,
+  },
+  infoText: {
+    fontSize: 14,
+    color: "#333",
+    marginBottom: 5,
+  },
+  infoLabel: {
+    fontWeight: "bold",
   },
   card: {
-    backgroundColor: '#fff',
+    backgroundColor: "#fff",
     borderRadius: 8,
     padding: 10,
     margin: 5,
-    width: '45%', // Ajustar tamaño para 2 columnas
-    alignItems: 'center',
-    shadowColor: '#000',
+    width: "45%",
+    alignItems: "center",
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.2,
     shadowRadius: 4,
@@ -140,53 +285,125 @@ const styles = StyleSheet.create({
   },
   cardTitle: {
     fontSize: 14,
-    fontWeight: 'bold',
-    textAlign: 'center',
+    fontWeight: "bold",
+    textAlign: "center",
   },
   cardDetail: {
     fontSize: 12,
-    color: '#555',
-    textAlign: 'center',
+    color: "#555",
+    textAlign: "center",
   },
   title: {
-    fontSize: 24,
-    fontWeight: 'bold',
+    fontSize: 22,
+    fontWeight: "bold",
     marginBottom: 10,
-    textAlign: 'center',
+    textAlign: "center",
   },
   description: {
-    fontSize: 16,
-    color: 'gray',
-    marginBottom: 20,
-    textAlign: 'center',
+    fontSize: 14,
+    color: "gray",
+    marginBottom: 10,
+    textAlign: "center",
   },
   sectionTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginBottom: 1, // Reducir la distancia del título con las tarjetas
-    textAlign: 'left',
-  },
-  trabajadorListContainer: {
-    marginTop: 1, // Ajustar separación entre "Trabajadores" y las tarjetas
-  },
-  infoRow: {
-    flexDirection: 'row',
-    justifyContent: 'flex-start',
+    fontSize: 20,
+    fontWeight: "bold",
+    marginTop: 20,
     marginBottom: 10,
   },
-  infoLabel: {
-    fontWeight: 'bold',
-    fontSize: 16,
-    marginRight: 5,
-  },
-  infoValue: {
-    fontSize: 16,
-  },
   buttonContainer: {
-    marginTop: 20,
+    marginTop: 10,
     paddingHorizontal: 10,
   },
+  servicioItem: {
+    backgroundColor: "#fff",
+    borderWidth: 1,
+    borderColor: "#ddd",
+    borderRadius: 10,
+    padding: 10,
+    marginVertical: 5,
+    marginHorizontal: 10,
+    width: "95%",
+    alignSelf: "center",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 3,
+    elevation: 3,
+  },
+  servicioName: {
+    fontSize: 15,
+    fontWeight: "bold",
+  },
+  servicioDetail: {
+    fontSize: 14,
+    color: "#666",
+  },
+  servicioAbono: {
+    fontSize: 14,
+    fontWeight: "bold",
+    color: "#000000",
+    marginTop: 5,
+  },
+  galleryContainer: {
+    marginBottom: 10,
+  },
+  galleryImageContainer: {
+    position: "relative",
+    marginRight: 10,
+  },
+  galleryImage: {
+    width: 100,
+    height: 100,
+    borderRadius: 10,
+    marginRight: 10,
+  },
+  deleteImageButton: {
+    position: "absolute",
+    top: 5,
+    right: 5,
+    backgroundColor: "#FF3B30",
+    width: 20,
+    height: 20,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: "#000",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  deleteImageButtonText: {
+    color: "#fff",
+    fontSize: 14,
+    fontWeight: "bold",
+  },
+  noImagesText: {
+    fontSize: 14,
+    color: "gray",
+    textAlign: "center",
+    marginBottom: 10,
+  },
+  placeholderText: {
+    fontSize: 16,
+    color: "gray",
+  },
+  loadingContainer: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  loadingText: {
+    marginTop: 10,
+    fontSize: 16,
+  },
+  errorContainer: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  error: {
+    color: "red",
+    fontSize: 16,
+  },
 });
-
 
 

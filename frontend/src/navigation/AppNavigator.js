@@ -49,17 +49,7 @@ const LoadingScreen = () => (
   </View>
 );
 
-const HomeNavigator = () => (
-  <Tab.Navigator lazy={true}>
-    <Tab.Screen name="Home" component={HomeScreen} />
-    <Tab.Screen name="Suscripcion" component={SuscripcionScreen} />
-    <Tab.Screen name="FormularioMicroempresa" component={FormularioMicroempresa} />
-    <Tab.Screen name="SeleccionMicroempresa" component={SeleccionMicroempresaScreen} />
-    <Tab.Screen name="Horario" component={DisponibilidadScreen} />
-    <Tab.Screen name="Calendario" component={CalendarScreen} />
-   
-  </Tab.Navigator>
-);
+
 
 const HomeClienteNavigator = () => (
  <Tab.Navigator lazy={true}>
@@ -73,7 +63,6 @@ const HomeClienteNavigator = () => (
 const HomeTrabajadorNavigator = () => (
 <Tab.Navigator lazy={true}>
     <Tab.Screen name="HomeTrabajador" component={HomeTrabajadorScreen} /> 
-   
     <Tab.Screen name="FormularioMicroempresa" component={FormularioMicroempresa} />
     <Tab.Screen name="SubirFotoPerfil" component={SubirFotoPerfilScreen} />
     <Tab.Screen name="SeleccionMicroempresa" component={SeleccionMicroempresaScreen} />

@@ -6,7 +6,6 @@ import {
   ActivityIndicator,
   FlatList,
   TouchableOpacity,
-  Button,
   Modal,
   Platform,
 } from 'react-native';
@@ -19,20 +18,16 @@ const ConfirmacionReservaScreen = () => {
   const route = useRoute();
   const navigation = useNavigation();
   const { microempresaId, servicioId, trabajadorId, fecha } = route.params;
-  
-
-  //console.log("Fecha en confirmacion reserva", fecha);
 
   const [disponibilidad, setDisponibilidad] = useState([]);
   const [loading, setLoading] = useState(true);
   const [duracionServicio, setDuracionServicio] = useState(null);
+  // Se mantiene el estado de excepciones por si se requiere en otro lugar
   const [excepciones, setExcepciones] = useState([]);
   const [selectedSlot, setSelectedSlot] = useState(null);
   const [selectedTrabajador, setSelectedTrabajador] = useState(null);
   const [modalVisible, setModalVisible] = useState(false);
-
-  //error testing
-  const [error, setError] = useState(null); 
+  const [error, setError] = useState(null);
 
   // --------------------------------------------------
   // 1. OBTENER DURACIÓN DEL SERVICIO
@@ -51,99 +46,173 @@ const ConfirmacionReservaScreen = () => {
   }, [servicioId]);
 
   // --------------------------------------------------
-  // 2. OBTENER DISPONIBILIDAD
+  // 2. OBTENER DISPONIBILIDAD Y FILTRAR RESERVAS
   // --------------------------------------------------
   useEffect(() => {
     const fetchDisponibilidad = async () => {
       if (!duracionServicio) return;
-
       try {
         setLoading(true);
         let response;
-
-        // a) Llamar a la función según haya (o no) un trabajadorId
+        // Llamada según se tenga o no un trabajador específico
         if (trabajadorId) {
           response = await disponibilidadService.getHorariosDisponibles({
             workerId: trabajadorId,
             date: fecha,
           });
+
           console.log('Disponibilidad para trabajador:', response);
+
         } else {
           response = await disponibilidadService.getHorariosDisponiblesMicroEmpresa({
             serviceId: servicioId,
             date: fecha,
           });
-          console.log('Disponibilidad para microempresa:', response);
+          console.log('Disponibilidad para microempresa:', JSON.stringify(response, null, 2));
         }
+  
+        // Si la respuesta viene envuelta en una propiedad "availableSlots", la extraemos
+        let availabilityResponse;
+        if (response && typeof response === 'object' && response.availableSlots) {
+          availabilityResponse = response.availableSlots;
+        } else {
+          availabilityResponse = response;
+        }
+  
+        console.log('Respuesta de disponibilidad:', availabilityResponse);
 
-        // b) Verificar que 'availableSlots' tenga la forma [ arrayConDatos, maybeError ]
-        if (
-          response &&
-          response.availableSlots &&
-          Array.isArray(response.availableSlots) &&
-          response.availableSlots.length === 2 // [ data, error ]
-        ) {
-          const [arrayData, maybeError] = response.availableSlots;
+        // Verificamos que availabilityResponse sea un array de dos elementos
+        if (!Array.isArray(availabilityResponse) || availabilityResponse.length !== 2) {
+          console.error('El formato de la respuesta no es válido:', response);
+          return;
+        }
+  
+        // Ahora desestructuramos
+        const [arrayData, maybeError] = availabilityResponse;
+        console.log('Datos de disponibilidad:', arrayData);
+        console.log('Error de disponibilidad:', maybeError);
 
-          if (maybeError) {
-            let errorStringText = 'Ocurrió un error, No hay disponibilidad horaria en ese día.'; // Mensaje genérico
-          
-            // Extrae el mensaje del error si está disponible
-            if (maybeError.response?.data) {
-              // Si el backend envía un objeto como error, conviértelo a texto
-              errorStringText =
-                typeof maybeError.response.data === 'string'
-                  ? maybeError.response.data
-                  : JSON.stringify(maybeError.response.data);
-            } else if (maybeError.message) {
-              errorStringText = maybeError.message;
-            }
-          
-            // Establece el error en el estado
-            setError(errorStringText);
-           // console.error('Error del backend:', maybeError);
-            return; // Evita que continúe ejecutando el código
+        if (maybeError) {
+          let errorStringText = 'Ocurrió un error, No hay disponibilidad horaria en ese día.';
+          if (maybeError.response?.data) {
+            errorStringText =
+              typeof maybeError.response.data === 'string'
+                ? maybeError.response.data
+                : JSON.stringify(maybeError.response.data);
+          } else if (maybeError.message) {
+            errorStringText = maybeError.message;
           }
+          setError(errorStringText);
+          return;
+        }
+       
 
 
-          // --- OPCIÓN 1: Cuando arrayData es un ARRAY (varios trabajadores)
-          if (Array.isArray(arrayData) && arrayData.length > 0) {
-            const firstObj = arrayData[0];
-            if (!firstObj.slots) {
-              console.error('No se encuentra la propiedad .slots en el primer objeto');
-              return;
-            }
-            const excepcionesBase = firstObj.excepciones || [];
-            const slotsBase = firstObj.slots.filter((slot) => slot !== null);
+        let slotsCalculados = [];
+        if (trabajadorId) {
+          console.log(
+            typeof arrayData === 'object' &&
+            arrayData !== null &&
+            Array.isArray(arrayData.availableSlots)
+          );
 
-            const slotsDivididos = dividirEnSlots(slotsBase, duracionServicio, fecha);
-            const slotsFiltrados = excluirExcepciones(slotsDivididos, excepcionesBase);
-            const slotsFuturos = filtrarSlotsFuturos(slotsFiltrados, fecha);
-
-            setDisponibilidad(slotsFuturos);
-            setExcepciones(excepcionesBase);
-
-          // --- OPCIÓN 2: Cuando arrayData es un OBJETO (un solo trabajador)
-          } else if (
+          // Caso trabajador específico:
+          if (
             typeof arrayData === 'object' &&
             arrayData !== null &&
             Array.isArray(arrayData.availableSlots)
           ) {
-            const slotsBase = arrayData.availableSlots.filter((slot) => slot !== null);
+            const slotsBase = arrayData.availableSlots.filter(slot => slot !== null);
             const excepcionesBase = arrayData.excepciones || [];
-
             const slotsDivididos = dividirEnSlots(slotsBase, duracionServicio, fecha);
             const slotsFiltrados = excluirExcepciones(slotsDivididos, excepcionesBase);
             const slotsFuturos = filtrarSlotsFuturos(slotsFiltrados, fecha);
-
-            setDisponibilidad(slotsFuturos);
-            setExcepciones(excepcionesBase);
-          } else {
-            console.error('No hay disponibilidad en arrayData:', arrayData);
+            slotsCalculados = slotsFuturos;
+            //ESTO ESTA BIEN
+          } else if (Array.isArray(arrayData) && arrayData.length > 0) {
+            const firstObj = arrayData[0];
+            const excepcionesBase = firstObj.excepciones || [];
+            const slotsBase = firstObj.slots.filter(slot => slot !== null);
+            const slotsDivididos = dividirEnSlots(slotsBase, duracionServicio, fecha);
+            const slotsFiltrados = excluirExcepciones(slotsDivididos, excepcionesBase);
+            const slotsFuturos = filtrarSlotsFuturos(slotsFiltrados, fecha);
+            slotsCalculados = slotsFuturos;
           }
         } else {
-          console.error('El formato de la respuesta no es válido:', response);
+          // Caso microempresa: agrupar slots y asociar a cada uno el arreglo de trabajadores
+          let groupedSlots = {};
+          arrayData.forEach(workerData => {
+            if (!workerData.slots) {
+              console.error('No se encuentra la propiedad .slots en uno de los objetos de disponibilidad');
+              return;
+            }
+            const worker = workerData.trabajador;
+            const excepcionesBase = workerData.excepciones || [];
+            const slotsBase = workerData.slots.filter(slot => slot !== null);
+            const slotsDivididos = dividirEnSlots(slotsBase, duracionServicio, fecha);
+            const slotsFiltrados = excluirExcepciones(slotsDivididos, excepcionesBase);
+            const slotsFuturos = filtrarSlotsFuturos(slotsFiltrados, fecha);
+            slotsFuturos.forEach(slot => {
+              const key = `${slot.inicio}-${slot.fin}`;
+              if (!groupedSlots[key]) {
+                groupedSlots[key] = { ...slot, trabajadores: [] };
+              }
+              if (worker && !groupedSlots[key].trabajadores.some(t => t.id === worker.id)) {
+                groupedSlots[key].trabajadores.push(worker);
+              }
+            });
+          });
+          slotsCalculados = Object.values(groupedSlots).sort((a, b) => {
+            const [hA, mA] = a.inicio.split(':').map(Number);
+            const [hB, mB] = b.inicio.split(':').map(Number);
+            return hA * 60 + mA - (hB * 60 + mB);
+          });
         }
+
+
+       
+
+        if (trabajadorId) {
+          // Se obtiene la respuesta del backend: {"reservas": [...]}
+          const reservasResponse = await reservaService.getReservasPorFechaTrabajador(trabajadorId, fecha);
+          const reservas = reservasResponse.reservas; // Ahora se extrae la propiedad "reservas"
+          if (Array.isArray(reservas) && reservas.length > 0) {
+            slotsCalculados = slotsCalculados.filter(slot => {
+              const slotStart = convertirAFecha(slot.inicio, fecha);
+              const slotEnd = convertirAFecha(slot.fin, fecha);
+              const overlap = reservas.some(reserva => {
+                const reservaStart = convertirAFecha(reserva.hora_inicio, fecha);
+                const reservaEnd = new Date(reservaStart.getTime() + reserva.duracion * 60000);
+                return slotStart < reservaEnd && slotEnd > reservaStart;
+              });
+              return !overlap;
+            });
+          }
+        } else {
+          const reservasResponse = await reservaService.getReservasPorFechaMicroempresa(servicioId, fecha);
+          console.log("reservas response para microempresa:", reservasResponse);
+          const reservas = reservasResponse.reservas;
+          if (Array.isArray(reservas) && reservas.length > 0) {
+            slotsCalculados = slotsCalculados.map(slot => {
+              const slotStart = convertirAFecha(slot.inicio, fecha);
+              const slotEnd = convertirAFecha(slot.fin, fecha);
+              const trabajadoresFiltrados = slot.trabajadores.filter(worker => {
+                const tieneOverlap = reservas.some(reserva => {
+                  if (reserva.trabajador.toString() === worker.id.toString()) {
+                    const reservaStart = convertirAFecha(reserva.hora_inicio, fecha);
+                    const reservaEnd = new Date(reservaStart.getTime() + reserva.duracion * 60000);
+                    return slotStart < reservaEnd && slotEnd > reservaStart;
+                  }
+                  return false;
+                });
+                return !tieneOverlap;
+              });
+              return { ...slot, trabajadores: trabajadoresFiltrados };
+            }).filter(slot => slot.trabajadores && slot.trabajadores.length > 0);
+          }
+        }
+  
+        setDisponibilidad(slotsCalculados);
       } catch (error) {
         console.error('Error al obtener la disponibilidad:', error);
       } finally {
@@ -152,42 +221,21 @@ const ConfirmacionReservaScreen = () => {
     };
     fetchDisponibilidad();
   }, [trabajadorId, servicioId, fecha, duracionServicio]);
+  
 
   // --------------------------------------------------
   // 3. FUNCIONES AUXILIARES
   // --------------------------------------------------
-
-  /**
-   * PARTE A:
-   * parseYmdToLocalDate - Fuerza un método para iOS y otro para Android
-   */
   function parseYmdToLocalDate(ymd) {
     const [year, month, day] = ymd.split('-').map(Number);
-
-    // Creamos la fecha en hora local
     let localMidnight = new Date(year, month - 1, day, 0, 0, 0);
-
     if (Platform.OS === 'android') {
-      // "Arreglito" sumando el offset para compensar que Android a veces parsea como UTC
-      // Efectivamente estamos diciendo: "si la hora local es 00:00, súmale offset"
-      // con lo cual se forzaría la medianoche local a esa misma "medianoche" sin restar horas.
-      const offsetInMinutes = localMidnight.getTimezoneOffset(); // Ej: 180 (si UTC-3)
-      localMidnight = new Date(
-        localMidnight.getTime() - offsetInMinutes * 60 * 1000
-      );
+      const offsetInMinutes = localMidnight.getTimezoneOffset();
+      localMidnight = new Date(localMidnight.getTime() - offsetInMinutes * 60 * 1000);
     }
-
-    // Para iOS no hacemos nada extra
     return localMidnight;
   }
 
-
-
-
-
-  /**
-   * isSameDayLocal - compara solo año, mes y día
-   */
   function isSameDayLocal(dateA, dateB) {
     return (
       dateA.getFullYear() === dateB.getFullYear() &&
@@ -196,40 +244,32 @@ const ConfirmacionReservaScreen = () => {
     );
   }
 
-  // a) Dividir en slots según la duración
   const dividirEnSlots = (intervalos, duracion, fechaBaseStr) => {
     if (!duracion) {
       console.log('Error: La duración del servicio no está definida.');
       return [];
     }
-
     let slots = [];
-
     intervalos.forEach(({ inicio, fin }) => {
       let horaInicio = convertirAFecha(inicio, fechaBaseStr);
       let horaFin = convertirAFecha(fin, fechaBaseStr);
-
       if (!horaInicio || !horaFin) {
         console.error('Error: Fecha inválida al dividir en slots.', { inicio, fin });
         return;
       }
-
       while (horaInicio < horaFin) {
         let horaSlotFin = new Date(horaInicio.getTime() + duracion * 60000);
         if (horaSlotFin > horaFin) break;
-
         slots.push({
           inicio: formatHora(horaInicio),
           fin: formatHora(horaSlotFin),
         });
-
         horaInicio = horaSlotFin;
       }
     });
     return slots;
   };
 
-  // b) Excluir slots que estén dentro de excepciones
   const excluirExcepciones = (slots, excepciones) => {
     return slots.filter(({ inicio, fin }) => {
       return !excepciones.some(({ inicio_no_disponible, fin_no_disponible }) => {
@@ -241,75 +281,48 @@ const ConfirmacionReservaScreen = () => {
     });
   };
 
-  // c) Filtrar slots que ya pasaron si es la misma fecha que HOY
   const filtrarSlotsFuturos = (slots, fechaSeleccionada) => {
-    //console.log('Filtrando slots futuros...');
-    //console.log('Fecha seleccionada:', fechaSeleccionada);
-
     if (!fechaSeleccionada) {
       console.error('Error: fechaSeleccionada es undefined.');
       return [];
     }
-
-    // 1) con parseYmdToLocalDate
-    const fechaRef = parseYmdToLocalDate(fechaSeleccionada); // medianoche "local"
-
-    // 2) "ahora" local (sin hack)
+    const fechaRef = parseYmdToLocalDate(fechaSeleccionada);
     const ahora = new Date();
-
-    console.log('Fecha de referencia:', fechaRef);
-    console.log('Fecha actual local:', ahora);
-
-    // si es el mismo día => filtrar
     const esHoy = isSameDayLocal(fechaRef, ahora);
     if (esHoy) {
-      console.log('📌 Filtrando slots porque la fecha seleccionada es HOY');
       return slots.filter(({ inicio }) => {
         const slotHora = convertirAFecha(inicio, fechaRef);
         return slotHora > ahora;
       });
     } else {
-      console.log('✅ No se aplica filtro porque la fecha es en otro día');
       return slots;
     }
   };
 
-  /**
-   * d) Convertir "HH:mm" + una "base" (que puede ser string "YYYY-MM-DD" o un Date)
-   *    en un Date local.
-   */
   const convertirAFecha = (horaStr, fechaBase) => {
     if (!horaStr) {
       console.error(`Error: horaStr es inválido (${horaStr})`);
       return null;
     }
-
     const [horas, minutos] = horaStr.split(':').map(Number);
     if (isNaN(horas) || isNaN(minutos)) {
       console.error(`Error: horaStr tiene un formato incorrecto (${horaStr})`);
       return null;
     }
-
     let base;
     if (typeof fechaBase === 'string') {
-      // => parseamos "YYYY-MM-DD" con la función que distingue iOS/Android
       base = parseYmdToLocalDate(fechaBase);
     } else {
-      // => ya es un Date
       base = new Date(fechaBase);
     }
-
     if (isNaN(base.getTime())) {
       console.error(`Error: fechaBase es inválida (${fechaBase})`);
       return null;
     }
-
-    // Ajustamos la hora/minutos sobre esa fecha local
     base.setHours(horas, minutos, 0, 0);
     return base;
   };
 
-  // e) Formatear fecha (objeto Date) a "HH:mm"
   const formatHora = (fecha) => {
     return fecha.toTimeString().split(' ')[0].substring(0, 5);
   };
@@ -317,42 +330,30 @@ const ConfirmacionReservaScreen = () => {
   // --------------------------------------------------
   // 4. SELECCIÓN DE TRABAJADOR SI NO HAY PREFERENCIA
   // --------------------------------------------------
-  const seleccionarTrabajadorAleatorio = async (slot) => {
-    // Si el usuario seleccionó un trabajador puntual, no necesitamos asignar uno
+  const seleccionarTrabajadorAleatorio = (slot) => {
     if (trabajadorId) {
       setSelectedTrabajador({ id: trabajadorId });
       return;
     }
-
-    try {
-      // Llamamos a la API para saber qué trabajadores están disponibles en esa hora
-      const response = await disponibilidadService.getTrabajadoresDisponiblesPorHora({
-        serviceId: servicioId,
-        date: fecha, // "YYYY-MM-DD"
-        hora: slot.inicio, // "HH:mm"
-      });
-
-      // Elegimos uno aleatorio
-      if (response && response.trabajadoresDisponibles && response.trabajadoresDisponibles.length > 0) {
-        const trabajadorAleatorio =
-          response.trabajadoresDisponibles[
-            Math.floor(Math.random() * response.trabajadoresDisponibles.length)
-          ];
-        setSelectedTrabajador(trabajadorAleatorio);
+    if (slot.trabajadores && slot.trabajadores.length > 0) {
+      let trabajadorSeleccionado;
+      if (slot.trabajadores.length === 1) {
+        trabajadorSeleccionado = slot.trabajadores[0];
       } else {
-        console.error('No hay trabajadores disponibles en este horario:', response);
+        trabajadorSeleccionado = slot.trabajadores[Math.floor(Math.random() * slot.trabajadores.length)];
       }
-    } catch (error) {
-      console.error('Error al obtener trabajadores disponibles:', error);
+      setSelectedTrabajador(trabajadorSeleccionado);
+    } else {
+      alert('No hay trabajadores disponibles en esa hora.');
     }
   };
 
   // --------------------------------------------------
   // 5. FUNCIONES DE LA UI
   // --------------------------------------------------
-  const handleSelectSlot = async (slot) => {
+  const handleSelectSlot = (slot) => {
     setSelectedSlot(slot);
-    await seleccionarTrabajadorAleatorio(slot);
+    seleccionarTrabajadorAleatorio(slot);
     setModalVisible(true);
   };
 
@@ -361,35 +362,24 @@ const ConfirmacionReservaScreen = () => {
       console.error('Error: No se ha asignado un trabajador');
       return;
     }
-  
     try {
-      // Aquí definimos el objeto que se enviará al backend
-      // Ajusta los nombres de campos según tu modelo o DTO de reserva en el backend
       const nuevaReserva = {
-        hora_inicio: selectedSlot.inicio,  // "08:00", etc.
-        fecha,                             // "2025-01-31", etc.
-        cliente: "670c0bcd3d2afb84d758ebde",         // Ajusta para obtener el ID real del cliente
-        trabajador: selectedTrabajador.id, // ID del trabajador asignado
-        servicio: servicioId,              // ID del servicio
-        estado: "Activa",                  // o el estado que manejes
+        hora_inicio: selectedSlot.inicio,
+        fecha,
+        cliente: "670c0bcd3d2afb84d758ebde",
+        trabajador: selectedTrabajador.id,
+        servicio: servicioId,
+        estado: "Activa",
       };
-  
-      // Si tu backend necesita también 'hora_fin', podrías usar selectedSlot.fin
-      // nuevaReserva.hora_fin = selectedSlot.fin;
-  
-      // Llamamos al servicio que crea la reserva en el backend
       const respuesta = await reservaService.createReserva(nuevaReserva);
       console.log('Reserva creada correctamente:', respuesta);
-  
-      // Cierra el modal o navega a otra pantalla después de crear la reserva
+      navigation.goBack();
       setModalVisible(false);
     } catch (error) {
       console.error('Error al crear la reserva:', error);
-      // Maneja el error en la UI si lo deseas (mostrar un alert, setear un estado, etc.)
     }
   };
- 
-  //error testing
+
   if (error) {
     return (
       <View style={styles.containerError}>
@@ -399,8 +389,8 @@ const ConfirmacionReservaScreen = () => {
           <TouchableOpacity
             style={styles.retryButton}
             onPress={() => {
-              setError(null); // Limpia el error
-              setLoading(true); // Fuerza un nuevo intento de carga
+              setError(null);
+              setLoading(true);
             }}
           >
             <Text style={styles.buttonText}>Reintentar</Text>
@@ -408,8 +398,7 @@ const ConfirmacionReservaScreen = () => {
           <TouchableOpacity
             style={styles.backButton}
             onPress={() => {
-              setError(null); // Limpia el error
-              navigation.goBack(); // Regresa a la pantalla anterior
+              setError(null);
             }}
           >
             <Text style={styles.buttonText}>Volver</Text>
@@ -418,9 +407,7 @@ const ConfirmacionReservaScreen = () => {
       </View>
     );
   }
-  // --------------------------------------------------
-  // RENDERIZADO
-  // --------------------------------------------------
+  
   if (loading) {
     return (
       <View style={styles.loaderContainer}>
@@ -432,32 +419,30 @@ const ConfirmacionReservaScreen = () => {
 
   return (
     <View style={styles.container}>
-    <Text style={styles.header}>Selecciona un horario</Text>
-    <View style={styles.subContainer}>
-      {disponibilidad.length > 0 ? (
-        <FlatList
-          data={disponibilidad}
-          keyExtractor={(item, index) => index.toString()}
-          renderItem={({ item }) => (
-            <TouchableOpacity
-              style={[
-                styles.slotButton,
-                selectedSlot === item && styles.selectedSlot,
-              ]}
-              onPress={() => handleSelectSlot(item)}
-            >
-              <Text style={styles.slotText}>
-                {item.inicio} - {item.fin}
-              </Text>
-            </TouchableOpacity>
-          )}
-        />
-      ) : (
-        <Text style={styles.noAvailability}>No hay horarios disponibles.</Text>
-      )}
-    </View>
-
-      {/* Modal de confirmación */}
+      <Text style={styles.header}>Selecciona un horario</Text>
+      <View style={styles.subContainer}>
+        {disponibilidad.length > 0 ? (
+          <FlatList
+            data={disponibilidad}
+            keyExtractor={(item, index) => index.toString()}
+            renderItem={({ item }) => (
+              <TouchableOpacity
+                style={[
+                  styles.slotButton,
+                  selectedSlot === item && styles.selectedSlot,
+                ]}
+                onPress={() => handleSelectSlot(item)}
+              >
+                <Text style={styles.slotText}>
+                  {item.inicio} - {item.fin}
+                </Text>
+              </TouchableOpacity>
+            )}
+          />
+        ) : (
+          <Text style={styles.noAvailability}>No hay horarios disponibles.</Text>
+        )}
+      </View>
       <Modal animationType="slide" transparent={true} visible={modalVisible}>
         <View style={styles.modalContainer}>
           <View style={styles.modalContent}>
@@ -483,9 +468,6 @@ const ConfirmacionReservaScreen = () => {
           </View>
         </View>
       </Modal>
-
-
-      {/* Botón de retroceso */}
       <View style={styles.buttonContainer}>
         <TouchableOpacity style={styles.customButton} onPress={() => navigation.goBack()}>
           <Text style={styles.customButtonText}>Atrás</Text>
@@ -494,7 +476,6 @@ const ConfirmacionReservaScreen = () => {
     </View>
   );
 };
-
 // --------------------------------------------------
 //  ESTILOS
 // --------------------------------------------------
