@@ -11,7 +11,7 @@
 import axios from 'axios';
 import Suscripcion from '../models/suscripcion.model.js';
 import UserModels from '../models/user.model.js';  
-
+const { User } = UserModels;
 import { handleError } from "../utils/errorHandler.js";
 import { ACCESS_TOKEN } from '../config/configEnv.js'; 
 
@@ -471,23 +471,20 @@ async function cancelarSuscripcion(idUser, preapprovalId) {
         }
 
        
-        // Rellenar los campos de la suscripción y actualizar el estado
-        const updatedSuscripcion = {
-            idUser: suscripcion.idUser || idUser,
-            idPlan: suscripcion.idPlan,
-            estado: "cancelled", // Cambiamos el estado a "cancelled"
-            preapproval_id: suscripcion.preapproval_id || preapprovalId,
-            cardTokenId: suscripcion.cardTokenId,
-        };
+        // 🔹 2️⃣ Eliminar el usuario Trabajador de la BD
+        const userTrabajador = await UserModels.User.findOne({ _id: idUser, kind: "Trabajador" }).exec();
+        if (userTrabajador) {
+            await User.deleteOne({ _id: idUser });
+            console.log(`Usuario Trabajador con ID ${idUser} eliminado.`);
+        } else {
+            console.log(`No se encontró usuario Trabajador con ID ${idUser}.`);
+        }
 
-        // Aplicar los cambios en la suscripción existente
-        Object.assign(suscripcion, updatedSuscripcion);
-        console.log("Datos antes de guardar:", suscripcion);
-        await suscripcion.save();
-        console.log("datos guardados correctamente");
-        console.log("Suscripción cancelada:", suscripcion);
+        // 🔹 3️⃣ Eliminar la suscripción de la BD
+        await Suscripcion.deleteOne({ preapproval_id: preapprovalId });
+        console.log("Suscripción eliminada de la BD.");
 
-        return [suscripcion, null];
+        return ["Suscripción cancelada y cuenta de Trabajador eliminada.", null];
     } catch (error) {
         console.error(`Error al cancelar la suscripción:`, error.response?.data || error.message);
         handleError(error, "suscripcion.service -> cancelarSuscripcion");

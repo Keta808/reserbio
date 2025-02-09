@@ -124,15 +124,14 @@ const AppNavigator = () => {
       <Stack.Screen name="Test" component={TestScreen} />
       <Stack.Screen name="Valoracion" component={ValoracionServicioScreen} /> 
       
-      <Stack.Screen name="Pago" component={PaymentScreen} />
+      <Stack.Screen name="Pago" component={PaymentScreen} /> 
+      <Stack.Screen name="Login" component={LoginScreen} />
     </Stack.Navigator>
   );
   
   const TrabajadorStack = () => (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
       <Stack.Screen name="HomeNavigator" component={HomeTrabajadorNavigator} />
-      <Stack.Screen name="Pago" component={PaymentScreen} />
-      <Stack.Screen name="Suscripcion" component={SuscripcionScreen} />
       <Stack.Screen name="FormularioCreacionHoras" component={FormularioCreacionHorasScreen} />
       <Stack.Screen name="SeleccionMicroempresa" component={SeleccionMicroempresaScreen} /> 
       <Stack.Screen name="GestorSuscripcion" component={gestorSuscripcionScreen} /> 
@@ -145,7 +144,7 @@ const AppNavigator = () => {
       <Stack.Screen name="Trabajador" component={PerfilTrabajadorScreen} /> 
       <Stack.Screen name="Perfil" component={TrabajadorScreen} /> 
       <Stack.Screen name="Servicio" component={ServicioScreen} />
-      
+      <Stack.Screen name="Login" component={LoginScreen} />
     </Stack.Navigator>
   );
   

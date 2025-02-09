@@ -17,14 +17,14 @@ export default function HomeTrabajadorScreen() {
     // Navegaciones
     const handleGoToPerfilTrabajador = () => navigation.navigate("Perfil");
     const handleGoToListaMicroempresas = () => navigation.navigate("ListaMicroempresas");
-    const handleGoToSuscripcion = () => navigation.navigate("Suscripcion");
+    ;
 
     return (
         <View style={[styles.container, { backgroundColor: theme.background }]}>
             <Text style={[styles.title, { color: theme.text }]}>Bienvenido Trabajador</Text>
 
             <Button title="Ver Perfil" onPress={handleGoToPerfilTrabajador} color={theme.primary} />
-            <Button title="Suscribirse" onPress={handleGoToSuscripcion} color={theme.primary} />
+            
             <Button title="Ver Lista de Microempresas" onPress={handleGoToListaMicroempresas} color={theme.primary} />
 
             {/* 🌗 Botón para cambiar el tema */}

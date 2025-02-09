@@ -4,6 +4,7 @@ import { getUserSubscription, cancelarSuscripcion } from '../services/suscripcio
 import { useNavigation } from '@react-navigation/native';
 import { AuthContext } from '../context/auth.context';
 
+
 const GestorSuscripcionScreen = () => { 
   const { user } = useContext(AuthContext);
   const [suscripcion, setSuscripcion] = useState(null);
@@ -21,10 +22,12 @@ const GestorSuscripcionScreen = () => {
           setSuscripcion(response.data);
         } else {
           Alert.alert('Error', 'No se pudo obtener la suscripción');
+          setSuscripcion(null);
         }
       } catch (error) {
         console.error("Error fetching subscription:", error.message || error);
         Alert.alert('Error', 'No se pudo obtener la suscripción');
+        setSuscripcion(null);
       } finally {
         setLoading(false);
       }
@@ -36,7 +39,7 @@ const GestorSuscripcionScreen = () => {
   const handleCancelSubscription = async () => {
     Alert.alert(
       "Cancelar Suscripción",
-      "¿Estás seguro de que deseas cancelar tu suscripción? Ten en cuenta que no podrás usar la aplicación hasta que consigas una nueva suscripción.",
+      "¿Estás seguro de que deseas cancelar tu suscripción? Se borraran tus datos y no podrás usar la aplicación como MICROEMPRESA hasta que consigas una nueva suscripción.",
       [
         {
           text: "Cancelar",
@@ -54,8 +57,8 @@ const GestorSuscripcionScreen = () => {
               if (response.state === 'Success') {
                 Alert.alert('Éxito', 'Suscripción cancelada con éxito');
                 setSuscripcion(null);
-                              // Redirigir a la pantalla de Login
-              navigation.navigate('HomeNavigator');
+                await logout();
+                navigation.navigate("Login");
 
               } else {
                 Alert.alert('Error', 'No se pudo cancelar la suscripción');
@@ -119,11 +122,11 @@ const GestorSuscripcionScreen = () => {
         </Text>
         <Text style={styles.cardText}>
           <Text style={styles.label}>Fecha de inicio: </Text>
-          {new Date(date_created).toLocaleDateString() || 'N/A'}
+          {new Date(date_created).toLocaleDateString("es-Es") || 'N/A'}
         </Text>
         <Text style={styles.cardText}>
           <Text style={styles.label}>Próximo pago: </Text>
-          {new Date(next_payment_date).toLocaleDateString() || 'N/A'}
+          {new Date(next_payment_date).toLocaleDateString("es-Es") || 'N/A'}
         </Text>
       </View>
     

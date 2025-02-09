@@ -2,7 +2,8 @@ import React, { useState } from 'react';
 import { View, Alert, StyleSheet, ActivityIndicator, Modal, Text } from 'react-native';
 import PaymentForm from '../components/paymentform.component'; // Ruta del componente
 // LLAMAR A FUNCION GENERAR TOKEN ID
-import { obtenerSuscripcion, getIssuers, getIdentificationTypes, cardForm } from '../services/suscripcion.service';
+import { obtenerSuscripcion, getIssuers, getIdentificationTypes, cardForm } from '../services/suscripcion.service'; 
+import  { logout }  from '../services/auth.services';
 
 
 
@@ -41,9 +42,19 @@ const PaymentScreen = ({ route, navigation }) => {
           
          
          
-          // Redirigir a la pantalla de login 
-          Alert.alert('Éxito', 'Suscripción realizada con éxito');
-          navigation.navigate('HomeNavigator', { screen: 'Home' });
+          Alert.alert(
+            'Éxito', 
+            'Suscripción realizada con éxito. Necesitas volver a iniciar sesión.',
+            [
+              {
+                text: "OK",
+                onPress: async () => {
+                  await logout();
+                  navigation.navigate("Login"); // Asegura que el usuario vuelva al login después del logout
+                }
+              }
+            ]
+          );
         } else {
           Alert.alert('Error', 'Hubo un problema al procesar la suscripción');
           navigation.navigate('HomeNavigator', { screen: 'Suscripciones' });
