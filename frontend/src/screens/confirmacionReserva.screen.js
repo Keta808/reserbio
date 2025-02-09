@@ -19,20 +19,20 @@ const ConfirmacionReservaScreen = () => {
   const route = useRoute();
   const navigation = useNavigation();
   const { microempresaId, servicioId, trabajadorId, fecha } = route.params;
-  // fecha: "YYYY-MM-DD"
+  
 
-  console.log("Fecha en confirmacion reserva", fecha);
+  //console.log("Fecha en confirmacion reserva", fecha);
 
   const [disponibilidad, setDisponibilidad] = useState([]);
   const [loading, setLoading] = useState(true);
-
   const [duracionServicio, setDuracionServicio] = useState(null);
   const [excepciones, setExcepciones] = useState([]);
-
   const [selectedSlot, setSelectedSlot] = useState(null);
   const [selectedTrabajador, setSelectedTrabajador] = useState(null);
-
   const [modalVisible, setModalVisible] = useState(false);
+
+  //error testing
+  const [error, setError] = useState(null); 
 
   // --------------------------------------------------
   // 1. OBTENER DURACIÓN DEL SERVICIO
@@ -67,11 +67,13 @@ const ConfirmacionReservaScreen = () => {
             workerId: trabajadorId,
             date: fecha,
           });
+          console.log('Disponibilidad para trabajador:', response);
         } else {
           response = await disponibilidadService.getHorariosDisponiblesMicroEmpresa({
             serviceId: servicioId,
             date: fecha,
           });
+          console.log('Disponibilidad para microempresa:', response);
         }
 
         // b) Verificar que 'availableSlots' tenga la forma [ arrayConDatos, maybeError ]
@@ -84,9 +86,25 @@ const ConfirmacionReservaScreen = () => {
           const [arrayData, maybeError] = response.availableSlots;
 
           if (maybeError) {
-            console.error('Error del backend:', maybeError);
-            return; // Podrías setear un estado de error
+            let errorStringText = 'Ocurrió un error, No hay disponibilidad horaria en ese día.'; // Mensaje genérico
+          
+            // Extrae el mensaje del error si está disponible
+            if (maybeError.response?.data) {
+              // Si el backend envía un objeto como error, conviértelo a texto
+              errorStringText =
+                typeof maybeError.response.data === 'string'
+                  ? maybeError.response.data
+                  : JSON.stringify(maybeError.response.data);
+            } else if (maybeError.message) {
+              errorStringText = maybeError.message;
+            }
+          
+            // Establece el error en el estado
+            setError(errorStringText);
+           // console.error('Error del backend:', maybeError);
+            return; // Evita que continúe ejecutando el código
           }
+
 
           // --- OPCIÓN 1: Cuando arrayData es un ARRAY (varios trabajadores)
           if (Array.isArray(arrayData) && arrayData.length > 0) {
@@ -163,6 +181,10 @@ const ConfirmacionReservaScreen = () => {
     return localMidnight;
   }
 
+
+
+
+
   /**
    * isSameDayLocal - compara solo año, mes y día
    */
@@ -221,8 +243,8 @@ const ConfirmacionReservaScreen = () => {
 
   // c) Filtrar slots que ya pasaron si es la misma fecha que HOY
   const filtrarSlotsFuturos = (slots, fechaSeleccionada) => {
-    console.log('Filtrando slots futuros...');
-    console.log('Fecha seleccionada:', fechaSeleccionada);
+    //console.log('Filtrando slots futuros...');
+    //console.log('Fecha seleccionada:', fechaSeleccionada);
 
     if (!fechaSeleccionada) {
       console.error('Error: fechaSeleccionada es undefined.');
@@ -366,6 +388,36 @@ const ConfirmacionReservaScreen = () => {
       // Maneja el error en la UI si lo deseas (mostrar un alert, setear un estado, etc.)
     }
   };
+ 
+  //error testing
+  if (error) {
+    return (
+      <View style={styles.containerError}>
+        <Text style={styles.errorHeader}>Error</Text>
+        <Text style={styles.errorText}>{error}</Text>
+        <View style={styles.errorButtons}>
+          <TouchableOpacity
+            style={styles.retryButton}
+            onPress={() => {
+              setError(null); // Limpia el error
+              setLoading(true); // Fuerza un nuevo intento de carga
+            }}
+          >
+            <Text style={styles.buttonText}>Reintentar</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.backButton}
+            onPress={() => {
+              setError(null); // Limpia el error
+              navigation.goBack(); // Regresa a la pantalla anterior
+            }}
+          >
+            <Text style={styles.buttonText}>Volver</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    );
+  }
   // --------------------------------------------------
   // RENDERIZADO
   // --------------------------------------------------
@@ -380,14 +432,18 @@ const ConfirmacionReservaScreen = () => {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.header}>Selecciona un horario</Text>
+    <Text style={styles.header}>Selecciona un horario</Text>
+    <View style={styles.subContainer}>
       {disponibilidad.length > 0 ? (
         <FlatList
           data={disponibilidad}
           keyExtractor={(item, index) => index.toString()}
           renderItem={({ item }) => (
             <TouchableOpacity
-              style={[styles.slotButton, selectedSlot === item && styles.selectedSlot]}
+              style={[
+                styles.slotButton,
+                selectedSlot === item && styles.selectedSlot,
+              ]}
               onPress={() => handleSelectSlot(item)}
             >
               <Text style={styles.slotText}>
@@ -399,6 +455,7 @@ const ConfirmacionReservaScreen = () => {
       ) : (
         <Text style={styles.noAvailability}>No hay horarios disponibles.</Text>
       )}
+    </View>
 
       {/* Modal de confirmación */}
       <Modal animationType="slide" transparent={true} visible={modalVisible}>
@@ -410,16 +467,29 @@ const ConfirmacionReservaScreen = () => {
                 : `¿Confirmar reserva para ${selectedSlot?.inicio} - ${selectedSlot?.fin}?`}
             </Text>
             <View style={styles.modalButtons}>
-              <Button title="Confirmar" onPress={handleConfirmarReserva} />
-              <Button title="Cancelar" onPress={() => setModalVisible(false)} color="red" />
+              <TouchableOpacity
+                style={styles.confirmButton}
+                onPress={handleConfirmarReserva}
+              >
+                <Text style={styles.buttonText}>Confirmar</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.cancelButton}
+                onPress={() => setModalVisible(false)}
+              >
+                <Text style={styles.buttonText}>Cancelar</Text>
+              </TouchableOpacity>
             </View>
           </View>
         </View>
       </Modal>
 
+
       {/* Botón de retroceso */}
       <View style={styles.buttonContainer}>
-        <Button title="Atras" onPress={() => navigation.goBack()} color="#dc3545" />
+        <TouchableOpacity style={styles.customButton} onPress={() => navigation.goBack()}>
+          <Text style={styles.customButtonText}>Atrás</Text>
+        </TouchableOpacity>
       </View>
     </View>
   );
@@ -431,75 +501,207 @@ const ConfirmacionReservaScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f9f9f9',
+    backgroundColor: '#f5f5f5', // Fondo más claro y moderno
     padding: 16,
-    justifyContent: 'center',
   },
   header: {
-    fontSize: 24,
+    fontSize: 26, // Título más grande
     fontWeight: 'bold',
-    marginTop: 120,
     textAlign: 'center',
+    color: '#007bff', // Azul para destacar el título
+    marginTop:'20%',
   },
+
+  //slots
+  subContainer: {
+    marginTop: 30, // Espacio adicional debajo del encabezado
+    flex: 1, // Permite que ocupe el espacio restante
+    backgroundColor: '#ffffff', // Opcional: fondo blanco para el subcontenedor
+    borderRadius: 12, // Opcional: bordes redondeados
+    padding: 10, // Opcional: padding interno
+    shadowColor: '#000', // Sombra opcional para destacar el subcontenedor
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+
   slotButton: {
-    backgroundColor: '#fff',
-    padding: 12,
-    borderRadius: 8,
-    marginVertical: 8,
+    backgroundColor: '#ffffff', // Blanco para resaltar cada slot
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderRadius: 12, // Bordes redondeados
+    marginVertical: 8, // Separación entre botones
+    marginHorizontal: 10, // Separación lateral
     alignItems: 'center',
+    justifyContent: 'center',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
-    elevation: 2,
+    elevation: 3, // Sombra para destacar
+    borderWidth: 1,
+    borderColor: '#e0e0e0', // Borde gris claro
   },
   selectedSlot: {
-    backgroundColor: '#d1e7dd',
-    borderColor: '#007bff',
-    borderWidth: 1,
+    backgroundColor: '#d4edda', // Verde claro para slots seleccionados
+    borderColor: '#28a745', // Verde más oscuro para el borde
   },
   slotText: {
-    fontSize: 16,
-    fontWeight: 'bold',
+    fontSize: 18, // Fuente más grande
+    fontWeight: '600', // Negrita
+    color: '#333', // Color oscuro para el texto
+    textAlign: 'center',
   },
   noAvailability: {
     textAlign: 'center',
-    fontSize: 16,
-    color: '#888',
+    fontSize: 18,
+    color: '#888', // Color gris para mostrar que no hay horarios
+    marginTop: 20,
   },
   loaderContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
   },
+
+  //modal
   modalContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: 'rgba(0,0,0,0.5)',
+    backgroundColor: 'rgba(0, 0, 0, 0.6)', // Fondo oscuro semitransparente
   },
   modalContent: {
-    backgroundColor: '#fff',
-    padding: 20,
-    borderRadius: 10,
-    width: '80%',
+    backgroundColor: '#ffffff', // Fondo blanco
+    padding: 30, // Padding generoso
+    borderRadius: 20, // Bordes más redondeados
+    width: '85%', // Ajusta el ancho del modal
     alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 6,
+    elevation: 5, // Sombra para Android
   },
   modalText: {
-    fontSize: 18,
-    marginBottom: 10,
+    fontSize: 18, // Tamaño adecuado para el texto
+    color: '#333', // Texto oscuro
     textAlign: 'center',
+    marginBottom: 20, // Espaciado inferior
+    lineHeight: 24, // Mejora la legibilidad
   },
   modalButtons: {
     flexDirection: 'row',
-    justifyContent: 'space-around',
+    justifyContent: 'space-between',
     width: '100%',
   },
-  buttonContainer: {
-    marginTop: 20,
-    alignSelf: 'center',
-    width: '80%',
+  confirmButton: {
+    backgroundColor: '#28a745', // Verde para el botón de confirmar
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderRadius: 8,
+    alignItems: 'center',
+    flex: 1,
+    marginRight: 5,
   },
+  cancelButton: {
+    backgroundColor: '#dc3545', // Rojo para el botón de cancelar
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderRadius: 8,
+    alignItems: 'center',
+    flex: 1,
+    marginLeft: 5,
+  },
+  buttonText: {
+    color: '#fff', // Texto blanco para contraste
+    fontSize: 16,
+    fontWeight: 'bold',
+    textAlign: 'center',
+  },
+  
+ 
+ 
+  //Boton de atras
+  buttonContainer: {
+    marginTop: 30,
+    alignItems: 'center', // Centra el botón horizontalmente
+    justifyContent: 'center',
+    marginBottom: 20,
+  },
+  customButton: {
+    backgroundColor: '#dc3545', // Rojo llamativo
+    paddingVertical: 12, // Más espacio vertical para hacerlo más grande
+    paddingHorizontal: 30, // Más espacio horizontal
+    borderRadius: 25, // Bordes más redondeados para un diseño moderno
+    shadowColor: '#000', // Sombra para darle profundidad
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 3, // Sombra en Android
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: '50%', // Ajusta el ancho al 50% de la pantalla
+  },
+  customButtonText: {
+    color: '#ffffff', // Texto blanco para contraste
+    fontSize: 18, // Texto más grande para mejor visibilidad
+    fontWeight: 'bold', // Negrita para destacar
+    textAlign: 'center',
+  },
+
+  //error
+  containerError: {
+    flex: 1,
+    backgroundColor: '#f8d7da', // Fondo rojo claro para errores
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  errorHeader: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#721c24', // Rojo oscuro para destacar
+    marginBottom: 10,
+    textAlign: 'center',
+  },
+  errorText: {
+    fontSize: 16,
+    color: '#721c24',
+    textAlign: 'center',
+    marginBottom: 20,
+  },
+  errorButtons: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    width: '100%',
+    paddingHorizontal: 20,
+  },
+  retryButton: {
+    backgroundColor: '#007bff', // Azul para el botón "Reintentar"
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderRadius: 8,
+    marginRight: 10,
+    alignItems: 'center',
+    flex: 1,
+  },
+  backButton: {
+    backgroundColor: '#dc3545', // Rojo para el botón "Volver"
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderRadius: 8,
+    alignItems: 'center',
+    flex: 1,
+  },
+  buttonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  
+
 });
 
 export default ConfirmacionReservaScreen;

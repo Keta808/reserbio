@@ -6,10 +6,9 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   StyleSheet,
-  Button,
 } from 'react-native';
 
-import DateTimePicker from '@react-native-community/datetimepicker';
+import DateTimePickerModal from 'react-native-modal-datetime-picker';
 
 import { useNavigation, useRoute } from '@react-navigation/native';
 import servicioService from '../services/servicio.service.js';
@@ -22,22 +21,21 @@ const SeleccionServicioScreen = () => {
   const [servicios, setServicios] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-
   const [selectedServicio, setSelectedServicio] = useState(null);
-
-  // Usamos undefined para indicar que el usuario no ha elegido nada aún
   const [selectedTrabajadorId, setSelectedTrabajadorId] = useState(undefined);
+  const [selectedDate, setSelectedDate] = useState(null);
+  const [isDatePickerVisible, setDatePickerVisibility] = useState(false);
 
-  const [selectedDate, setSelectedDate] = useState(new Date());
-  const [showDatePicker, setShowDatePicker] = useState(false);
+
+ 
 
   useEffect(() => {
     const fetchServicios = async () => {
       try {
         setLoading(true);
         const data = await servicioService.getServiciosByMicroempresaId(microempresaId);
-        const serviciosArray = data.data;
-        setServicios([...serviciosArray]);
+        setServicios(data.data);
+        
       } catch (err) {
         console.error('Error al obtener los servicios:', err);
         setError('No se pudo conectar con el servidor');
@@ -50,45 +48,24 @@ const SeleccionServicioScreen = () => {
   }, [microempresaId]);
 
   const handleTrabajadorSelect = (trabajadorId) => {
-    // trabajadorId = null => sin preferencia, 
-    // trabajadorId = 'abc123' => alguno en particular
     console.log('Trabajador seleccionado:', trabajadorId);
     setSelectedTrabajadorId(trabajadorId);
   };
-
-  // const handleServicioSelect = (servicioId) => {
-  //  setSelectedServicio(servicioId);
-  // };
 
   const handleContinue = () => {
     navigation.navigate('ConfirmacionReserva', {
       microempresaId,
       servicioId: selectedServicio.id || selectedServicio._id,
-      trabajadorId: selectedTrabajadorId, // Esto puede ser null o un string
+      trabajadorId: selectedTrabajadorId,
       fecha: selectedDate.toISOString().split('T')[0],
     });
   };
 
-  const handleDateChange = (event, selected) => {
-    setShowDatePicker(false);
-    console.log('Fecha seleccionada:', selected);
-    if (selected) {
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-      const oneWeekLater = new Date();
-      oneWeekLater.setDate(today.getDate() + 7);
-      oneWeekLater.setHours(23, 59, 59, 999);
-     // console.log('Hoy:', today);
-
-
-      if (selected >= today && selected <= oneWeekLater) {
-        
-        setSelectedDate(selected);
-      } else {
-        alert('Por favor selecciona una fecha entre hoy y una semana en el futuro.');
-      }
-    }
+  const handleDateConfirm = (date) => {
+    setSelectedDate(date);
+    setDatePickerVisibility(false);
   };
+  
 
   if (loading) {
     return (
@@ -107,82 +84,133 @@ const SeleccionServicioScreen = () => {
     );
   }
 
+  const formatDate = (date) => {
+    const day = String(date.getDate()).padStart(2, '0');
+    const month = String(date.getMonth() + 1).padStart(2, '0'); // Los meses van de 0 a 11
+    const year = date.getFullYear();
+    return `${day}-${month}-${year}`;
+  };
+
+  const ErrorMessage = ({ message, onClose }) => (
+    <View style={styles.errorMessageContainer}>
+      <Text style={styles.errorMessageText}>{message}</Text>
+      <TouchableOpacity style={styles.errorMessageButton} onPress={onClose}>
+        <Text style={styles.errorMessageButtonText}>Cerrar</Text>
+      </TouchableOpacity>
+    </View>
+  );
+  
+  if (error) {
+    return (
+      <View style={styles.container}>
+        <ErrorMessage
+          message={error}
+          onClose={() => setError(null)} // Limpia el error al cerrar el mensaje
+        />
+      </View>
+    );
+  }
+
   return (
     <View style={styles.container}>
       <Text style={styles.header}>Selecciona un servicio</Text>
       <FlatList
         data={servicios}
         keyExtractor={(item, index) =>
-          item.id?.toString() || item._id?.toString() || index.toString()
+          item.id?.toString() || item._id?.toString() || `servicio-${index}`
         }
         renderItem={({ item }) => (
           <TouchableOpacity
-            style={[styles.card, selectedServicio?.id === item.id && styles.selectedCard]}
-            onPress={() => setSelectedServicio(item)}
+          
+            style={[
+              styles.card,
+              selectedServicio?._id === item._id && styles.selectedCard,
+            ]}
+            onPress={() => {
+              console.log('Servicio seleccionado:', item);
+              setSelectedServicio(item);
+            }}
           >
             <Text style={styles.cardTitle}>{item.nombre}</Text>
             <Text style={styles.cardSubtitle}>{item.duracion} min</Text>
           </TouchableOpacity>
         )}
+        contentContainerStyle={styles.cardContainer}
+        numColumns={2}
       />
 
       <Text style={styles.subHeader}>Selecciona un trabajador</Text>
       <FlatList
-        data={[
-          ...trabajadores.map((item) => ({ id: item._id, nombre: item.nombre })),
-          { id: null, nombre: 'No tengo preferencia' },
-        ]}
-        keyExtractor={(item, index) => item.id?.toString() || index.toString()}
-        renderItem={({ item }) => (
-          <TouchableOpacity
-            style={[styles.card, selectedTrabajadorId === item.id && styles.selectedCard]}
-            onPress={() => handleTrabajadorSelect(item.id)}
-          >
-            <Text style={styles.cardTitle}>{item.nombre || 'Sin nombre definido'}</Text>
-          </TouchableOpacity>
-        )}
-      />
+          data={[
+            ...trabajadores.map((item) => ({ id: item._id, nombre: item.nombre })),
+            { id: null, nombre: 'No tengo preferencia' },
+          ]}
+          keyExtractor={(item, index) =>
+            item.id?.toString() || `trabajador-${index}`
+          }
+          renderItem={({ item }) => (
+            <TouchableOpacity
+              style={[
+                styles.workerCard,
+                selectedTrabajadorId === item.id && styles.selectedWorkerCard,
+              ]}
+              onPress={() => handleTrabajadorSelect(item.id)}
+            >
+              <Text style={styles.workerName}>{item.nombre}</Text>
+            </TouchableOpacity>
+          )}
+          contentContainerStyle={styles.workerContainer}
+          numColumns={2} // Define que haya 2 columnas
+          columnWrapperStyle={{ justifyContent: 'space-between', marginBottom: 10 }} // Ajusta espaciado entre columnas
+          showsVerticalScrollIndicator={false}
+        />
+
 
       <Text style={styles.subHeader}>Selecciona una fecha</Text>
-      <TouchableOpacity
-        style={styles.datePickerButton}
-        onPress={() => setShowDatePicker(true)}
-      >
-        <Text style={styles.datePickerText}>
-          {selectedDate.toISOString().split('T')[0]}
-        </Text>
-      </TouchableOpacity>
+              <TouchableOpacity
+          style={styles.datePickerButton}
+          onPress={() => setDatePickerVisibility(true)}
+        >
+          <Text style={styles.datePickerText}>
+         
+            {selectedDate ? formatDate(selectedDate) : 'Selecciona una fecha'}
+          </Text>
+        </TouchableOpacity>
 
-      {showDatePicker && (
-        <DateTimePicker
-          value={selectedDate}
-          mode="date"
-          display="default"
-          onChange={handleDateChange}
-          minimumDate={new Date()} // Bloquea fechas pasadas
-          maximumDate={(() => {
-            const maxDate = new Date();
-            maxDate.setDate(maxDate.getDate() + 7);
-            return maxDate;
-          })()} // Bloquea más de una semana en el futuro
-        />
-      )}
+        <DateTimePickerModal
+        isVisible={isDatePickerVisible}
+        mode="date"
+        onConfirm={handleDateConfirm}
+        onCancel={() => setDatePickerVisibility(false)}
+        minimumDate={new Date()}
+        maximumDate={(() => {
+          const maxDate = new Date();
+          maxDate.setDate(maxDate.getDate() + 7);
+          return maxDate;
+        })()}
+        themeVariant="light" // Fuerza el tema claro
+        locale="es-ES" // Esto asegura que el modal use el idioma español
+      />
 
-      <View style={styles.buttonContainer}>
-        <Button
-          title="Continuar"
-          onPress={handleContinue}
-          // Habilita si hay servicio escogido y se eligió algún trabajador
-          // (sea un ID real o null => 'No tengo preferencia')
-          disabled={!selectedServicio || selectedTrabajadorId === undefined}
-          color="#007bff"
-        />
-        <Button
-          title="Atras"
-          onPress={() => navigation.goBack()}
-          color="#dc3545"
-        />
-      </View>
+        <View style={styles.buttonContainer}>
+          <TouchableOpacity
+            style={styles.backButton}
+            onPress={() => navigation.goBack()}
+          >
+            <Text style={styles.buttonText}>Atrás</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[
+              styles.continueButton,
+              (!selectedServicio || selectedTrabajadorId === undefined  || !selectedDate) && styles.disabledButton,
+            ]}
+            onPress={handleContinue}
+            disabled={!selectedServicio || selectedTrabajadorId === undefined  || !selectedDate}
+          >
+            <Text style={styles.buttonText}>Continuar</Text>
+          </TouchableOpacity>
+        </View>
     </View>
   );
 };
@@ -190,77 +218,157 @@ const SeleccionServicioScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: 'center',
     padding: 16,
-   
-    backgroundColor: '#f9f9f9',
+    backgroundColor: '#f5f5f5',
+  },
+  header: {
+    fontSize: 26,
+    fontWeight: 'bold',
+    marginBottom: 20,
+    textAlign: 'center',
+    color: '#007bff',
+    marginTop:'20%',
+  },
+  cardContainer: {
+    justifyContent: 'space-between',
   },
   card: {
     backgroundColor: '#fff',
     padding: 16,
-    borderRadius: 8,
-    marginVertical: 8,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 2,
+    borderRadius: 12,
+    margin: 10,
+    flex: 1,
+    alignItems: 'center',
   },
   selectedCard: {
-    backgroundColor: '#d1e7dd',
+    backgroundColor: '#e0f7fa',
     borderColor: '#007bff',
     borderWidth: 1,
   },
   cardTitle: {
-    fontSize: 16,
-    fontWeight: 'bold',
+    fontSize: 18,
+    fontWeight: '600',
     textAlign: 'center',
+    color: '#333',
   },
   cardSubtitle: {
     fontSize: 14,
-    color: '#555',
+    color: '#666',
     textAlign: 'center',
+    marginTop: 4,
   },
-  header: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    marginTop: 100,
-    textAlign: 'center',
-  },
+  
   subHeader: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    marginVertical: 16,
+    fontSize: 22,
+    fontWeight: '600',
+    marginVertical: 12,
     textAlign: 'center',
+    color: '#444',
   },
-  datePickerButton: {
-    backgroundColor: '#e8e8e8',
+
+  workerContainer: {
+    justifyContent: 'space-between', // Asegura espacio entre las columnas
+    paddingHorizontal: 10, // Margen lateral
+  },
+  workerCard: {
+    backgroundColor: '#fff',
     padding: 12,
     borderRadius: 8,
     alignItems: 'center',
-    marginVertical: 16,
+    justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 6,
+    elevation: 3,
+    width: '45%', // Ajusta el ancho para que quepan dos por fila con margen
+    marginBottom: 10, // Espaciado entre filas
+  },
+  selectedWorkerCard: {
+    backgroundColor: '#e0f7fa',
+    borderColor: '#007bff',
+    borderWidth: 1,
+  },
+  workerName: {
+    fontSize: 16,
+    fontWeight: '500',
+    textAlign: 'center',
+    color: '#333',
+
+  },
+  datePickerButton: {
+    backgroundColor: '#fff',
+    padding: 12,
+    borderRadius: 8,
+    alignItems: 'center',
+    borderColor: '#ccc',
+    borderWidth: 1,
+    marginVertical: 20,
   },
   datePickerText: {
     fontSize: 16,
-    color: '#333',
+    color: '#007bff',
   },
   buttonContainer: {
-    marginTop: 20,
-    alignSelf: 'center',
-    width: '80%',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 30,
+    paddingHorizontal: 10,
+    marginBottom: '10%',
   },
-  loaderContainer: {
-    flex: 1,
+  backButton: {
+    backgroundColor: '#dc3545', // Color rojo para el botón "Atrás"
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderRadius: 8,
+    alignItems: 'center',
     justifyContent: 'center',
-    alignItems: 'center',
+    flex: 1,
+    marginRight: 10,
   },
-  errorContainer: {
+  continueButton: {
+    backgroundColor: '#007bff', // Color azul para el botón "Continuar"
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderRadius: 8,
     alignItems: 'center',
-    marginTop: 50,
+    justifyContent: 'center',
+    flex: 1,
+    marginLeft: 10,
   },
-  errorText: {
+  disabledButton: {
+    backgroundColor: '#b0c4de', // Color gris para el estado deshabilitado
+  },
+  buttonText: {
+    color: '#fff',
     fontSize: 16,
-    color: 'red',
+    fontWeight: '600',
+    textAlign: 'center',
+  },
+
+  //error
+  errorMessageContainer: {
+    backgroundColor: '#f8d7da',
+    padding: 16,
+    borderRadius: 8,
+    marginBottom: 20,
+  },
+  errorMessageText: {
+    color: '#721c24',
+    fontSize: 16,
+    marginBottom: 10,
+  },
+  errorMessageButton: {
+    backgroundColor: '#f5c6cb',
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  errorMessageButtonText: {
+    color: '#721c24',
+    fontSize: 14,
+    fontWeight: 'bold',
   },
 });
 

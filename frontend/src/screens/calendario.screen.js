@@ -86,6 +86,9 @@ const CalendarScreen = () => {
   const [confirmModalVisible, setConfirmModalVisible] = useState(false);
   const [selectedReservation, setSelectedReservation] = useState(null);
 
+
+
+
   // Función para formatear las horas en HH:MM
   const formatTime = (dateString) => {
     const date = new Date(dateString);
@@ -262,25 +265,30 @@ const CalendarScreen = () => {
           />
         }
         markedDates={Object.keys(items).reduce((acc, date) => {
-          acc[date] = {
-            customStyles: {
-              container: {
-                backgroundColor: 'transparent', // Fondo transparente para el día
-                borderRadius: 10, // Hace el fondo más redondeado
+          const today = new Date().toISOString().split("T")[0]; // Fecha actual en formato YYYY-MM-DD
+    
+          // Solo marcamos fechas que sean hoy o en el futuro
+          if (date >= today) {
+            acc[date] = {
+              customStyles: {
+                container: {
+                  backgroundColor: 'transparent',
+                  borderRadius: 10,
+                },
+                text: {
+                  color: 'black',
+                  fontWeight: 'bold',
+                },
               },
-              text: {
-                color: 'black', // Color del texto del día
-                fontWeight: 'bold',
-              },
-            },
-            dots: [
-              {
-                key: date,
-                color: '#007BFF', // Azul vibrante
-                selectedDotColor: '#007BFF',
-              },
-            ],
-          };
+              dots: [
+                {
+                  key: date,
+                  color: '#007BFF',
+                  selectedDotColor: '#007BFF',
+                },
+              ],
+            };
+          }
           return acc;
         }, {})}
         markingType="multi-dot" // Permite usar puntos redondos
