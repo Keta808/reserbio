@@ -102,7 +102,8 @@ async function calcularMontoAbono(id, precio, porcentajeAbono) {
         const servicio = await Servicio.findById(id).exec();
         if (!servicio) return [null, "El servicio no existe"];
         if (porcentajeAbono < 0 ) return [null, "Debes configurar el porcentaje de abono antes de realizar esta accion."];
-        const montoAbono = precio * porcentajeAbono;
+        const porcentajeDecimal = porcentajeAbono / 100;
+        const montoAbono = precio * porcentajeDecimal;
         return [montoAbono, null];
     } catch (error) {
         handleError(error, "servicio.service -> calcularMontoAbono");

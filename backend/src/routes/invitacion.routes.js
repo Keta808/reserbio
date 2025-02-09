@@ -29,8 +29,8 @@ router.post(
 
 // router.post("/aceptar/:id", InvitacionController.aceptarInvitacion);
 router.post("/aceptar-invitacion/:token", InvitacionController.aceptarInvitacion);
-
-
+// 📌 Ruta para rechazar una invitación
+router.post("/rechazar/:token", InvitacionController.rechazarInvitacion);
 // 📌 Ruta para obtener invitaciones pendientes de una microempresa
 router.get(
     "/pendientes/:idMicroempresa",

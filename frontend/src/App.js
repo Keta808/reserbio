@@ -1,23 +1,24 @@
 import React from 'react';
 import { StatusBar } from 'expo-status-bar';
-import { StyleSheet, View} from 'react-native'; 
+import { StyleSheet, View } from 'react-native'; 
 import AppNavigator from './navigation/AppNavigator';
 import { AuthProvider } from './context/auth.context'; 
-import { NavigationContainer } from '@react-navigation/native';
+import { NavigationContainer } from '@react-navigation/native'; // ❌ Elimina ThemeProvider aquí
+import { ThemeProvider } from './context/theme.context'; // ✅ Mantén esta importación
 
 export default function App() {
   console.log('App - Rendering');
   return (
-   
-      <NavigationContainer> 
+    <NavigationContainer> 
       <AuthProvider>
-      <View style={styles.container}>
-        <AppNavigator />
-        <StatusBar style="auto" />
-      </View> 
+        <ThemeProvider> 
+          <View style={styles.container}>
+            <AppNavigator />
+            <StatusBar style="auto" />
+          </View> 
+        </ThemeProvider>
       </AuthProvider>
-      </NavigationContainer>
-    
+    </NavigationContainer>
   );
 }
 
@@ -27,3 +28,4 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
   },
 });
+

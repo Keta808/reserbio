@@ -38,6 +38,24 @@ export async function aceptarInvitacion(req, res) {
 }
 
 /**
+ * Controlador para rechazar una invitación
+ */
+export async function rechazarInvitacion(req, res) {
+    try {
+        console.log("📩 Petición recibida en rechazarInvitacion");
+        console.log("📩 Token recibido:", req.params.token);
+
+        const { token } = req.params;
+
+        const result = await InvitacionService.rechazarInvitacion(token);
+        return res.json({ state: "Success", message: result });
+    } catch (error) {
+        console.error("❌ Error en rechazarInvitacion:", error);
+        return res.status(500).json({ state: "Error", message: error.message });
+    }
+}
+
+/**
  * Controlador para obtener todas las invitaciones pendientes
  */
 export async function obtenerInvitaciones(req, res) {
@@ -53,6 +71,7 @@ export async function obtenerInvitaciones(req, res) {
 export default {
     enviarInvitacion,
     aceptarInvitacion,
+    rechazarInvitacion,
     obtenerInvitaciones,
 };
 

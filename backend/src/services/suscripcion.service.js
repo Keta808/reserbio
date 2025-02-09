@@ -10,7 +10,7 @@
 /* eslint-disable require-jsdoc */
 import axios from 'axios';
 import Suscripcion from '../models/suscripcion.model.js';
-  
+import UserModels from '../models/user.model.js';  
 
 import { handleError } from "../utils/errorHandler.js";
 import { ACCESS_TOKEN } from '../config/configEnv.js'; 
@@ -257,11 +257,7 @@ async function obtenerSuscripcion(plan, user, cardTokenId, payer_email){
         const startDate = new Date(); // Fecha actual
         const endDate = new Date();
         endDate.setMonth(startDate.getMonth() + 1); // Duración: 1 mes   
-        // DEPURACION: Mostrar fechas
-        console.log("SERVICES OBTENER SUS: Fecha de inicio:", startDate.toISOString());
-        console.log("SERVICES OBTENER SUS: Fecha de término:", endDate.toISOString());
-        
-
+       
         // DEPURACION: Mostrar datos de la suscripción
         console.log("SERVICES OBTENER SUS: Datos de suscripción:", { plan, user, cardTokenId, payer_email });
 
@@ -303,13 +299,16 @@ async function obtenerSuscripcion(plan, user, cardTokenId, payer_email){
         } 
         console.log("SERVICE OBTENER SUS: Respuesta de Mercado Pago:", response.data);
         console.log("SERVICE OBTENER SUS:ID de preaprobación:", response.data.id);
+        
         // Obtener preaproval_id de la respuesta
         const preapprovalId = response.data.id;
-        
+        // Convertir a trabajador 
+        const [newTrabajador, errorChange] = await userChange(user.id);
+        if (errorChange) return [null, errorChange];
 
         // Guardar la suscripción en la BD
         const [suscripcion, error] = await crearSuscripcion({
-            idUser: user.id,
+            idUser: newTrabajador._id,
             idPlan: plan._id,
             estado: "authorized",
             preapproval_id: preapprovalId,
@@ -330,6 +329,33 @@ async function obtenerSuscripcion(plan, user, cardTokenId, payer_email){
         return [null, error.response?.data || error.message];
     }
 } 
+async function userChange(id){
+    try {
+        if (!id) return [null, "ID de usuario no proporcionado."];
+     
+        const user = await UserModels.Cliente.findById(id); 
+        if (!user) return [null, "El usuario (cliente) no existe."]; 
+
+        
+
+        const newTrabajador = new UserModels.Trabajador({
+            nombre: user.nombre,
+            apellido: user.apellido,
+            telefono: user.telefono,
+            email: user.email,
+            password: user.password,
+            state: user.state,
+        });
+        await newTrabajador.save(); 
+        console.log("Usuario cambiado a trabajador:", newTrabajador);
+        return [newTrabajador, null];
+    } catch (error){
+        console.error(`Error al cambiar el usuario a trabajador:`, error.response?.data || error.message);
+        handleError(error, "suscripcion.service -> userChange");
+        return [null, error.response?.data || error.message];
+    }
+}
+
 // Funciones Mercado pago 
 // Funcion para Buscar en las Suscripciones 
 async function searchSuscripcionMP(params){ 
@@ -559,5 +585,5 @@ export default { crearSuscripcion, cancelarSuscripcion, getSuscripciones, getSus
 deleteSuscripcion, updateSuscripcion, sincronizarEstados, 
 getIssuers, getIdentificationTypes, cardForm, obtenerSuscripcion, 
 searchSuscripcionMP, getSuscripcionById, updateSuscripcionMP, getSuscripcionBypreapprovalId, updateSuscripcionCard, updateCardTokenByUserId,
-getUserSubscription,
+getUserSubscription, userChange,
 }; 
