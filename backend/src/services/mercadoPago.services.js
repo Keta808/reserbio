@@ -109,6 +109,10 @@ async function generarUrlOnBoarding(idMicroempresa) {
     const onBoardingUrl = `https://auth.mercadopago.com/authorization?client_id=${CLIENT_ID}&response_type=code&platform_id=mp&redirect_uri=${redirect_uri}&state=${idMicroempresa}`;
     return onBoardingUrl;
 }
+// Refund
+async function refundPayment(paymentId, amount) {
+    
+}
 export { 
     crearMercadoPagoAcc, 
     getMercadoPagoAcc,
@@ -117,4 +121,5 @@ export {
     onBoarding,
     generarUrlOnBoarding,
     getMercadoPagoAccs,
+    refundPayment,
 }; 
