@@ -173,5 +173,68 @@ async function finalizarReserva(req, res) {
     }
 }
 
-export default { getReservas, getReservasByTrabajador, createReserva ,deleteReserva ,updateReserva, cancelReserva, getReservasByCliente, finalizarReserva};
+
+
+/**
+ * Controlador para obtener las reservas activas de un trabajador en una fecha determinada.
+ * Se espera recibir en req.params:
+ * - workerId: ID del trabajador.
+ * - date: Fecha en formato "YYYY-MM-DD".
+ */
+const getReservasPorFechaTrabajador = async (req, res) => {
+    try {
+      console.log("getReservasPorFechaTrabajador req params", req.params);
+  
+      const { workerId, date } = req.params;
+      console.log("getReservasPorFechaTrabajador workerId", workerId);
+      console.log("getReservasPorFechaTrabajador date", date);
+  
+      // Llamamos al servicio y esperamos un objeto con la propiedad "reservas"
+      const result = await ReservaService.getReservasPorFechaTrabajador(workerId, date);
+      
+      if (result.error) {
+        return res.status(400).json({ error: result.error });
+      }
+      
+      return res.status(200).json({ reservas: result.reservas });
+    } catch (err) {
+      console.error('Error en getReservasTrabajadorController:', err);
+      return res.status(500).json({ error: 'Error interno del servidor.' });
+    }
+  };
+  
+  
+  /**
+   * Controlador para obtener las reservas activas de la microempresa en una fecha determinada.
+   * Se espera recibir en req.params:
+   * - serviceId: ID del servicio, que se usa para obtener la microempresa.
+   * - date: Fecha en formato "YYYY-MM-DD".
+   */
+  const getReservasPorFechaMicroempresa = async (req, res) => {
+    try {
+      const { serviceId, date } = req.params;
+      const result = await ReservaService.getReservasPorFechaMicroempresa(serviceId, date);
+  
+      if (result.error) {
+        return res.status(400).json({ error: result.error });
+      }
+      return res.status(200).json({ reservas: result.reservas });
+    } catch (err) {
+      console.error('Error en getReservasMicroempresaController:', err);
+      return res.status(500).json({ error: 'Error interno del servidor.' });
+    }
+  };
+  
+
+export default { 
+    getReservas,
+    getReservasByTrabajador, 
+    createReserva ,
+    deleteReserva ,
+    updateReserva,
+    cancelReserva,
+    getReservasByCliente,
+    finalizarReserva,
+    getReservasPorFechaTrabajador,
+    getReservasPorFechaMicroempresa};
 

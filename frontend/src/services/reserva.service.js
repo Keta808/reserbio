@@ -74,10 +74,46 @@ async function getReservasByCliente(clienteId) {
         throw error;
     }
 }
+
+// Obtiene las reservas activas para un trabajador en una fecha determinada.
+
+async function getReservasPorFechaTrabajador(workerId, date) {
+    try {
+    
+        const response = await instance.get(`/reservas/horas/trabajador/${workerId}/${date}`);
+        return response.data;
+    } catch (error) {
+        console.error(
+        "Error al obtener las reservas del trabajador en la fecha:",
+        error.response?.data || error.message
+        );
+        throw error;
+    }
+}
+
+//Obtiene las reservas activas para un trabajador en una fecha determinada.
+
+async function getReservasPorFechaMicroempresa(serviceId, date) {
+    try {
+        console.log("DATOS QUE LLEGAN A LA FUNCION DE MICROEMPRESA");
+        console.log(serviceId, date);
+        const response = await instance.get(`/reservas/horas/microempresa/${serviceId}/${date}`);
+        return response.data;
+    } catch (error) {
+        console.error(
+        "Error al obtener las reservas de la microempresa en la fecha:",
+        error.response?.data || error.message
+        );
+        throw error;
+    }
+}
 export default {
     getReservasByTrabajadorId,
     createReserva,
     deleteReserva,
     cancelReserva,
     getReservasByCliente,
+    getReservasPorFechaTrabajador,
+    getReservasPorFechaMicroempresa
+
 };

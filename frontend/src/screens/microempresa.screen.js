@@ -13,8 +13,8 @@ import {
   StatusBar
 } from "react-native";
 import { Image } from "expo-image";
+import ServiciosService from "../services/servicio.service";
 import MicroempresaService from "../services/microempresa.service";
-import { getServiciosByMicroempresaId } from "../services/servicio.service";
 import { useFocusEffect } from "@react-navigation/native";
 
 export default function MicroempresaScreen({ route, navigation }) {
@@ -63,8 +63,9 @@ export default function MicroempresaScreen({ route, navigation }) {
   // Fetch servicios
   const fetchServicios = async () => { 
     try {
-      
-      const response = await getServiciosByMicroempresaId(id);
+
+      console.log("📥 Fetching servicios for microempresa with ID: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", id);
+      const response = await ServiciosService.getServiciosByMicroempresaId(id);
       if (response.state === "Success" && Array.isArray(response.data)) {
         setServicios(response.data);
       }

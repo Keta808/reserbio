@@ -4,6 +4,8 @@ import instance from "./root.services";
 
 async function getServiciosByMicroempresaId(microempresaId) {
     try {
+        
+        console.log("microempresaId aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", microempresaId);
         const response = await instance.get(`/servicios/servicios/${microempresaId}`);
         return response.data;
     } catch (error) {
@@ -79,4 +81,5 @@ async function calcularMontoAbono(id, precio, porcentaje) {
     }
 }   
 
-export default  {  getServiciosByMicroempresaId, getServicios, createServicio, deleteServicio, updateServicio, getServicioById, configurarPorcentajeAbono, calcularMontoAbono };    
+export default {  
+getServiciosByMicroempresaId, getServicios, createServicio, deleteServicio, updateServicio, getServicioById, configurarPorcentajeAbono, calcularMontoAbono };    

@@ -9,6 +9,8 @@ const { Trabajador, Cliente, User } = UserModels;
 import Disponibilidad from "../models/disponibilidad.model.js";
 
 
+import Enlace from "../models/enlace.model.js"; 
+
 //Importa el modelo de Servicio
 import Servicio from "../models/servicio.model.js";
 
@@ -96,6 +98,8 @@ async function createReserva(reserva) {
         const horaInicio = hora_inicio.split(':');
         if (horaInicio.length !== 2) return [null, "La hora de inicio no es válida"];
 
+
+
         // Validar existencia de trabajador y cliente
         const trabajadorFound = await Trabajador.findById(trabajador);
         if (!trabajadorFound) return [null, "El trabajador no existe"];
@@ -113,6 +117,8 @@ async function createReserva(reserva) {
         const fechaReserva = stringToDateOnly(fecha); // Convertir DD-MM-YYYY a Date
         const horaInicioDate = stringToDate(hora_inicio, fecha); // Convertir HH:MM con fecha a Date
 
+
+
         // Validar existencia del servicio y calcular duración
         const servicioFound = await Servicio.findById(servicio);
         if (!servicioFound) return [null, "El servicio no existe"];
@@ -128,6 +134,7 @@ async function createReserva(reserva) {
         const disponibilidad = await Disponibilidad.findOne({ trabajador: trabajador, dia: diaSemana });
         if (!disponibilidad) return [null, "El trabajador no está disponible en este día"];
 
+        console.log("disponibilidad en servicio xd", disponibilidad);
         // Rango de disponibilidad
         const [inicioDisponible, finDisponible] = [
             new Date(`${fechaReserva.toDateString()} ${disponibilidad.hora_inicio}`),
@@ -139,8 +146,12 @@ async function createReserva(reserva) {
             return [null, "La hora ingresada está fuera del rango de disponibilidad del trabajador"];
         }
 
+
+        //console.log("validacion que la hora de inicio este dentro del rango disponibble", (horaInicioDate < inicioDisponible || horaInicioDate >= finDisponible));
+
         // Validar contra excepciones
         const excepciones = disponibilidad.excepciones;
+        
         if (excepciones && excepciones.length > 0) {
             for (let excepcion of excepciones) {
                 const excepcionInicio = new Date(`${fechaReserva.toDateString()} ${excepcion.inicio_no_disponible}`);
@@ -151,18 +162,25 @@ async function createReserva(reserva) {
                     (horaFin > excepcionInicio && horaFin <= excepcionFin) ||
                     (horaInicioDate <= excepcionInicio && horaFin >= excepcionFin)
                 ) {
+                   
                     return [null, "La hora ingresada choca con las excepciones del trabajador"];
-                }
+                } 
+
             }
         }
 
+
         // Validar que no exista una reserva que choque en horario
-        const reservas = await Reserva.find({ trabajador, fecha: fechaReserva });
+        const reservas = await Reserva.find({ trabajador, fecha: fechaReserva, estado:'Activa'});
+        console.log("reservas ENCONTRADAS PARA QUE?", reservas);
+
         for (let reservaExistente of reservas) {
             const horaInicioReserva = new Date(reservaExistente.hora_inicio);
             const horaFinReserva = new Date(horaInicioReserva);
             horaFinReserva.setMinutes(horaFinReserva.getMinutes() + reservaExistente.duracion);
-
+            console.log(" 1 -",(horaInicioDate >= horaInicioReserva && horaInicioDate < horaFinReserva));
+            console.log(" 2 -",(horaFin > horaInicioReserva && horaFin <= horaFinReserva));
+            console.log(" 3 -",(horaInicioDate <= horaInicioReserva && horaFin >= horaFinReserva));
             if (
                 (horaInicioDate >= horaInicioReserva && horaInicioDate < horaFinReserva) ||
                 (horaFin > horaInicioReserva && horaFin <= horaFinReserva) ||
@@ -327,10 +345,117 @@ async function finalizarReserva(id) {
     }
 }
 
+// Una función auxiliar para formatear la hora a "HH:mm"
+function formatHora(date) {
+    // Asegúrate de que 'date' es un objeto Date
+    const horas = date.getHours().toString().padStart(2, '0');
+    const minutos = date.getMinutes().toString().padStart(2, '0');
+    return `${horas}:${minutos}`;
+  }
+  
+  function formatFecha(date) {
+    // Devuelve la fecha en formato "YYYY-MM-DD"
+    const year = date.getFullYear();
+    const month = (date.getMonth() + 1).toString().padStart(2, '0');
+    const day = date.getDate().toString().padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  }
+
+  
+/**
+ * Obtiene las reservas activas para un trabajador en una fecha determinada.
+ * @param {string} workerId - ID del trabajador.
+ * @param {string} date - Fecha en formato "YYYY-MM-DD".
+ * @returns {[Array, null] | [null, string]} Retorna un array de reservas o un mensaje de error.
+ */
+async function getReservasPorFechaTrabajador(workerId, date) {
+    try {
+      const fechaConsulta = stringToDateOnly(date); // Asegúrate de que esta función convierta "YYYY-MM-DD" a un Date correcto
+      const reservas = await Reserva.find({
+        trabajador: workerId,
+        fecha: fechaConsulta,
+        estado: 'Activa'
+      }).sort({ hora_inicio: 1 });
+  
+      // Formatear cada reserva para que solo se envíen los datos necesarios
+      const reservasFormateadas = reservas.map(reserva => ({
+        _id: reserva._id,
+        cliente: reserva.cliente,
+        duracion: reserva.duracion,
+        estado: reserva.estado,
+        fecha: formatFecha(new Date(reserva.fecha)),
+        hora_inicio: formatHora(new Date(reserva.hora_inicio)),
+        servicio: reserva.servicio,
+        trabajador: reserva.trabajador
+      }));
+  
+      console.log("reservas en servicio backend getReservasPorFechaTrabajador", reservasFormateadas);
+      return { reservas: reservasFormateadas };
+    } catch (error) {
+      console.error("Error al obtener reservas para el trabajador:", error);
+      return { error: "Ocurrió un error al obtener las reservas para el trabajador." };
+    }
+  }
+/**
+ * Obtiene las reservas activas para una microempresa (basado en el serviceId) en una fecha determinada.
+ * Se asume que el serviceId permite obtener el servicio y, a partir de él, la microempresa.
+ * @param {string} serviceId - ID del servicio.
+ * @param {string} date - Fecha en formato "YYYY-MM-DD".
+ * @returns {[Array, null] | [null, string]} Retorna un array de reservas o un mensaje de error.
+ */
+async function getReservasPorFechaMicroempresa(serviceId, date) {
+    try {
+      const fechaConsulta = stringToDateOnly(date);
+      const servicio = await Servicio.findById(serviceId);
+      if (!servicio) {
+        return { error: "El servicio no existe" };
+      }
+      const trabajadores = await Enlace.find({
+        id_microempresa: servicio.idMicroempresa,
+        estado: true
+      }).populate('id_trabajador');
+  
+      if (!trabajadores.length) {
+        return { error: "No hay trabajadores activos en esta microempresa" };
+      }
+  
+      const workerIds = trabajadores.map(enlace => enlace.id_trabajador._id);
+      const reservas = await Reserva.find({
+        trabajador: { $in: workerIds },
+        fecha: fechaConsulta,
+        estado: 'Activa'
+      }).sort({ hora_inicio: 1 });
+  
+      const reservasFormateadas = reservas.map(reserva => ({
+        _id: reserva._id,
+        cliente: reserva.cliente,
+        duracion: reserva.duracion,
+        estado: reserva.estado,
+        fecha: formatFecha(new Date(reserva.fecha)),
+        hora_inicio: formatHora(new Date(reserva.hora_inicio)),
+        servicio: reserva.servicio,
+        trabajador: reserva.trabajador
+      }));
+  
+      return { reservas: reservasFormateadas };
+    } catch (error) {
+      console.error("Error al obtener reservas para la microempresa:", error);
+      return { error: "Ocurrió un error al obtener las reservas para la microempresa." };
+    }
+  }
+
+
+
 //Exporta las funciones definidas
-
-
-export default { getReservas, getReservasByTrabajador, createReserva, deleteReserva, updateReserva, cancelReserva, getReservasByCliente, finalizarReserva };
+export default {
+     getReservas,
+      getReservasByTrabajador, 
+      createReserva, deleteReserva, 
+      updateReserva, cancelReserva, 
+      getReservasByCliente, 
+      finalizarReserva,
+      getReservasPorFechaTrabajador,
+      getReservasPorFechaMicroempresa};
 
 
 

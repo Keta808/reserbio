@@ -273,6 +273,8 @@ export default {
     getMicroempresasPorCategoria, 
     getMicromempresaPorNombre,
     getMicroempresasByUser,
-    getMicroempresaIdByTrabajadorId
+    getMicroempresaIdByTrabajadorId,
+
+    
 };
 
