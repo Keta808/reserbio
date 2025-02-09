@@ -60,15 +60,7 @@ async function getServicioById(id) {
     }
 } 
 
-async function configurarPorcentajeAbono(id, porcentaje) {
-    try {
-        const response = await instance.post(`servicios/servicio/${id}`, { porcentajeAbono: porcentaje });
-        return response.data;
-    } catch (error) {
-        console.error(`Error al configurar el porcentaje de abono del servicio con ID ${id}:`, error.response?.data || error.message);
-        throw error;
-    }
-} 
+
 async function calcularMontoAbono(id, precio, porcentaje) {
     try {
         const response = await instance.post(`servicios/servicios/${id}`, { precio, porcentajeAbono: porcentaje });
@@ -79,4 +71,4 @@ async function calcularMontoAbono(id, precio, porcentaje) {
     }
 }   
 
-export { getServiciosByMicroempresaId, getServicios, createServicio, deleteServicio, updateServicio, getServicioById, configurarPorcentajeAbono, calcularMontoAbono };    
+export default { getServiciosByMicroempresaId, getServicios, createServicio, deleteServicio, updateServicio, getServicioById, calcularMontoAbono };    

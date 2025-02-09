@@ -14,7 +14,7 @@ import {
 } from "react-native";
 import { Image } from "expo-image";
 import MicroempresaService from "../services/microempresa.service";
-import { getServiciosByMicroempresaId } from "../services/servicio.service";
+import ServiciosService from "../services/servicio.service";
 import { useFocusEffect } from "@react-navigation/native";
 
 export default function MicroempresaScreen({ route, navigation }) {
@@ -23,6 +23,7 @@ export default function MicroempresaScreen({ route, navigation }) {
   const [fotoPerfilUrl, setFotoPerfilUrl] = useState(null);
   const [loading, setLoading] = useState(true);
   const [servicios, setServicios] = useState([]);
+  const [montoAbono, setMontoAbono] = useState({});
 
   // Funciones de fetch definidas fuera o dentro del componente...
   const fetchMicroempresa = async () => {
@@ -64,7 +65,7 @@ export default function MicroempresaScreen({ route, navigation }) {
   const fetchServicios = async () => { 
     try {
       
-      const response = await getServiciosByMicroempresaId(id);
+      const response = await ServiciosService.getServiciosByMicroempresaId(id);
       if (response.state === "Success" && Array.isArray(response.data)) {
         setServicios(response.data);
       }
@@ -73,6 +74,25 @@ export default function MicroempresaScreen({ route, navigation }) {
     }
 
   };
+  // Calcular Monto abono 
+  useEffect(()=> {
+    
+    const obtenerMontosAbono = async () => {
+      let newMontos = {}; 
+      for (let servicio of servicios){
+        if(servicio.porcentajeAbono && servicio.porcentajeAbono > 0) {
+          try {
+            const monto = await ServiciosService.calcularMontoAbono(servicio._id, servicio.precio, servicio.porcentajeAbono);
+            newMontos[servicio._id] = monto.data;
+          } catch (error) {
+            console.error("Error al calcular el monto de abono:", error.message);
+          }
+        }
+      }
+      setMontoAbono(newMontos);
+    };
+    obtenerMontosAbono();
+  }, [servicios]);
 
   // Función para eliminar una imagen
   const handleDeleteImage = (publicId) => {
@@ -198,9 +218,11 @@ export default function MicroempresaScreen({ route, navigation }) {
                 {servicios.map((servicio) => (
                   <View key={servicio._id} style={styles.servicioItem}>
                     <Text style={styles.servicioName}>{servicio.nombre}</Text>
-                    <Text style={styles.servicioDetail}>${servicio.precio}</Text>
+                    <Text style={styles.servicioDetail}>Precio: ${servicio.precio}</Text>
                     <Text style={styles.servicioDetail}>{servicio.descripcion}</Text>
-                    
+                    {montoAbono[servicio._id] && montoAbono[servicio._id] > 0 && (
+                      <Text style = {styles.servicioAbono}>Abono para reservar: ${montoAbono[servicio._id]} </Text>
+                    )}
                   </View>
                 ))}
               </>
@@ -451,6 +473,12 @@ const styles = StyleSheet.create({
   servicioDetail: {
     fontSize: 14,
     color: "#666",
+  },
+  servicioAbono: {
+    fontSize: 14,
+    fontWeight: "bold",
+    color: "#000000", 
+    marginTop: 5,
   },
 });
 

@@ -65,7 +65,8 @@ const HomeClienteNavigator = () => (
  <Tab.Navigator lazy={true}>
     <Tab.Screen name="HomeCliente" component={HomeClienteScreen} />
     <Tab.Screen name ="Test" component={TestScreen} />  
-    <Tab.Screen name="Reservas" component={ReservaClienteScreen} />
+    <Tab.Screen name="Reservas" component={ReservaClienteScreen} /> 
+    <Tab.Screen name="Suscripcion" component={SuscripcionScreen} />
     
   </Tab.Navigator>
 );
@@ -121,7 +122,9 @@ const AppNavigator = () => {
       <Stack.Screen name="SeleccionServicio" component={SeleccionServicioScreen} />
       <Stack.Screen name="ConfirmacionReserva" component={ConfirmacionReservaScreen} />
       <Stack.Screen name="Test" component={TestScreen} />
-      <Stack.Screen name="Valoracion" component={ValoracionServicioScreen} />
+      <Stack.Screen name="Valoracion" component={ValoracionServicioScreen} /> 
+      
+      <Stack.Screen name="Pago" component={PaymentScreen} />
     </Stack.Navigator>
   );
   

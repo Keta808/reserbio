@@ -291,6 +291,21 @@ async function getUserSubscription(req, res) {
         return respondError(req, res, 400, error.message);
     }
 }
+async function userChange(req, res) {
+    try {
+        const { id } = req.params; 
+        if (!id) {
+            return respondError(req, res, 400, "Faltan datos para obtener la suscripción");
+        }
+        console.log("CONTROLLER USER CHANGE: ID recibido:", id); 
+        const [trabajador, error ] = await suscripcionService.userChange(id); 
+        if (error) return respondError(req, res, 400, error);
+        return respondSuccess(req, res, 200, trabajador);
+    } catch (error){
+        handleError(error, "suscripcion.controller -> userChange");
+        return respondError(req, res, 400, error.message);
+    }
+}
 export default { 
     crearSuscripcion, 
     getSuscripciones, 
@@ -309,5 +324,6 @@ export default {
     cancelarSuscripcion,
     updateCardTokenByUserId,
     getUserSubscription,
+    userChange,
 
 };
