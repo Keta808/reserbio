@@ -110,7 +110,7 @@ const ReservaClienteScreen = () => {
                     {
                       translateX: animacion.interpolate({
                         inputRange: [0, 1],
-                        outputRange: [0, 150], // Ajusta el desplazamiento para cubrir el 50% del switch
+                        outputRange: [0, 140], // Ajusta el desplazamiento para cubrir el 50% del switch
                       }),
                     },
                   ],

@@ -26,21 +26,36 @@ Get de todas las reservas de la base de datos por id del trabajador
 */
 
 async function getReservasByTrabajador(req, res) {
+    const { id } = req.params; // Asumimos que el ID del trabajador viene en los parámetros de la ruta
     try {
-        const { error } = reservaIdSchema.validate(req.params);
-        if (error) return respondError(req, res, 400, error.message);
-
-        const [reservas, errorReservas] = await ReservaService.getReservasByTrabajador(req.params.id);
-        if (errorReservas) return respondError(req, res, 404, errorReservas);
-
-        reservas.length === 0
-            ? respondSuccess(req, res, 204)
-            : respondSuccess(req, res, 200, reservas);
+      const [reservas, error] = await ReservaService.getReservasByTrabajador(id);
+      if (error || !reservas) {
+        return res.status(404).json({ error: "No hay reservas" });
+      }
+  
+      // Transforma cada reserva en un array que contenga un objeto JSON
+      const reservasEnArray = reservas.map(reserva => {
+        return [
+          {
+            id: reserva._id,
+            cliente: reserva.cliente,      // Objeto completo poblado de cliente
+            servicio: reserva.servicio,    // Objeto completo poblado de servicio
+            trabajador: reserva.trabajador,
+            estado: reserva.estado,
+            duracion: reserva.duracion,
+            fecha: reserva.fecha,
+            hora_inicio: reserva.hora_inicio,
+          }
+        ];
+      });
+  
+      return res.status(200).json(reservasEnArray);
     } catch (error) {
-        handleError(error, "reserva.controller -> getReservasByTrabajador");
-        respondError(req, res, 400, error.message);
+      console.error("Error en controlador getReservasByTrabajador:", error);
+      return res.status(500).json({ error: "Error interno del servidor" });
     }
-}
+  }
+  
 
 /**
  * Crea una nueva reserva en la base de datos
