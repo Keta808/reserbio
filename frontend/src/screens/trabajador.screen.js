@@ -76,7 +76,7 @@ export default function TrabajadorScreen() {
     
           <View style={styles.buttonContainer}>
             <Button
-              title="Editar Perfil"
+              title="Editar Perfil**"
               onPress={() => navigation.navigate('Reservar', { trabajadorId: user.id })}
               color="blue"
             />

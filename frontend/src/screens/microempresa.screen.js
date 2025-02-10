@@ -257,7 +257,7 @@ export default function MicroempresaScreen({ route, navigation }) {
               {/* ✅ Botón "Invitar Trabajador" ahora está debajo de los trabajadores */}
               <View style={styles.buttonContainer}>
                 <Button
-                  title="Invitar Trabajador"
+                  title="Invitar Trabajador**"
                   onPress={() => navigation.navigate("InvitarTrabajador", { idMicroempresa: id })}
                   color="#28a745" // Verde
                 />
@@ -306,11 +306,6 @@ export default function MicroempresaScreen({ route, navigation }) {
   
             {/* 📌 Botones finales: Reservar y Volver al Inicio */}
             <View style={styles.buttonContainer}>
-              <Button
-                title="Reservar"
-                onPress={() => navigation.navigate("Reservar", { id, userId })}
-                color="red"
-              />
               <Button
                 title="Volver al Inicio"
                 onPress={() => navigation.navigate("HomeNavigator")}

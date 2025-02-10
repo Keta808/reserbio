@@ -74,10 +74,6 @@ const PaymentScreen = ({ route, navigation }) => {
     try {
       const issuers = await getIssuers();
       const identificationTypes = await getIdentificationTypes();
-      console.log("Tipos de identificación:", identificationTypes); 
-      
-      console.log("Issuers fetched:", issuers);
-    
       return { issuers, identificationTypes };
     } catch (error) {
       console.error("Error fetching dynamic data:", error.message || error);
