@@ -6,8 +6,8 @@ import { AuthContext } from '../context/auth.context';
 // Descripciones de los planes
 const planDescriptions = {
   "Plan Gratuito": "Este es el plan gratuito y permite acceder a las funciones básicas del sistema por un plazo de tiempo determinado (3 meses de prueba).",
-  "Plan Basico": "El plan Básico incluye todas las caracteristicas de agenda y reserva del sistema con la posibilidad de agregar hasta 2 trabajadores a tu microempresa.",
-  "Plan Premium": "El plan Premium incluye incluye todas las caracteristicas de agenda y reserva del sistema con la posibilidad de agregar hasta 8 trabajadores a tu microempresa y soporte prioritario."
+  "Plan Basico": "El plan Básico incluye todas las caracteristicas de agenda y reserva del sistema. No se permite agregar trabajadores a tu microempresa.",
+  "Plan Premium": "El plan Premium incluye  todas las caracteristicas de agenda y reserva del sistema con la posibilidad de agregar hasta 10 trabajadores a tu microempresa y soporte prioritario."
 };
 
 const SuscripcionScreen = () => {
@@ -154,6 +154,7 @@ const styles = StyleSheet.create({
   },
   disclaimerContainer: {
     marginTop: 20,
+    marginBottom: 30,
     padding: 15,
     backgroundColor: '#f9f9f9',
     borderRadius: 8,

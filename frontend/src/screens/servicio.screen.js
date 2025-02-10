@@ -60,7 +60,7 @@ const ServicioScreen = ({ route }) => {
         }
     }; 
     const handleAgregarServicio = async () => {
-        console.log("FRONT: Agregar servicio");
+        
         if (!nombre || !precio || !duracion || !descripcion) {
             Alert.alert('Error', 'Por favor, complete todos los campos obligatorios.');
             return;

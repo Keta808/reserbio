@@ -197,30 +197,34 @@ export default function MicroempresaScreen({ route, navigation }) {
             </View>
   
             {/* ✅ Servicios Ofrecidos */}
-            {servicios.length > 0 && (
-              <View style={styles.sectionContainer}>
-                <Text style={styles.sectionTitle}>Servicios Ofrecidos</Text>
-                {servicios.map((servicio) => (
-                  <View key={servicio._id} style={styles.servicioItem}>
-                    <Text style={styles.servicioName}>{servicio.nombre}</Text>
-                    <Text style={styles.servicioDetail}>Precio: ${servicio.precio}</Text>
-                    <Text style={styles.servicioDetail}>{servicio.descripcion}</Text>
-                    {montoAbono[servicio._id] && montoAbono[servicio._id] > 0 && (
-                      <Text style={styles.servicioAbono}>Abono para reservar: ${montoAbono[servicio._id]}</Text>
-                    )}
-                  </View>
-                ))}
+<View style={styles.sectionContainer}>
+  <Text style={styles.sectionTitle}>Servicios Ofrecidos</Text>
   
-                {/* ⚙️ Botón "Configurar Servicios" debajo de los servicios */}
-                <View style={styles.buttonContainer}>
-                  <Button
-                    title="Configurar Servicios"
-                    onPress={() => navigation.navigate("Servicio", { id })}
-                    color="green"
-                  />
-                </View>
-              </View>
-            )}
+  {/* ✅ Mostrar los servicios si existen */}
+  {servicios.length > 0 ? (
+    servicios.map((servicio) => (
+      <View key={servicio._id} style={styles.servicioItem}>
+        <Text style={styles.servicioName}>{servicio.nombre}</Text>
+        <Text style={styles.servicioDetail}>Precio: ${servicio.precio}</Text>
+        <Text style={styles.servicioDetail}>{servicio.descripcion}</Text>
+        {montoAbono[servicio._id] && montoAbono[servicio._id] > 0 && (
+          <Text style={styles.servicioAbono}>Abono para reservar: ${montoAbono[servicio._id]}</Text>
+        )}
+      </View>
+    ))
+  ) : (
+    <Text style={styles.servicioDetail}>No hay servicios registrados aún.</Text>
+  )}
+
+  {/* ⚙️ Botón "Configurar Servicios" SIEMPRE visible */}
+  <View style={styles.buttonContainer}>
+    <Button
+      title="Configurar Servicios"
+      onPress={() => navigation.navigate("Servicio", { id })}
+      color="green"
+    />
+  </View>
+</View>
           </View>
         }
         ListFooterComponent={
@@ -253,7 +257,7 @@ export default function MicroempresaScreen({ route, navigation }) {
               {/* ✅ Botón "Invitar Trabajador" ahora está debajo de los trabajadores */}
               <View style={styles.buttonContainer}>
                 <Button
-                  title="Invitar Trabajador"
+                  title="Invitar Trabajador**"
                   onPress={() => navigation.navigate("InvitarTrabajador", { idMicroempresa: id })}
                   color="#28a745" // Verde
                 />
@@ -302,11 +306,6 @@ export default function MicroempresaScreen({ route, navigation }) {
   
             {/* 📌 Botones finales: Reservar y Volver al Inicio */}
             <View style={styles.buttonContainer}>
-              <Button
-                title="Reservar"
-                onPress={() => navigation.navigate("Reservar", { id, userId })}
-                color="red"
-              />
               <Button
                 title="Volver al Inicio"
                 onPress={() => navigation.navigate("HomeNavigator")}

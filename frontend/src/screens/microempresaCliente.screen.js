@@ -104,7 +104,7 @@ export default function MicroempresaClienteScreen({ route, navigation }) {
       </View>
     );
   }
-
+  const microempresaId = id; 
   return (
     <SafeAreaView style={styles.safeArea}>
       <FlatList
@@ -146,7 +146,10 @@ export default function MicroempresaClienteScreen({ route, navigation }) {
                   <View key={servicio._id} style={styles.servicioItem}>
                     <Text style={styles.servicioName}>{servicio.nombre}</Text>
                     <Text style={styles.servicioDetail}>Precio: ${servicio.precio}</Text>
-                    <Text style={styles.servicioDetail}>{servicio.descripcion}</Text>
+                    <Text style={styles.servicioDetail}>{servicio.descripcion}</Text> 
+                    {servicio.porcentajeAbono !== undefined && (
+                      <Text style={styles.servicioDetail}>Porcentaje de Abono: {servicio.porcentajeAbono}%</Text>
+                  )} 
                   </View>
                 ))}
               </View>

@@ -2,7 +2,7 @@
 
 /** Modelo de datos 'User' */
 import UserModels from "../models/user.model.js";
-const { User } = UserModels; // Extraer 'User' de las exportaciones de 'user.model.js'
+const { User, Trabajador, Cliente, Administrador } = UserModels; 
 
 /** Modulo 'jsonwebtoken' para crear tokens */
 import jwt from "jsonwebtoken";
@@ -20,12 +20,31 @@ import { handleError } from "../utils/errorHandler.js";
 async function login(user) {
   try {
     const { email, password } = user;
+      //  Buscar en la misma colección `User` con filtro explícito de `kind`
+    const userFoundTrabajador = await User.findOne({ email, kind: "Trabajador" }).exec(); 
+    
 
-    const userFound = await User.findOne({ email: email })
-      .exec();
+    // Buscar también en Cliente
+    const userFoundCliente = await User.findOne({ email, kind: "Cliente" }).exec(); 
+    
+
+    let kind = "Cliente"; 
+    let userFound = userFoundCliente; // Por defecto, el usuario es Cliente
+
+    if (userFoundTrabajador) {
+      kind = "Trabajador"; // Si existe en Trabajador, es Trabajador
+      userFound = userFoundTrabajador;
+    } 
+
+    if (!userFound) {
+      userFound = await User.findOne({ email, kind: "Administrador" }).exec();
+      kind = "Administrador";
+    }
+
     if (!userFound) {
       return [null, null, "El usuario y/o contraseña son incorrectos"];
     }
+
 
     const matchPassword = await User.comparePassword(
       password,
@@ -37,7 +56,7 @@ async function login(user) {
     }
 
     const accessToken = jwt.sign(
-      { email: userFound.email, kind: userFound.kind, id : userFound._id },
+      { email: userFound.email, kind, id: userFound._id },
       ACCESS_JWT_SECRET,
       {
         expiresIn: "1d",
@@ -55,7 +74,7 @@ async function login(user) {
       },
     );
     
-    return [accessToken, refreshToken, null];
+    return [accessToken, refreshToken, null, kind, userFound];
   } catch (error) {
     handleError(error, "auth.service -> signIn");
   }
