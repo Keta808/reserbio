@@ -1,19 +1,56 @@
 import instance from "./root.services";
+import moment from "moment";
 
 async function getReservasByTrabajadorId(trabajadorId) {
     try {
-    
-
-        const response = await instance.get(`/reservas/trabajador/${trabajadorId}`);
-        return response.data;
+      const response = await instance.get(`/reservas/trabajador/${trabajadorId}`);
+      const backendData = response.data; // Se asume que es un array de arrays
+      console.log("Datos del backend:", backendData);
+  
+      // Transformamos la data al formato que requiere Agenda.
+      const agendaData = {};
+  
+      backendData.forEach(innerArray => {
+        // Suponemos que cada innerArray contiene al menos una reserva.
+        const reserva = innerArray[0];
+  
+        // Convertimos "hora_inicio" a un objeto Date y luego a una cadena ISO
+        const startDate = new Date(reserva.hora_inicio);
+        const isoStart = startDate.toISOString();
+        
+        // Ahora formateamos la fecha a "YYYY-MM-DD" usando Moment, asegurando un input ISO
+        const dateKey = moment(isoStart).format('YYYY-MM-DD');
+  
+        if (!agendaData[dateKey]) {
+          agendaData[dateKey] = [];
+        }
+  
+        // Calculamos la hora de fin sumándole la duración (en minutos) a la hora de inicio.
+        const endDate = new Date(startDate.getTime() + reserva.duracion * 60000);
+  
+        // Agregamos el evento con toda la información requerida.
+        agendaData[dateKey].push({
+          id: reserva.id,
+          name: `${reserva.servicio.nombre} - ${reserva.cliente.nombre}`,
+          start: startDate,
+          end: endDate,
+          servicioNombre: reserva.servicio.nombre,
+          clienteNombre: reserva.cliente.nombre,
+        });
+      });
+  
+      console.log("Data transformada para Agenda:", agendaData);
+      return agendaData;
     } catch (error) {
-        console.error(
+      console.error(
         "Error al obtener las reservas del trabajador:",
         error.response?.data || error.message
-        );
-        throw error;
+      );
+      throw error;
     }
-    }
+  }
+  
+
 
 async function createReserva(data) {
     try {

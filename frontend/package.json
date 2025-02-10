@@ -31,7 +31,7 @@
     "react-native": "^0.74.5",
     "react-native-actions-sheet": "^0.9.7",
     "react-native-big-calendar": "^4.17.1",
-    "react-native-calendar-strip": "^2.2.6",
+    "react-native-calendar-strip": "^1.4.2",
     "react-native-calendars": "^1.1308.1",
     "react-native-gesture-handler": "^2.22.0",
     "react-native-modal-datetime-picker": "^18.0.0",
