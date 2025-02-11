@@ -212,7 +212,7 @@ export default function MicroempresaClienteScreen({ route, navigation }) {
             <View style={styles.buttonContainer}>
               <Button
                 title="Reservar"
-                onPress={() => navigation.navigate("SeleccionServicio", { microempresaId, trabajadores: microempresa.trabajadores })}
+                onPress={() => navigation.navigate("SeleccionServicio", { microempresaId: id, trabajadores: microempresa.trabajadores  })}
                 color="red"
               />
               <Button

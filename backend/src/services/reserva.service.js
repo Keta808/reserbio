@@ -39,19 +39,21 @@ Obtiene todas las reservas de la base de datos por id del trabajador
 
 async function getReservasByTrabajador(id) {
     try {
-        console.log("id", id);
-        const reservas = await Reserva.find({ trabajador: id, estado: { $ne: 'Cancelada' } })
-            .populate('cliente', 'nombre email')
-            .populate('servicio', 'nombre')
-            .exec();
-            
-        if (!reservas || reservas.length === 0) return [null, "No hay reservas"];
-        console.log("reservas", reservas);
-        return [reservas, null];
+      console.log("id", id);
+      const reservas = await Reserva.find({ trabajador: id, estado: { $ne: 'Cancelada' } })
+        .populate('cliente', 'nombre email')
+        .populate('servicio', 'nombre')
+        .exec();
+          
+      if (!reservas || reservas.length === 0) return [null, "No hay reservas"];
+      console.log("reservas", reservas);
+      return [reservas, null];
     } catch (error) {
-        handleError(error, "reserva.service -> getReservasByTrabajador");
+      handleError(error, "reserva.service -> getReservasByTrabajador");
+      return [null, "Error interno"];
     }
-}
+  }
+  
 
 
 /**

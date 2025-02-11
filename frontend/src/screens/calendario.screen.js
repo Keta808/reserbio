@@ -1,365 +1,195 @@
-import React, { useEffect, useState, useCallback } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  ActivityIndicator,
-  Modal,
-  TouchableOpacity,
-  RefreshControl,
-  // OJO: "Memo" no existe en 'react-native'. Si quieres usar React.memo, debes importarlo de 'react'.
-} from 'react-native';
-import { Agenda, LocaleConfig } from 'react-native-calendars';
+import React, { useState, useEffect, useCallback } from 'react';
+import { View, Text, FlatList, TouchableOpacity, ScrollView, StyleSheet, Modal, RefreshControl } from 'react-native';
+import moment from 'moment';
+import 'moment/locale/es';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import reservaService from '../services/reserva.service';
 
-// Configurar idioma al español
-LocaleConfig.locales['es'] = {
-  monthNames: [
-    'Enero',
-    'Febrero',
-    'Marzo',
-    'Abril',
-    'Mayo',
-    'Junio',
-    'Julio',
-    'Agosto',
-    'Septiembre',
-    'Octubre',
-    'Noviembre',
-    'Diciembre',
-  ],
-  monthNamesShort: [
-    'Ene',
-    'Feb',
-    'Mar',
-    'Abr',
-    'May',
-    'Jun',
-    'Jul',
-    'Ago',
-    'Sep',
-    'Oct',
-    'Nov',
-    'Dic',
-  ],
-  dayNames: [
-    'Domingo',
-    'Lunes',
-    'Martes',
-    'Miércoles',
-    'Jueves',
-    'Viernes',
-    'Sábado',
-  ],
-  dayNamesShort: ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'],
-  today: 'Hoy',
-};
-LocaleConfig.defaultLocale = 'es';
+moment.locale('es');
 
-/**
- * Componente memoizado para mostrar cada reserva en la Agenda,
- * evitando re-renderizados innecesarios.
- */
-const ReservationItem = React.memo(({ item, onSelect }) => {
-  return (
-    <TouchableOpacity
-      style={styles.item}
-      onPress={() => onSelect(item)}
-    >
-      <Text style={styles.itemText}>{item.name}</Text>
-      <Text style={styles.itemTime}>Hora: {item.time}</Text>
-      <Text style={styles.itemClient}>Cliente: {item.client}</Text>
-      <Text style={styles.itemStatus}>Estado: {item.status}</Text>
-    </TouchableOpacity>
-  );
-});
-
-const CalendarScreen = () => {
-  const [items, setItems] = useState({});
-  const [filteredItems, setFilteredItems] = useState([]);
+const AgendaScreen = () => {
+  const [items, setItems] = useState({}); // Objeto: { "YYYY-MM-DD": [eventos] }
+  const [selectedDate, setSelectedDate] = useState(new Date());
   const [loading, setLoading] = useState(true);
-  const [selectedDay, setSelectedDay] = useState(
-    new Date().toISOString().split('T')[0]
-  );
+  const [refreshing, setRefreshing] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
-  const [confirmModalVisible, setConfirmModalVisible] = useState(false);
-  const [selectedReservation, setSelectedReservation] = useState(null);
+  const [selectedEvent, setSelectedEvent] = useState(null);
 
-
-
-
-  // Función para formatear las horas en HH:MM
-  const formatTime = (dateString) => {
-    const date = new Date(dateString);
-    return `${date.getHours().toString().padStart(2, '0')}:${date
-      .getMinutes()
-      .toString()
-      .padStart(2, '0')}`;
-  };
-
-  // Función para obtener el ID del usuario desde AsyncStorage
-  const getUserId = async () => {
+  // Función para cargar (o refrescar) los datos desde el backend
+  const fetchData = useCallback(async () => {
     try {
+      if (!refreshing) setLoading(true);
       const userData = await AsyncStorage.getItem('user');
-      if (userData) {
-        const parsedData = JSON.parse(userData);
-        return parsedData.id;
-      } else {
-        console.error('No se encontraron datos de usuario en AsyncStorage');
-        return null;
-      }
-    } catch (error) {
-      console.error('Error al obtener datos de AsyncStorage:', error);
-      return null;
-    }
-  };
-
-  /**
-   * Función que carga las reservas desde la API y actualiza el estado.
-   * Se declara con useCallback para evitar volver a crearse en cada render.
-   */
-  const loadReservations = useCallback(async () => {
-    setLoading(true);
-    try {
-      const userId = await getUserId();
-      if (!userId) {
-        console.error('No se pudo obtener el ID del usuario');
-        setLoading(false);
+      if (!userData) {
+        console.error('No se encontró el objeto user en AsyncStorage');
         return;
       }
+      const user = JSON.parse(userData);
+      const workerId = user.id;
+      console.log("ID del trabajador:", workerId);
 
-      const response = await reservaService.getReservasByTrabajadorId(userId);
-      const reservations = response.data;
-     
-      const mappedItems = {};
-      reservations.forEach((reserva) => {
-        const date = reserva.fecha.split('T')[0];
-        if (!mappedItems[date]) {
-          mappedItems[date] = [];
-        }
-      
-        // Convertir `hora_inicio` a un objeto Date
-        const horaInicio = new Date(reserva.hora_inicio);
-      
-        // Obtener duración del servicio en minutos (si no existe, asumimos 0 minutos)
-  
-        const duracionMinutos = reserva.duracion || 0;
-        
-
-        // Calcular la hora de fin sumando la duración en minutos
-        const horaFin = new Date(horaInicio.getTime() + duracionMinutos * 60000);
-        
-       
-        mappedItems[date].push({
-          id: reserva._id,
-          name: reserva.servicio.nombre || 'Reserva sin nombre',
-          time: `${formatTime(horaInicio)} - ${formatTime(horaFin)}`,
-          client:
-            reserva.cliente?.nombre || reserva.cliente?.email || 'Desconocido',
-          status: reserva.estado || 'Sin estado',
-        });
-      });
-      
-      setItems(mappedItems);
-      setFilteredItems(mappedItems[selectedDay] || []);
+      const agendaData = await reservaService.getReservasByTrabajadorId(workerId);
+      console.log("Data transformada para Agenda:", agendaData);
+      setItems(agendaData);
     } catch (error) {
-      console.error('Error al cargar las reservas:', error);
+      console.error("Error al obtener reservas:", error);
     } finally {
       setLoading(false);
+      setRefreshing(false);
     }
-  }, [selectedDay]);
+  }, [refreshing]);
 
-  // Cargar reservas cuando se monta el componente
   useEffect(() => {
-    loadReservations();
-  }, [loadReservations]);
+    fetchData();
+  }, [fetchData]);
 
-  // Actualizar la lista filtrada cuando cambie el día seleccionado o las reservas
-  useEffect(() => {
-    setFilteredItems(items[selectedDay] || []);
-  }, [selectedDay, items]);
-
-  // Función que maneja el "pull to refresh"
-  const handleRefresh = async () => {
-    await loadReservations();
-  };
-
-  // Función para abrir el modal de confirmación y cerrar el modal de detalles
-  const openConfirmModal = () => {
-    setModalVisible(false); // Cerrar modal de detalles
-    // Abrir modal de confirmación con un pequeño delay
-    setTimeout(() => setConfirmModalVisible(true), 300);
-  };
-
-  // Función para cancelar la reserva
-  const handleCancelReservation = async () => {
-    try {
-      await reservaService.cancelReserva(selectedReservation.id);
-      setConfirmModalVisible(false);
-
-      // Actualizar las reservas localmente
-      const updatedItems = { ...items };
-      updatedItems[selectedDay] = updatedItems[selectedDay].filter(
-        (item) => item.id !== selectedReservation.id
-      );
-      setItems(updatedItems);
-      setFilteredItems(updatedItems[selectedDay] || []);
-    } catch (error) {
-      console.error('Error al cancelar la cita:', error);
+  // Genera un array de 10 días (desde 2 días atrás hasta 7 días en adelante)
+  const generateDays = () => {
+    const days = [];
+    const startDay = moment().subtract(2, 'days');
+    const numDays = 10;
+    for (let i = 0; i < numDays; i++) {
+      days.push(moment(startDay).add(i, 'days'));
     }
+    return days;
   };
 
-  // useCallback para la selección de una reserva (evita recrear la función cada vez)
-  const handleSelectReservation = useCallback((item) => {
-    setSelectedReservation(item);
+  const days = generateDays();
+
+  const onDateSelected = (date) => {
+    console.log("Fecha seleccionada:", moment(date).format("YYYY-MM-DD"));
+    setSelectedDate(date);
+  };
+
+  const selectedKey = moment(selectedDate).format('YYYY-MM-DD');
+  const eventsForSelectedDay = items[selectedKey] || [];
+
+  // Ordena los eventos por la hora de inicio (de menor a mayor)
+  const sortedEventsForSelectedDay = [...eventsForSelectedDay].sort((a, b) => a.start - b.start);
+
+  // Modal de cancelación
+  const openCancelModal = (event) => {
+    setSelectedEvent(event);
     setModalVisible(true);
-  }, []);
+  };
 
-  // Renderizado de cada reserva en la Agenda
-  const renderItem = useCallback(
-    (reservation) => (
-      <ReservationItem
-        item={reservation}
-        onSelect={handleSelectReservation}
-      />
-    ),
-    [handleSelectReservation]
-  );
+  const confirmCancel = async () => {
+    if (selectedEvent) {
+      try {
+        const result = await reservaService.cancelReserva(selectedEvent.id);
+        console.log("Reserva cancelada:", result);
+        const updatedItems = { ...items };
+        if (updatedItems[selectedKey]) {
+          updatedItems[selectedKey] = updatedItems[selectedKey].filter(e => e.id !== selectedEvent.id);
+          setItems(updatedItems);
+        }
+      } catch (error) {
+        console.error("Error al cancelar reserva:", error);
+      } finally {
+        setModalVisible(false);
+        setSelectedEvent(null);
+      }
+    }
+  };
 
-  // Renderizado cuando no hay reservas en una fecha
-  const renderEmptyDate = () => (
-    <View style={styles.emptyDate}>
-      <Text>No hay reservas para esta fecha.</Text>
-    </View>
-  );
+  const cancelModal = () => {
+    setModalVisible(false);
+    setSelectedEvent(null);
+  };
 
-  if (loading && Object.keys(items).length === 0) {
-    // Muestra un indicador de carga si aún no hay datos
+  if (loading && !refreshing) {
     return (
-      <View style={styles.loading}>
-        <ActivityIndicator size="large" color="#0000ff" />
-        <Text>Cargando reservas...</Text>
+      <View style={styles.loadingContainer}>
+        <Text style={styles.loadingText}>Cargando reservas...</Text>
       </View>
     );
   }
 
   return (
-    <View style={{ flex: 1 }}>
-      <Agenda
-        items={{ [selectedDay]: filteredItems }}
-        renderItem={renderItem}
-        renderEmptyDate={renderEmptyDate}
-        // Cambiamos la lógica para comparar IDs en lugar del nombre
-        rowHasChanged={(r1, r2) => r1.id !== r2.id}
-        firstDay={1}
-        selected={selectedDay}
-        onDayPress={(day) => setSelectedDay(day.dateString)}
-        pastScrollRange={1}
-        futureScrollRange={1}
-        // "Pull to refresh"
-        refreshControl={
-          <RefreshControl
-            refreshing={loading}
-            onRefresh={handleRefresh}
-          />
-        }
-        markedDates={Object.keys(items).reduce((acc, date) => {
-          const today = new Date().toISOString().split("T")[0]; // Fecha actual en formato YYYY-MM-DD
-    
-          // Solo marcamos fechas que sean hoy o en el futuro
-          if (date >= today) {
-            acc[date] = {
-              customStyles: {
-                container: {
-                  backgroundColor: 'transparent',
-                  borderRadius: 10,
-                },
-                text: {
-                  color: 'black',
-                  fontWeight: 'bold',
-                },
-              },
-              dots: [
-                {
-                  key: date,
-                  color: '#007BFF',
-                  selectedDotColor: '#007BFF',
-                },
-              ],
-            };
-          }
-          return acc;
-        }, {})}
-        markingType="multi-dot" // Permite usar puntos redondos
-
-      />
-
-      {/* Modal de Detalles */}
-      {selectedReservation && (
-        <Modal
-          visible={modalVisible}
-          transparent={true}
-          animationType="slide"
-          onRequestClose={() => setModalVisible(false)}
-        >
-          <View style={styles.modalContainer}>
-            <View style={styles.modalContent}>
-              <Text style={styles.modalTitle}>Detalle de la Reserva</Text>
-              <Text style={styles.modalText}>
-                Servicio: {selectedReservation.name}
-              </Text>
-              <Text style={styles.modalText}>
-                Hora: {selectedReservation.time}
-              </Text>
-              <Text style={styles.modalText}>
-                Cliente: {selectedReservation.client}
-              </Text>
-              <Text style={styles.modalText}>
-                Estado: {selectedReservation.status}
-              </Text>
+    <View style={styles.container}>
+      {/* Container para el Calendar Strip */}
+      <View style={styles.stripContainer}>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.stripContent}>
+          {days.map((day, index) => {
+            const dateKey = day.format('YYYY-MM-DD');
+            const isSelected = moment(selectedDate).isSame(day, 'day');
+            const isToday = moment().isSame(day, 'day');
+            const hasEvent = items && items[dateKey] && items[dateKey].length > 0;
+            return (
               <TouchableOpacity
-                style={styles.cancelButton}
-                onPress={openConfirmModal}
+                key={index}
+                onPress={() => onDateSelected(day.toDate())}
+                style={[
+                  styles.dayContainer,
+                  isSelected && styles.selectedDayContainer,
+                  !isSelected && isToday && styles.todayContainer,
+                ]}
               >
-                <Text style={styles.cancelButtonText}>Cancelar Cita</Text>
+                <Text style={[styles.dayName, isSelected && styles.selectedDayName]}>
+                  {day.format('ddd')}
+                </Text>
+                <Text style={[styles.dayNumber, isSelected && styles.selectedDayNumber]}>
+                  {day.format('D')}
+                </Text>
+                {hasEvent && <View style={styles.dot} />}
               </TouchableOpacity>
-              <TouchableOpacity
-                style={styles.closeButton}
-                onPress={() => setModalVisible(false)}
-              >
-                <Text style={styles.closeButtonText}>Cerrar</Text>
+            );
+          })}
+        </ScrollView>
+      </View>
+
+      {/* Container para la Agenda */}
+      <View style={styles.agendaContainer}>
+        <Text style={styles.agendaTitle}>
+          Reservas para {moment(selectedDate).format('MMMM D dddd ')}
+        </Text>
+        {sortedEventsForSelectedDay.length === 0 ? (
+          <Text style={styles.noEventsText}>No hay reservas para este día.</Text>
+        ) : (
+          <FlatList
+            data={sortedEventsForSelectedDay}
+            keyExtractor={(item) => item.id}
+            refreshControl={
+              <RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); fetchData(); }} />
+            }
+            renderItem={({ item }) => (
+              <View style={styles.eventItem}>
+                <View style={styles.eventInfo}>
+                  <Text style={styles.eventTitle}>{item.name}</Text>
+                  <Text style={styles.eventTime}>
+                    Inicio: {moment(item.start).format('LT')} - Fin: {moment(item.end).format('LT')}
+                  </Text>
+                </View>
+                <TouchableOpacity style={styles.cancelButton} onPress={() => openCancelModal(item)}>
+                  <Text style={styles.cancelButtonText}>X</Text>
+                </TouchableOpacity>
+              </View>
+            )}
+          />
+        )}
+      </View>
+
+      {/* Modal de confirmación para cancelar reserva */}
+      <Modal
+        transparent
+        animationType="fade"
+        visible={modalVisible}
+        onRequestClose={cancelModal}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContainer}>
+            <Text style={styles.modalTitle}>Confirmar cancelación</Text>
+            <Text style={styles.modalMessage}>
+              ¿Desea cancelar la reserva "{selectedEvent ? selectedEvent.name : ''}"?
+            </Text>
+            <View style={styles.modalButtons}>
+              <TouchableOpacity style={styles.modalButton} onPress={cancelModal}>
+                <Text style={styles.modalButtonText}>Cancelar</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={[styles.modalButton, styles.modalButtonConfirm]} onPress={confirmCancel}>
+                <Text style={[styles.modalButtonText, styles.modalButtonTextConfirm]}>Confirmar</Text>
               </TouchableOpacity>
             </View>
-          </View>
-        </Modal>
-      )}
-
-      {/* Modal de Confirmación */}
-      <Modal
-        visible={confirmModalVisible}
-        transparent={true}
-        animationType="slide"
-        onRequestClose={() => setConfirmModalVisible(false)}
-      >
-        <View style={styles.modalContainer}>
-          <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Confirmar Cancelación</Text>
-            <Text style={styles.modalText}>
-              ¿Estás seguro de que deseas cancelar esta cita?
-            </Text>
-            <TouchableOpacity
-              style={styles.confirmButton}
-              onPress={handleCancelReservation}
-            >
-              <Text style={styles.confirmButtonText}>Sí, Cancelar</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={styles.closeButton}
-              onPress={() => setConfirmModalVisible(false)}
-            >
-              <Text style={styles.closeButtonText}>No</Text>
-            </TouchableOpacity>
           </View>
         </View>
       </Modal>
@@ -367,102 +197,171 @@ const CalendarScreen = () => {
   );
 };
 
+
 const styles = StyleSheet.create({
-  modalContainer: {
+  container: {
+    flex: 1,
+    backgroundColor: '#F5F5F5',
+  },
+  loadingContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
   },
-  modalContent: {
-    backgroundColor: 'white',
+  loadingText: {
+    fontSize: 18,
+    color: '#333',
+  },
+  // Container del strip con altura fija de 50 píxeles
+  stripContainer: {
+    height: 70,
+    marginTop:20,
+    backgroundColor: '#fff',
+    borderBottomWidth: 1,
+    borderBottomColor: '#ccc',
+  },
+  stripContent: {
+    alignItems: 'center',
+    paddingHorizontal: 5,
+  },
+  dayContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginHorizontal: 6,
+    paddingVertical: 5,
+    paddingHorizontal: 8,
+    borderRadius: 4,
+  },
+  selectedDayContainer: {
+    backgroundColor: '#4CAF50',
+  },
+  todayContainer: {
+    borderColor: '#4CAF50',
+    borderWidth: 1,
+  },
+  dayName: {
+    fontSize: 20,
+    color: '#333',
+  },
+  dayNumber: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#333',
+  },
+  selectedDayName: {
+    color: '#fff',
+  },
+  selectedDayNumber: {
+    color: '#fff',
+  },
+  dot: {
+    width: 4,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: '#FF5722',
+    marginTop: 2,
+  },
+  // Container de la agenda
+  agendaContainer: {
+    flex: 1,
+    padding: 10,
+    marginTop: 20,
+  },
+  agendaTitle: {
+    fontSize: 22,
+    fontWeight: 'bold',
+    marginBottom: 10,
+    color: '#333',
+  },
+  noEventsText: {
+    fontSize: 18,
+    color: '#666',
+    textAlign: 'center',
+    marginTop: 20,
+  },
+  eventItem: {
+    flexDirection: 'row',
+    backgroundColor: '#fff',
     padding: 20,
-    borderRadius: 10,
+    borderRadius: 6,
+    marginBottom: 10,
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  eventInfo: {
+    flex: 1,
+  },
+  eventTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#4CAF50',
+    marginBottom: 4,
+  },
+  eventTime: {
+    fontSize: 18,
+    color: '#666',
+    fontWeight: '600',
+  },
+  cancelButton: {
+    marginLeft: 10,
+    padding: 8,
+    backgroundColor: '#FF5722',
+    borderRadius: 20,
+  },
+  cancelButtonText: {
+    fontSize: 18,
+    color: '#fff',
+    fontWeight: 'bold',
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.4)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalContainer: {
     width: '80%',
+    backgroundColor: '#fff',
+    borderRadius: 8,
+    padding: 20,
     alignItems: 'center',
   },
   modalTitle: {
-    fontSize: 20,
+    fontSize: 22,
     fontWeight: 'bold',
-    marginBottom: 15,
-  },
-  modalText: {
-    fontSize: 16,
     marginBottom: 10,
+    color: '#333',
+  },
+  modalMessage: {
+    fontSize: 18,
     textAlign: 'center',
+    marginBottom: 20,
+    color: '#333',
   },
-  cancelButton: {
-    marginTop: 20,
-    backgroundColor: '#FF4D4D',
-    padding: 10,
-    borderRadius: 5,
+  modalButtons: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
     width: '100%',
-    alignItems: 'center',
   },
-  cancelButtonText: {
-    color: 'white',
-    fontWeight: 'bold',
-  },
-  confirmButton: {
-    marginTop: 20,
-    backgroundColor: '#FF4D4D',
-    padding: 10,
-    borderRadius: 5,
-    width: '100%',
-    alignItems: 'center',
-  },
-  confirmButtonText: {
-    color: 'white',
-    fontWeight: 'bold',
-  },
-  closeButton: {
-    marginTop: 10,
-    backgroundColor: '#007BFF',
-    padding: 10,
-    borderRadius: 5,
-    width: '100%',
-    alignItems: 'center',
-  },
-  closeButtonText: {
-    color: 'white',
-    fontWeight: 'bold',
-  },
-  item: {
-    backgroundColor: 'white',
-    padding: 15,
-    borderRadius: 5,
-    marginRight: 10,
-    marginTop: 17,
-  },
-  itemText: {
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
-  itemTime: {
-    fontSize: 14,
-    color: '#555',
-  },
-  itemClient: {
-    fontSize: 14,
-    color: '#888',
-  },
-  itemStatus: {
-    fontSize: 14,
-    color: '#888',
-  },
-  emptyDate: {
-    backgroundColor: '#f2f2f2',
-    padding: 15,
-    borderRadius: 5,
-    marginRight: 10,
-    marginTop: 17,
-    alignItems: 'center',
-  },
-  loading: {
+  modalButton: {
     flex: 1,
-    justifyContent: 'center',
+    paddingVertical: 10,
+    marginHorizontal: 5,
+    borderRadius: 6,
+    backgroundColor: '#ccc',
     alignItems: 'center',
+  },
+  modalButtonConfirm: {
+    backgroundColor: '#4CAF50',
+  },
+  modalButtonText: {
+    fontSize: 18,
+    color: '#fff',
+    fontWeight: 'bold',
+  },
+  modalButtonTextConfirm: {
+    color: '#fff',
   },
 });
 
-export default CalendarScreen;
+export default AgendaScreen;
