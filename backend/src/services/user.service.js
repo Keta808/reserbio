@@ -230,6 +230,27 @@ async function deleteUser(id) {
   } catch (error) {
     handleError(error, "user.service -> deleteUser");
   }
+} 
+
+async function updateTrabajador(id, trabajador) {
+  try {
+    if(!id) return [null, "No se recibió el ID del trabajador"];
+    const existingTrabajador = await Trabajador.findById(id).exec();
+    if (!existingTrabajador) return [null, "El trabajador no existe"];
+
+    // Reemplazar solo los datos que se envían en la solicitud
+    if (trabajador.nombre) existingTrabajador.nombre = trabajador.nombre;
+    if (trabajador.apellido) existingTrabajador.apellido = trabajador.apellido;
+    if (trabajador.telefono) existingTrabajador.telefono = trabajador.telefono;
+    if (trabajador.email) existingTrabajador.email = trabajador.email;
+
+    // Guardar cambios manualmente
+    await existingTrabajador.save();
+
+    return [existingTrabajador, null];
+  } catch (error) {
+    handleError(error, "user.service -> updateTrabajador");
+  }
 }
 
 
@@ -243,4 +264,5 @@ export default {
   getUserById,
   deleteUser,
   getTrabajadorById,
+  updateTrabajador,
 };

@@ -109,7 +109,7 @@ const GestorSuscripcionScreen = () => {
   const { status, reason, date_created, next_payment_date } = suscripcion;
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Gestor de Suscripciones</Text>
+      <Text style={styles.title}>Gestor de Suscripcion</Text>
       <View style={styles.card}>
         <Text style={styles.cardTitle}>Información de la Suscripción</Text>
         <Text style={styles.cardText}>
@@ -158,6 +158,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     textAlign: 'center',
     marginBottom: 20,
+    marginTop: 20,
     color: '#333',
   },
   center: {

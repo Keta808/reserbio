@@ -9,5 +9,14 @@ async function getTrabajadorById(id) {
     throw error;
   }
 } 
+async function updateTrabajador(id, data) {
+  try {
+    const response = await instance.post(`/users/trabajador/${id}`, data);
+    return response.data;
+  } catch (error) {
+    console.error(`Error al actualizar el trabajador con ID ${id}:`, error.response?.data || error.message);
+    throw error;
+  }
+}
 
-export { getTrabajadorById };
+export { getTrabajadorById, updateTrabajador };

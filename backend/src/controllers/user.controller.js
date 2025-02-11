@@ -190,6 +190,23 @@ async function deleteUser(req, res) {
   }
 }
 
+async function updateTrabajador(req, res) {
+  try {
+    const { error } = userIdSchema.validate(req.params);
+    if (error) return respondError(req, res, 400, error.message);
+    const { trabajadorData } = req.body; 
+    if (!trabajadorData) return respondError(req, res, 400, "No se envió información para actualizar");
+    
+
+    const [trabajador, errorTrabajador] = await UserService.updateTrabajador(req.params.id, trabajadorData);
+    if (errorTrabajador) return respondError(req, res, 404, errorTrabajador);
+
+    respondSuccess(req, res, 200, trabajador);
+  } catch (error) {
+    handleError(error, "user.controller -> updatedTrabajador");
+    respondError(req, res, 400, error.message);
+  }
+}
 
 export default {
   getUsers,
@@ -201,4 +218,5 @@ export default {
   getUserById,
   deleteUser,
   getTrabajadorById,
+  updateTrabajador,
 };
