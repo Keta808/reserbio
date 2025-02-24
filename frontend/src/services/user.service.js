@@ -19,4 +19,6 @@ async function updateTrabajador(id, data) {
   }
 }
 
+
+
 export { getTrabajadorById, updateTrabajador };

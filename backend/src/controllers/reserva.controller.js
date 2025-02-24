@@ -240,6 +240,36 @@ const getReservasPorFechaTrabajador = async (req, res) => {
     }
   };
   
+  async function createReservaHorario(req, res) {
+    try {
+        console.log("createReservaHorario BODY:", req.body);
+        
+        const { hora_inicio, fecha, cliente, trabajador, servicio, estado } = req.body;
+
+        // Validación de campos obligatorios
+        if (!hora_inicio || !fecha || !cliente || !trabajador || !servicio || !estado) {
+            return res.status(400).json({
+                message: "Todos los campos son obligatorios: hora_inicio, fecha, cliente, trabajador, servicio y estado."
+            });
+        }
+
+        // Llamada al servicio
+        const [nuevaReserva, error] = await ReservaService.createReservaHorario(req.body);
+
+        if (error) {
+            return res.status(400).json({ message: error });
+        }
+
+        // Respuesta exitosa
+        return res.status(201).json({
+            message: "Reserva creada exitosamente.",
+            reserva: nuevaReserva
+        });
+    } catch (error) {
+        console.error("Error al crear la reserva:", error);
+        return res.status(500).json({ message: "Ocurrió un error al crear la reserva." });
+    }
+}
 
 export default { 
     getReservas,
@@ -251,5 +281,8 @@ export default {
     getReservasByCliente,
     finalizarReserva,
     getReservasPorFechaTrabajador,
-    getReservasPorFechaMicroempresa};
+    getReservasPorFechaMicroempresa,
+  
+    createReservaHorario,
+  };
 

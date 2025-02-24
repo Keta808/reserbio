@@ -165,6 +165,7 @@ const obtenerDiaEnEspañol = (fecha) => {
 
 async function getHorasDisponibles(trabajadorId, fecha, duracionServicio) {
   try {
+    console.log("getHorasDisponibles SERVICE:", trabajadorId, fecha, duracionServicio);
     // Validar si el trabajador existe
     const trabajadorExist = await Trabajador.findById(trabajadorId).exec();
     if (!trabajadorExist) return [null, 'El trabajador no existe'];

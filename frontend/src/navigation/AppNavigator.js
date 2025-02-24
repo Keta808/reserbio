@@ -35,6 +35,14 @@ import CardScreen from '../screens/cardForm.screen.js';
 import TrabajadorScreen from '../screens/trabajador.screen.js';
 import HomeTrabajadorScreen from '../screens/homeTrabajador.screen.js';
 import ServicioScreen from '../screens/servicio.screen.js';
+
+
+// Pantalla test
+
+import Horario from '../screens/horario.screen.js';
+import EditarHorarioScreen from '../screens/editarHorarioScreen.js';
+import ConfirmacionReservaSlotScreen from '../screens/confirmacionReservaSlot.screen.js';
+
 // Contexto de autenticación
 import { AuthContext } from '../context/auth.context';
 
@@ -67,6 +75,7 @@ const HomeTrabajadorNavigator = () => (
     <Tab.Screen name="SeleccionMicroempresa" component={SeleccionMicroempresaScreen} /> 
     <Tab.Screen name="Horario" component={DisponibilidadScreen} /> 
     <Tab.Screen name="Perfil" component={TrabajadorScreen} />
+    <Tab.Screen name="HorarioTEST" component={Horario} /> 
 </Tab.Navigator>
 );
 
@@ -112,6 +121,7 @@ const AppNavigator = () => {
       <Stack.Screen name="Valoracion" component={ValoracionServicioScreen} />   
       <Stack.Screen name="Pago" component={PaymentScreen} /> 
       <Stack.Screen name="Login" component={LoginScreen} />
+      <Stack.Screen name= "ConfirmacionReservaSlotScreen" component={ConfirmacionReservaSlotScreen} />
       
     </Stack.Navigator>
   );
@@ -132,6 +142,10 @@ const AppNavigator = () => {
       <Stack.Screen name="Perfil" component={TrabajadorScreen} /> 
       <Stack.Screen name="Servicio" component={ServicioScreen} />
       <Stack.Screen name="Login" component={LoginScreen} />
+
+      <Stack.Screen name="HorarioTEST" component={Horario} />
+      <Stack.Screen name="EditarHorario" component={EditarHorarioScreen} /> 
+     
     </Stack.Navigator>
   );
   

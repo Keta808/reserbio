@@ -9,9 +9,9 @@ import {
 } from 'react-native';
 
 import DateTimePickerModal from 'react-native-modal-datetime-picker';
-
 import { useNavigation, useRoute } from '@react-navigation/native';
 import servicioService from '../services/servicio.service.js';
+
 
 const SeleccionServicioScreen = () => {
   const navigation = useNavigation();
@@ -25,9 +25,7 @@ const SeleccionServicioScreen = () => {
   const [selectedTrabajadorId, setSelectedTrabajadorId] = useState(undefined);
   const [selectedDate, setSelectedDate] = useState(null);
   const [isDatePickerVisible, setDatePickerVisibility] = useState(false);
-
-
- 
+  const [selectedTrabajadorNombre, setSelectedTrabajadorNombre] = useState(null);
 
   useEffect(() => {
     const fetchServicios = async () => {
@@ -50,14 +48,24 @@ const SeleccionServicioScreen = () => {
   const handleTrabajadorSelect = (trabajadorId) => {
     console.log('Trabajador seleccionado:', trabajadorId);
     setSelectedTrabajadorId(trabajadorId);
+    setSelectedTrabajadorNombre(trabajadores.find((t) => t._id === trabajadorId)?.nombre);
   };
 
   const handleContinue = () => {
-    navigation.navigate('ConfirmacionReserva', {
+    console.log('Enviando params:', {
       microempresaId,
       servicioId: selectedServicio.id || selectedServicio._id,
       trabajadorId: selectedTrabajadorId,
       fecha: selectedDate.toISOString().split('T')[0],
+      trabajadorNombre: selectedTrabajadorNombre,
+    });
+  
+    navigation.navigate('ConfirmacionReservaSlotScreen', {
+      microempresaId,
+      servicioId: selectedServicio.id || selectedServicio._id,
+      trabajadorId: selectedTrabajadorId,
+      fecha: selectedDate.toISOString().split('T')[0],
+      trabajadorNombre: selectedTrabajadorNombre,
     });
   };
 

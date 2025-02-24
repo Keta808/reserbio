@@ -8,8 +8,9 @@ const router = Router();
 
 router.use(authenticationMiddleware);
 
-
+// Actualiza los bloques de un día
 router.put("/actualizar-bloques", horarioController.updateBloquesByDia);
+
 // Obtener horarios por ID de trabajador
 router.get('/trabajador/:trabajadorId', horarioController.getHorariosByTrabajador);
 
@@ -21,7 +22,6 @@ router.get('/trabajador/:trabajadorId/horas-disponibles', horarioController.getH
 
 // Obtener horarios por ID de microempresa
 router.get('/disponibilidad-microempresa', horarioController.getDisponibilidadMicroEmpresa);
-
 
 
 // Crear un nuevo horario

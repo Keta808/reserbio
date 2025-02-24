@@ -103,7 +103,7 @@ async function deleteHorarioById(req, res) {
 
 async function updateBloquesByDia(req, res) {
     try {
-        console.log("updateBloquesByDia BODY:", req.body);
+       
         const { trabajador, dia, bloques } = req.body;
 
         if (!trabajador || !dia || !bloques) {
@@ -153,9 +153,15 @@ async function getDiasSinHorario(req, res) {
 //FUNCION DE PRUEBA
   async function getHorasDisponibles(req, res) {
     try {
+      console.log("getHorasDisponibles");
+      
       const { trabajadorId } = req.params;
       const { fecha, duracion } = req.query;
   
+      console.log("trabajadorId", trabajadorId);
+      console.log("fecha", fecha);
+      console.log("duracion", duracion);
+      
       if (!fecha || !duracion) {
         return respondError(req, res, 400, "Fecha y duración son obligatorias");
       }
@@ -174,6 +180,9 @@ async function getDiasSinHorario(req, res) {
 
 async function getDisponibilidadMicroEmpresa(req, res) {
     try {
+
+      console.log("getDisponibilidadMicroEmpresa");
+      console.log(req.query);
       const { serviceId, date } = req.query;
   
       if (!serviceId || !date) {
