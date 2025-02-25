@@ -33,10 +33,14 @@ async function createEnlace(enlace) {
     session.startTransaction(); // Inicia la transacción explícitamente
     try {
         const { id_trabajador, id_role, id_microempresa, fecha_inicio, estado } = enlace;
-        
-        // Restricciones Enlace:
-        const enlaceTrabajador = await Trabajador.findById(id_trabajador).exec();
-        if (!enlaceTrabajador) throw new Error("El trabajador no existe");
+
+        // 📌 **Verificar si el usuario es Trabajador o Cliente**
+        let usuario = await Trabajador.findById(id_trabajador).exec();
+        // 📌 **Si el usuario es Cliente, cambiar su `kind` a Trabajador**
+        if (!usuario) {
+            usuario = await UserModels.User.findById(id_trabajador).exec();
+            if (!usuario) throw new Error("El usuario no existe");
+        }             
 
         const enlaceRole = await Role.findById(id_role).exec();
         if (!enlaceRole) throw new Error("El role no existe");
@@ -55,26 +59,25 @@ async function createEnlace(enlace) {
             estado,
         });
 
-        // Guardar el nuevo enlace y actualizar la microempresa en la misma transacción
+        // 📌 **Guardar el nuevo enlace y actualizar la microempresa en la misma transacción**
         await newEnlace.save({ session });
         enlaceMicroempresa.trabajadores.addToSet(newEnlace._id);
         await enlaceMicroempresa.save({ session });
 
-        // Confirmar la transacción
+        // 📌 **Confirmar la transacción**
         await session.commitTransaction();
         
         return [newEnlace, null];
     } catch (error) {
-        // Abortar la transacción en caso de error
+        // 📌 **Abortar la transacción en caso de error**
         await session.abortTransaction();
         handleError(error, "enlace.service -> createEnlace");
         return [null, error.message];
     } finally {
-        // Finalizar la sesión independientemente del resultado
+        // 📌 **Finalizar la sesión independientemente del resultado**
         session.endSession();
     }
 }
-
 
 /** */
 async function deleteEnlace(id) {
