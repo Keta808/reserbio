@@ -1,11 +1,18 @@
-import React, { useEffect, useState, useCallback } from 'react'; 
-import { View, Text, StyleSheet, ActivityIndicator, FlatList, Button, Animated, TouchableOpacity } from 'react-native';
+import React, { useEffect, useState, useCallback } from 'react';
+import { 
+  View, 
+  Text, 
+  StyleSheet, 
+  ActivityIndicator, 
+  FlatList, 
+  Animated, 
+  TouchableOpacity, 
+  Modal 
+} from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import reservaService from '../services/reserva.service';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import valoracionService from '../services/valoracion.service';
-
-// test 
 import { AntDesign } from '@expo/vector-icons';
 
 const ReservaClienteScreen = () => {
@@ -13,10 +20,13 @@ const ReservaClienteScreen = () => {
   const [clienteId, setClienteId] = useState(null);
   const [reservas, setReservas] = useState([]);
   const [loading, setLoading] = useState(true);
-  
-  // Estado para el filtro actual ('Activas' o 'Finalizadas')
+  // Filtro para mostrar reservas 'Activas' o 'Finalizadas'
   const [filtro, setFiltro] = useState('Activas');
   const animacion = new Animated.Value(filtro === 'Activas' ? 0 : 1);
+
+  // Estado para el modal de confirmación al cancelar
+  const [modalVisible, setModalVisible] = useState(false);
+  const [reservaSeleccionada, setReservaSeleccionada] = useState(null);
 
   useFocusEffect(
     useCallback(() => {
@@ -40,10 +50,12 @@ const ReservaClienteScreen = () => {
     try {
       setLoading(true);
       const response = await reservaService.getReservasByCliente(id);
-      const reservasConValoracion = await Promise.all(response.data.map(async (reserva) => {
-        const valoracionResponse = await valoracionService.existeValoracionPorReserva(reserva._id);
-        return { ...reserva, tieneValoracion: valoracionResponse.existe };
-      }));
+      const reservasConValoracion = await Promise.all(
+        response.data.map(async (reserva) => {
+          const valoracionResponse = await valoracionService.existeValoracionPorReserva(reserva._id);
+          return { ...reserva, tieneValoracion: valoracionResponse.existe };
+        })
+      );
       setReservas(reservasConValoracion || []);
     } catch (error) {
       console.error('Error al obtener las reservas del cliente:', error);
@@ -52,19 +64,33 @@ const ReservaClienteScreen = () => {
     }
   };
 
-  const formatDateTime = (fechaISO, hora) => {
-    const dateObj = new Date(fechaISO);
-    const formattedDate = dateObj.toLocaleDateString('es-CL', { day: '2-digit', month: '2-digit', year: 'numeric' });
-    const formattedTime = new Date(hora).toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit' });
-    return `${formattedDate} - ${formattedTime}`;
+  // Función para formatear la fecha y horas de la reserva
+  const formatReserva = (reserva) => {
+    // Se toma la hora de inicio y se le suma la duración (en minutos) para obtener la hora de término.
+    const inicioDate = new Date(reserva.hora_inicio);
+    const finDate = new Date(inicioDate.getTime() + reserva.duracion * 60000);
+    // Formateo: "nombre del día, DD de MMMM de YYYY"
+    const formattedDate = inicioDate.toLocaleDateString('es-ES', { 
+      weekday: 'long', day: '2-digit', month: 'long', year: 'numeric' 
+    });
+    const formattedInicio = inicioDate.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
+    const formattedFin = finDate.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
+    return `${formattedDate}\n${formattedInicio} -  ${formattedFin}`;
   };
 
-  const reservasFiltradas = reservas.filter((reserva) => {
-    if (reserva.estado === 'Cancelada') return false;
-    return filtro === 'Activas' ? reserva.estado === 'Activa' : reserva.estado === 'Finalizada';
-  });
+  const reservasFiltradas = reservas
+    .filter((reserva) => {
+      if (reserva.estado === 'Cancelada') return false;
+      return filtro === 'Activas' ? reserva.estado === 'Activa' : reserva.estado === 'Finalizada';
+    })
+    .sort((a, b) => {
+      if (filtro === 'Finalizadas') {
+        return new Date(b.fecha) - new Date(a.fecha); // Orden descendente
+      }
+      return 0;
+    });
 
-  // Función para cambiar el filtro y animar el switch
+  // Cambia el filtro y anima el switch
   const cambiarFiltro = () => {
     const nuevoFiltro = filtro === 'Activas' ? 'Finalizadas' : 'Activas';
     setFiltro(nuevoFiltro);
@@ -75,14 +101,24 @@ const ReservaClienteScreen = () => {
     }).start();
   };
 
-  // Cancelar reservas
-  const cancelarReserva = async (id) => {
-    try {
-      await reservaService.cancelReserva(id);
-      console.log('Reserva cancelada:', id);
-      fetchReservas(clienteId);
-    } catch (error) {
-      console.error('Error al cancelar la reserva:', error);
+  // Mostrar modal de confirmación antes de cancelar una reserva
+  const confirmarCancelacion = (id) => {
+    setReservaSeleccionada(id);
+    setModalVisible(true);
+  };
+
+  // Ejecutar la cancelación de la reserva
+  const cancelarReserva = async () => {
+    if (reservaSeleccionada) {
+      try {
+        await reservaService.cancelReserva(reservaSeleccionada);
+        fetchReservas(clienteId);
+      } catch (error) {
+        console.error('Error al cancelar la reserva:', error);
+      } finally {
+        setModalVisible(false);
+        setReservaSeleccionada(null);
+      }
     }
   };
 
@@ -99,26 +135,26 @@ const ReservaClienteScreen = () => {
     <View style={styles.container}>
       <Text style={styles.header}>Mis Reservas</Text>
 
-      {/* Switch personalizado */}
+      {/* Switch de filtro personalizado */}
       <View style={styles.switchContainer}>
         <TouchableOpacity onPress={cambiarFiltro} style={styles.switch}>
-        <Animated.View
-              style={[
-                styles.switchIndicator,
-                {
-                  transform: [
-                    {
-                      translateX: animacion.interpolate({
-                        inputRange: [0, 1],
-                        outputRange: [0, 140], // Ajusta el desplazamiento para cubrir el 50% del switch
-                      }),
-                    },
-                  ],
-                },
-              ]}
-            />
-          <Text style={[styles.switchText, filtro === 'Activas' && styles.activeText]}>Activas</Text>
-          <Text style={[styles.switchText, filtro === 'Finalizadas' && styles.activeText]}>Finalizadas</Text>
+          <Animated.View
+            style={[
+              styles.switchIndicator,
+              {
+                left: animacion.interpolate({
+                  inputRange: [0, 1],
+                  outputRange: ['5%', '55%'],
+                }),
+              },
+            ]}
+          />
+          <Text style={[styles.switchText, filtro === 'Activas' && styles.activeText]}>
+            Activas
+          </Text>
+          <Text style={[styles.switchText, filtro === 'Finalizadas' && styles.activeText]}>
+            Finalizadas
+          </Text>
         </TouchableOpacity>
       </View>
 
@@ -128,35 +164,35 @@ const ReservaClienteScreen = () => {
           keyExtractor={(item) => item._id}
           renderItem={({ item }) => (
             <View style={styles.reservaItem}>
-              <Text style={styles.reservaText}>
-                {formatDateTime(item.fecha, item.hora_inicio)}
-              </Text>
-              <Text style={styles.reservaSubText}>
-                Servicio: {item.servicio.nombre}
-              </Text>
+              <Text style={styles.reservaText}>{formatReserva(item)}</Text>
+              <Text style={styles.reservaSubText}>Servicio: {item.servicio.nombre}</Text>
               <Text style={styles.reservaSubText}>
                 Trabajador: {item.trabajador.nombre} {item.trabajador.apellido}
               </Text>
               <Text
                 style={[
                   styles.estado,
-                  item.estado === 'Activa' ? styles.estadoActiva : styles.estadoFinalizada
+                  item.estado === 'Activa' ? styles.estadoActiva : styles.estadoFinalizada,
                 ]}
               >
                 {item.estado}
               </Text>
-              
+
               {item.estado === 'Activa' && (
-              <TouchableOpacity onPress={() => cancelarReserva(item._id)} style={styles.cancelButton}>
-                <AntDesign name="closecircle" size={24} color="red" />
-              </TouchableOpacity>
-            )}
+                <TouchableOpacity
+                  onPress={() => confirmarCancelacion(item._id)}
+                  style={styles.cancelButton}
+                >
+                  <AntDesign name="closecircle" size={24} color="red" />
+                </TouchableOpacity>
+              )}
               {item.estado === 'Finalizada' && !item.tieneValoracion && (
-                <Button
-                  title="Valorar Servicio"
+                <TouchableOpacity
+                  style={styles.valoracionButton}
                   onPress={() => navigation.navigate('Valoracion', { reserva: item, clienteId })}
-                  color="#28a745"
-                />
+                >
+                  <Text style={styles.valoracionButtonText}>Valorar Servicio</Text>
+                </TouchableOpacity>
               )}
             </View>
           )}
@@ -167,9 +203,29 @@ const ReservaClienteScreen = () => {
         </Text>
       )}
 
-      <View style={styles.buttonContainer}>
-        <Button title="Atrás" onPress={() => navigation.goBack()} color="#dc3545" />
-      </View>
+      {/* Modal de confirmación para cancelar reserva */}
+      <Modal visible={modalVisible} transparent animationType="fade">
+        <View style={styles.modalContainer}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalText}>¿Seguro que deseas cancelar esta reserva?</Text>
+            <View style={styles.modalButtons}>
+             
+              <TouchableOpacity
+                onPress={() => setModalVisible(false)}
+                style={[styles.modalButton, styles.modalCloseButton]}
+              >
+                <Text style={styles.modalButtonText}>Cerrar</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={cancelarReserva}
+                style={[styles.modalButton, styles.modalCancelButton]}
+              >
+                <Text style={styles.modalButtonText}>Cancelar Reserva</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 };
@@ -181,44 +237,45 @@ const styles = StyleSheet.create({
     padding: 16,
   },
   header: {
-    fontSize: 24,
+    fontSize: 26,
     fontWeight: 'bold',
     marginBottom: 16,
     textAlign: 'center',
+    color: '#333',
   },
   switchContainer: {
     alignItems: 'center',
     marginBottom: 16,
   },
   switch: {
-    width: '80%', // Ocupa el 80% del ancho de la pantalla
-    height: 50, // Altura ajustada
-    backgroundColor: '#ddd', // Fondo gris claro para el switch
+    width: '80%',
+    height: 50,
+    backgroundColor: '#ddd',
     borderRadius: 25,
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
+    justifyContent: 'space-around',
     position: 'relative',
-    overflow: 'hidden', // Evita desbordes visuales
+    overflow: 'hidden',
   },
   switchIndicator: {
     position: 'absolute',
-    width: '50%', // El indicador ocupa la mitad del ancho del switch
-    height: '100%', // Cubre todo el alto del switch
-    backgroundColor: '#34c759', // Verde para el indicador
+    width: '40%',
+    height: '80%',
+    backgroundColor: '#34c759',
     borderRadius: 25,
-    zIndex: 1, // Asegura que el indicador esté detrás del texto
+    top: '10%',
   },
   switchText: {
     flex: 1,
     textAlign: 'center',
-    fontSize: 16, // Tamaño de fuente
+    fontSize: 16,
     fontWeight: 'bold',
-    color: '#000', // Texto gris claro
-    zIndex: 2, // Asegura que el texto esté encima del indicador
+    color: '#000',
+    zIndex: 2,
   },
   activeText: {
-    color: '#fff', // Texto blanco cuando está activo
+    color: '#fff',
   },
   reservaItem: {
     backgroundColor: '#fff',
@@ -230,10 +287,13 @@ const styles = StyleSheet.create({
   reservaText: {
     fontSize: 16,
     fontWeight: 'bold',
+    color: '#333',
+    marginBottom: 4,
   },
   reservaSubText: {
     fontSize: 14,
     color: '#666',
+    marginVertical: 2,
   },
   estado: {
     marginTop: 8,
@@ -251,18 +311,73 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     fontSize: 16,
     color: '#888',
-  },
-  buttonContainer: {
     marginTop: 20,
-    alignSelf: 'center',
-    width: '80%',
   },
   cancelButton: {
-    alignSelf: 'flex-end',
     position: 'absolute',
     right: 10,
     top: 10,
   },
+  valoracionButton: {
+    backgroundColor: '#28a745',
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 6,
+    alignSelf: 'flex-start',
+    marginTop: 8,
+  },
+  valoracionButtonText: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: 'bold',
+  },
+  loaderContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalContainer: { 
+    flex: 1, 
+    justifyContent: 'center', 
+    alignItems: 'center', 
+    backgroundColor: 'rgba(0,0,0,0.5)' 
+  },
+  modalContent: {
+    backgroundColor: '#fff',
+    width: '80%',
+    borderRadius: 10,
+    padding: 20,
+    alignItems: 'center',
+  },
+  modalText: {
+    fontSize: 16,
+    marginBottom: 20,
+    textAlign: 'center',
+    color: '#333',
+  },
+  modalButtons: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    width: '100%',
+  },
+  modalButton: {
+    paddingVertical: 10,
+    paddingHorizontal: 15,
+    borderRadius: 8,
+    minWidth: '40%',
+    alignItems: 'center',
+  },
+  modalCancelButton: {
+    backgroundColor: 'red',
+  },
+  modalCloseButton: {
+    backgroundColor: '#ccc',
+  },
+  modalButtonText: {
+    color: '#fff',
+    fontWeight: 'bold',
+  },
+
 });
 
 export default ReservaClienteScreen;

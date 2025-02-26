@@ -166,43 +166,44 @@ const obtenerDiaEnEspañol = (fecha) => {
 async function getHorasDisponibles(trabajadorId, fecha, duracionServicio) {
   try {
     console.log("getHorasDisponibles SERVICE:", trabajadorId, fecha, duracionServicio);
-    // Validar si el trabajador existe
+    // Validar que el trabajador exista
     const trabajadorExist = await Trabajador.findById(trabajadorId).exec();
     if (!trabajadorExist) return [null, 'El trabajador no existe'];
 
-
-    // Convertir la fecha y obtener el día en español
+    // Obtener el día en español (por ejemplo, "lunes", "martes", etc.)
     const diaEnEspañol = obtenerDiaEnEspañol(fecha);
-
-
     // Obtener el horario del trabajador para ese día
     const horario = await Horario.findOne({ trabajador: trabajadorId, dia: diaEnEspañol }).exec();
     if (!horario) return [null, 'No hay horario asignado para ese día'];
 
-    // Obtener las reservas ya existentes en esa fecha
+    // Obtener las reservas activas del trabajador para la fecha indicada
     const reservas = await Reserva.find({
       trabajador: trabajadorId,
       fecha: {
         $gte: new Date(`${fecha}T00:00:00.000Z`),
         $lte: new Date(`${fecha}T23:59:59.999Z`)
-      }
+      },
+      estado: 'Activa'
     }).exec();
 
-    // Crear slots de tiempo basados en los bloques horarios
     let slotsDisponibles = [];
 
     for (const bloque of horario.bloques) {
+      // Crear objetos Moment para el inicio y fin del bloque usando la fecha y la hora del bloque
       let inicio = moment(`${fecha}T${bloque.hora_inicio}`);
       const fin = moment(`${fecha}T${bloque.hora_fin}`);
 
+      // Mientras se pueda crear un slot completo dentro del bloque
       while (inicio.clone().add(duracionServicio, 'minutes').isSameOrBefore(fin)) {
         const finSlot = inicio.clone().add(duracionServicio, 'minutes');
 
-        // Verificar si el slot se solapa con alguna reserva existente
+        // Verificar si el slot se solapa con alguna reserva
         const solapado = reservas.some(reserva => {
+          // Parsear la hora de inicio de la reserva (ya viene con la fecha completa)
           const inicioReserva = moment(reserva.hora_inicio);
+          // Calcular el fin de la reserva usando la duración almacenada
           const finReserva = inicioReserva.clone().add(reserva.duracion, 'minutes');
-
+          // Se solapa si: inicio del slot < fin de la reserva && fin del slot > inicio de la reserva
           return inicio.isBefore(finReserva) && finSlot.isAfter(inicioReserva);
         });
 
@@ -213,7 +214,8 @@ async function getHorasDisponibles(trabajadorId, fecha, duracionServicio) {
           });
         }
 
-        inicio.add(duracionServicio, 'minutes'); // Avanzar al siguiente slot
+        // Avanzar al siguiente slot (sumar la duración del servicio)
+        inicio.add(duracionServicio, 'minutes');
       }
     }
 
@@ -224,72 +226,66 @@ async function getHorasDisponibles(trabajadorId, fecha, duracionServicio) {
 }
 
 
+
 // FUNCION DE PRUEBA 
 async function getHorariosDisponiblesMicroEmpresa(serviceId, date) {
-    try {
-      const diasSemana = ["domingo", "lunes", "martes", "miércoles", "jueves", "viernes", "sábado"];
-      const parts = date.split("-");
-      const fechaConsulta = new Date(Date.UTC(parts[0], parts[1] - 1, parts[2]));
-      const diaSemana = diasSemana[fechaConsulta.getUTCDay()];
-  
-      const servicio = await Servicio.findById(serviceId);
-      if (!servicio) {
-        return [null, "El servicio no existe"];
-      }
-      const duracionServicio = servicio.duracion;
-  
-      const trabajadores = await Enlace.find({
-        id_microempresa: servicio.idMicroempresa,
-        estado: true
-      }).populate('id_trabajador');
-  
-      if (!trabajadores.length) {
-        return [null, "No hay trabajadores activos en esta microempresa"];
-      }
-  
-      let disponibilidadGlobal = [];
-  
-      for (const enlace of trabajadores) {
-        const trabajador = enlace.id_trabajador;
-  
-        const horario = await Horario.findOne({
+  try {
+    // Convertir la fecha (por ejemplo "2025-02-27") y obtener el día de la semana
+    const diasSemana = ["domingo", "lunes", "martes", "miércoles", "jueves", "viernes", "sábado"];
+    const fechaConsulta = moment(date, "YYYY-MM-DD"); // Usamos moment para la fecha
+    const diaSemana = diasSemana[fechaConsulta.day()]; // day() devuelve 0 para domingo, etc.
+
+    // Obtener el servicio y su duración
+    const servicio = await Servicio.findById(serviceId);
+    if (!servicio) {
+      return [null, "El servicio no existe"];
+    }
+    const duracionServicio = servicio.duracion;
+
+    // Obtener los trabajadores activos de la microempresa
+    const trabajadores = await Enlace.find({
+      id_microempresa: servicio.idMicroempresa,
+      estado: true
+    }).populate('id_trabajador');
+
+    if (!trabajadores.length) {
+      return [null, "No hay trabajadores activos en esta microempresa"];
+    }
+
+    let disponibilidadGlobal = [];
+
+    for (const enlace of trabajadores) {
+      const trabajador = enlace.id_trabajador;
+      // Obtener el horario del trabajador para el día solicitado
+      const horario = await Horario.findOne({
+        trabajador: trabajador._id,
+        dia: diaSemana
+      });
+      if (!horario) continue;
+
+      for (const bloque of horario.bloques) {
+        let tiempoLibre = timeToMinutes(bloque.hora_inicio); // Ej: "08:00" → 480 minutos
+        const horaFinBloque = timeToMinutes(bloque.hora_fin);
+
+        // Obtener las reservas activas para el trabajador en la fecha
+        const reservas = await Reserva.find({
           trabajador: trabajador._id,
-          dia: diaSemana
-        });
-  
-        if (!horario) continue;
-  
-        for (const bloque of horario.bloques) {
-          let tiempoLibre = timeToMinutes(bloque.hora_inicio);
-          const horaFinBloque = timeToMinutes(bloque.hora_fin);
-  
-          const reservas = await Reserva.find({
-            trabajador: trabajador._id,
-            fecha: fechaConsulta,
-            estado: 'Activa'
-          }).sort({ hora_inicio: 1 });
-  
-          reservas.forEach(reserva => {
-            const horaInicioReserva = timeToMinutes(reserva.hora_inicio);
-            const horaFinReserva = horaInicioReserva + reserva.duracion;
-  
-            while (tiempoLibre + duracionServicio <= horaInicioReserva) {
-              disponibilidadGlobal.push({
-                trabajador: {
-                  id: trabajador._id,
-                  nombre: `${trabajador.nombre} ${trabajador.apellido}`
-                },
-                slot: {
-                  inicio: minutesToTime(tiempoLibre),
-                  fin: minutesToTime(tiempoLibre + duracionServicio)
-                }
-              });
-              tiempoLibre += duracionServicio;
-            }
-            tiempoLibre = Math.max(tiempoLibre, horaFinReserva);
-          });
-  
-          while (tiempoLibre + duracionServicio <= horaFinBloque) {
+          fecha: {
+            $gte: new Date(`${date}T00:00:00.000Z`),
+            $lte: new Date(`${date}T23:59:59.999Z`)
+          },
+          estado: 'Activa'
+        }).sort({ hora_inicio: 1 });
+
+        // Procesar cada reserva para ajustar el tiempo libre
+        reservas.forEach(reserva => {
+          // Usamos moment para extraer la hora de inicio en minutos
+          const resMoment = moment(reserva.hora_inicio);
+          const horaInicioReserva = resMoment.hour() * 60 + resMoment.minute();
+          const horaFinReserva = horaInicioReserva + reserva.duracion;
+
+          // Generar slots antes de la reserva
+          while (tiempoLibre + duracionServicio <= horaInicioReserva) {
             disponibilidadGlobal.push({
               trabajador: {
                 id: trabajador._id,
@@ -302,19 +298,38 @@ async function getHorariosDisponiblesMicroEmpresa(serviceId, date) {
             });
             tiempoLibre += duracionServicio;
           }
+          // Actualizar el tiempo libre para que empiece después de la reserva
+          tiempoLibre = Math.max(tiempoLibre, horaFinReserva);
+        });
+
+        // Generar slots después de la última reserva en el bloque
+        while (tiempoLibre + duracionServicio <= horaFinBloque) {
+          disponibilidadGlobal.push({
+            trabajador: {
+              id: trabajador._id,
+              nombre: `${trabajador.nombre} ${trabajador.apellido}`
+            },
+            slot: {
+              inicio: minutesToTime(tiempoLibre),
+              fin: minutesToTime(tiempoLibre + duracionServicio)
+            }
+          });
+          tiempoLibre += duracionServicio;
         }
       }
-  
-      if (!disponibilidadGlobal.length) {
-        return [null, "No hay disponibilidad para este servicio en la fecha seleccionada"];
-      }
-  
-      return [disponibilidadGlobal, null];
-    } catch (error) {
-      console.error("Error al obtener los horarios disponibles:", error);
-      return [null, "Ocurrió un error al calcular los horarios disponibles"];
     }
+
+    if (!disponibilidadGlobal.length) {
+      return [null, "No hay disponibilidad para este servicio en la fecha seleccionada"];
+    }
+
+    return [disponibilidadGlobal, null];
+  } catch (error) {
+    console.error("Error al obtener los horarios disponibles:", error);
+    return [null, "Ocurrió un error al calcular los horarios disponibles"];
   }
+}
+
 
 
 // exporta todas las funciones  

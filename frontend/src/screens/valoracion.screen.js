@@ -1,18 +1,22 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, Button, Alert, StyleSheet, TouchableOpacity,Platform } from 'react-native';
-
+import { 
+  SafeAreaView,
+  View, 
+  Text, 
+  TextInput, 
+  Alert, 
+  StyleSheet, 
+  TouchableOpacity,
+  Platform,
+  StatusBar 
+} from 'react-native';
 import valoracionService from '../services/valoracion.service';
 import servicioService from '../services/servicio.service';
 
 const ValoracionServicioScreen = ({ route, navigation }) => {
   const { reserva, clienteId } = route.params;
-  //console.log("cliente id", clienteId);
-  //console.log("reserva",reserva);
-
   const [puntuacion, setPuntuacion] = useState(5);
   const [comentario, setComentario] = useState('');
-  //console.log("id reserva", reserva._id);
-  //id de trabajador de microempresa por servicio
   let idMicroempresa = null;
 
   const handleSubmit = async () => {
@@ -20,8 +24,8 @@ const ValoracionServicioScreen = ({ route, navigation }) => {
       Alert.alert('Error', 'Por favor, selecciona una puntuación.');
       return;
     }
-   
-    //borrar <->
+    
+    // Obtenemos el id de la microempresa
     idMicroempresa = await servicioService.getMicroempresaIdByServicioId(reserva.servicio._id);
     
     const valoracionData = {
@@ -34,10 +38,8 @@ const ValoracionServicioScreen = ({ route, navigation }) => {
       comentario,
     };
 
-     console.log(valoracionData);
     try {
       await valoracionService.crearValoracion(valoracionData);
-      console.log(valoracionData);
       Alert.alert('Éxito', 'Tu valoración ha sido enviada.');
       navigation.goBack();
     } catch (error) {
@@ -45,95 +47,139 @@ const ValoracionServicioScreen = ({ route, navigation }) => {
     }
   };
 
+  // Formateo de la fecha: "nombre del día, dd de MMMM de YYYY"
+  const formattedFecha = new Date(reserva.fecha).toLocaleDateString('es-ES', { 
+    weekday: 'long', 
+    day: '2-digit', 
+    month: 'long', 
+    year: 'numeric'
+  });
+
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Valorar Servicio</Text>
+    <SafeAreaView style={styles.safeArea}>
+      <View style={styles.outerContainer}>
+        <View style={styles.container}>
+          {/* Encabezado: Título y detalles */}
+          <Text style={styles.title}>Valorar Servicio</Text>
+          <Text style={styles.detailText}>Servicio: {reserva.servicio.nombre}</Text>
+          <Text style={styles.detailText}>
+            Trabajador: {reserva.trabajador.nombre} {reserva.trabajador.apellido}
+          </Text>
+          <Text style={styles.detailText}>Fecha: {formattedFecha}</Text>
 
-      <Text style={styles.label}>Puntuación:</Text>
-      <View style={styles.ratingContainer}>
-        {[1, 2, 3, 4, 5].map((star) => (
-          <TouchableOpacity key={star} onPress={() => setPuntuacion(star)}>
-            <Text style={[styles.star, puntuacion >= star ? styles.starSelected : null]}>
-              ★
-            </Text>
+          <Text style={styles.label}>Puntuación:</Text>
+          <View style={styles.ratingContainer}>
+            {[1, 2, 3, 4, 5].map((star) => (
+              <TouchableOpacity key={star} onPress={() => setPuntuacion(star)}>
+                <Text style={[styles.star, puntuacion >= star && styles.starSelected]}>
+                  ★
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+
+          <Text style={styles.label}>Comentario:</Text>
+          <TextInput
+            style={styles.textInput}
+            placeholder="Escribe tu comentario..."
+            multiline
+            maxLength={500}
+            value={comentario}
+            onChangeText={setComentario}
+          />
+
+          <TouchableOpacity style={styles.submitButton} onPress={handleSubmit}>
+            <Text style={styles.submitButtonText}>Enviar Valoración</Text>
           </TouchableOpacity>
-        ))}
+        </View>
+
+        {/* Botón Volver en la esquina inferior izquierda */}
+        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.footerBackButton}>
+          <Text style={styles.footerBackButtonText}>← Volver</Text>
+        </TouchableOpacity>
       </View>
-
-      <Text style={styles.label}>Comentario:</Text>
-      <TextInput
-        style={styles.textInput}
-        placeholder="Escribe tu comentario..."
-        multiline
-        maxLength={500}
-        value={comentario}
-        onChangeText={setComentario}
-      />
-
-      <TouchableOpacity style={styles.button} onPress={handleSubmit}>
-            <Text style={styles.buttonText}>Enviar Valoración</Text>
-      </TouchableOpacity>
-    </View>
+    </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
+  safeArea: {
     flex: 1,
-    padding: 20,
-    backgroundColor: '#f0f0f5', // Fondo más suave
+    backgroundColor: '#f0f0f5',
+    paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight : 0,
+  },
+  outerContainer: {
+    flex: 1,
+    justifyContent: 'space-between',
     paddingHorizontal: 20,
     paddingVertical: 30,
+  },
+  container: {
+    flex: 1,
   },
   title: {
     fontSize: 28,
     fontWeight: 'bold',
     textAlign: 'center',
-    marginTop: '15%',
-    color: '#4A90E2 ',
-    fontFamily: 'Arial',
+    color: '#4A90E2',
+    marginBottom: 20,
+  },
+  detailText: {
+    fontSize: 16,
+    textAlign: 'center',
+    color: '#555',
+    marginBottom: 10,
   },
   label: {
-    marginTop: 35,
     fontSize: 18,
     fontWeight: 'bold',
     color: '#444',
-     
+    marginTop: 20,
+    marginBottom: 8,
   },
   ratingContainer: {
     flexDirection: 'row',
-    justifyContent: 'space-arround',
-    marginVertical: 15, 
+    justifyContent: 'center',
+    marginVertical: 15,
   },
-
   star: {
-    fontSize: 40, // Tamaño ajustado para destacar mejor
-    color: '#ccc', // Color gris claro para las no seleccionadas
-    marginHorizontal: 10, // Espacio uniforme entre las estrellas
+    fontSize: 40,
+    color: '#ccc',
+    marginHorizontal: 6,
   },
   starSelected: {
-    color: '#FFD700', // Amarillo brillante para las estrellas seleccionadas
+    color: '#FFD700',
   },
   textInput: {
     borderWidth: 1,
-    borderColor: '#4A90E2', // Bordes más vibrantes
+    borderColor: '#4A90E2',
     padding: 12,
-    borderRadius: 10, // Bordes más redondeados
+    borderRadius: 10,
     height: 100,
-    marginTop: 10,
-    backgroundColor: '#f9f9f9', // Fondo suave
-    fontSize: 16, // Texto más legible
-    textAlignVertical: 'top', // Asegura que el texto comience desde arriba
+    backgroundColor: '#f9f9f9',
+    fontSize: 16,
+    textAlignVertical: 'top',
+    marginBottom: 20,
   },
-  button: {
-    backgroundColor: '#4A90E2', // Fondo azul vibrante
+  submitButton: {
+    backgroundColor: '#4A90E2',
     padding: 15,
     borderRadius: 8,
     alignItems: 'center',
-    marginTop: 20,
-    width: '100%', // Botón más grande
   },
-  buttonText: {
+  submitButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  footerBackButton: {
+    backgroundColor: 'red',
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderRadius: 8,
+    alignSelf: 'flex-start',
+  },
+  footerBackButtonText: {
     color: '#fff',
     fontSize: 16,
     fontWeight: 'bold',
