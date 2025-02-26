@@ -19,6 +19,7 @@ import SeleccionMicroempresaScreen from '../screens/seleccionMicroempresa.screen
 import SuscripcionScreen from '../screens/suscripcion.screen.js';
 import PaymentScreen from '../screens/pago.screen.js';
 import LoginScreen from '../screens/login.screen.js';
+import RegistroClienteScreen from '../screens/registroClientes.screen.js';
 // import HomeScreen from '../screens/home.screen.js';
 import CalendarScreen from '../screens/calendario.screen.js'; 
 import HomeClienteScreen from '../screens/homeCliente.screen.js';
@@ -28,6 +29,7 @@ import ConfirmacionReservaScreen from '../screens/confirmacionReserva.screen.js'
 // import TestScreen from '../screens/testimagenes.screen.js';
 import ReservaClienteScreen from '../screens/reservasCliente.screen.js';
 import ValoracionServicioScreen from '../screens/valoracion.screen.js';
+import AceptarInvitacionScreen from '../screens/aceptarInvitacionScreen.js';
 
 // Pantallas para Trabajador
 import gestorSuscripcionScreen from '../screens/gestorSuscripcion.screen.js'; 
@@ -43,6 +45,7 @@ import Horario from '../screens/horario.screen.js';
 import EditarHorarioScreen from '../screens/editarHorarioScreen.js';
 import ConfirmacionReservaSlotScreen from '../screens/confirmacionReservaSlot.screen.js';
 
+import InvitarTrabajadorScreen from '../screens/invitarTrabajadores.screen.js';
 // Contexto de autenticación
 import { AuthContext } from '../context/auth.context';
 
@@ -118,7 +121,8 @@ const AppNavigator = () => {
       <Stack.Screen name="MicroempresaCliente" component={MicroempresaClienteScreen} />
       <Stack.Screen name="SeleccionServicio" component={SeleccionServicioScreen} />
       <Stack.Screen name="ConfirmacionReserva" component={ConfirmacionReservaScreen} />
-      <Stack.Screen name="Valoracion" component={ValoracionServicioScreen} />   
+      <Stack.Screen name="Valoracion" component={ValoracionServicioScreen} />
+      <Stack.Screen name="AceptarInvitacion" component={AceptarInvitacionScreen} />   
       <Stack.Screen name="Pago" component={PaymentScreen} /> 
       <Stack.Screen name="Login" component={LoginScreen} />
       <Stack.Screen name= "ConfirmacionReservaSlotScreen" component={ConfirmacionReservaSlotScreen} />
@@ -134,6 +138,7 @@ const AppNavigator = () => {
       <Stack.Screen name="GestorSuscripcion" component={gestorSuscripcionScreen} /> 
       <Stack.Screen name="CardScreen" component={CardScreen} />
       <Stack.Screen name="Microempresa" component={MicroempresaInicioScreeen} />
+      <Stack.Screen name="InvitarTrabajador" component={InvitarTrabajadorScreen} />
       <Stack.Screen name="EditarMicroempresa" component={FormularioEdicionMicroempresa} />
       <Stack.Screen name="SubirFotoPerfil" component={SubirFotoPerfilScreen} />
       <Stack.Screen name="SubirImagenes" component={SubirImagenesScreen} />
@@ -153,8 +158,8 @@ const AppNavigator = () => {
     <Stack.Navigator screenOptions={{ headerShown: false }}>
       {isAuthenticated ? (
         (() => {
-          console.log('Valor de user:', user); // Verifica si `user` existe y muestra su contenido
-          console.log('Valor de user.kind:', user?.kind); // Verifica el valor de `kind`
+          console.log('Valor de user:', user); 
+          console.log('Valor de user.kind:', user?.kind);
           return user?.kind === 'Cliente' ? ( 
             <Stack.Screen name="Cliente" component={ClienteStack} />
           ) : (
@@ -162,7 +167,10 @@ const AppNavigator = () => {
           );
         })()
       ) : (
-        <Stack.Screen name="Login" component={LoginScreen} />
+        <>
+          <Stack.Screen name="Login" component={LoginScreen} />
+          <Stack.Screen name="RegistroCliente" component={RegistroClienteScreen} />
+        </>
       )}
     </Stack.Navigator>
   );

@@ -8,26 +8,35 @@ export default function InvitarTrabajadorScreen({ navigation, route }) {
     const [loading, setLoading] = useState(false);
 
     const handleEnviarInvitacion = async () => {
-        if (!email.trim()) {
+      if (!email.trim()) {
           Alert.alert("Error", "Por favor ingresa un correo válido.");
           return;
-        }
-      
-        try {
+      }
+  
+      try {
           setLoading(true);
           const response = await invitacionService.enviarInvitacion(email, idMicroempresa);
-          console.log("📡 Invitación enviada con éxito:", response);
-          Alert.alert("Éxito", "La invitación fue enviada correctamente.", [
-            { text: "OK", onPress: () => navigation.goBack() }
-          ]);
-        } catch (error) {
+  
+          // 📌 Revisamos la estructura correcta de la respuesta
+          const codigo = response?.data?.data?.codigoInvitacion; 
+  
+          if (codigo) {
+              console.log("📡 Invitación enviada con éxito:", response);
+              Alert.alert(
+                  "Invitación Enviada",
+                  `Se ha enviado una invitación a ${email} con el código: ${codigo}`,
+                  [{ text: "OK", onPress: () => navigation.goBack() }]
+              );
+          } else {
+              throw new Error("No se generó un código de invitación en la respuesta.");
+          }
+      } catch (error) {
           console.error("❌ Error al enviar la invitación:", error.message);
           Alert.alert("Error", "No se pudo enviar la invitación.");
-        } finally {
+      } finally {
           setLoading(false);
-        }
-      };
-      
+      }
+  };  
 
     return (
         <View style={styles.container}>
