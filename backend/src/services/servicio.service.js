@@ -109,4 +109,31 @@ async function calcularMontoAbono(id, precio, porcentajeAbono) {
         handleError(error, "servicio.service -> calcularMontoAbono");
     }
 }
-export default { getServicios, createServicio, deleteServicio, updateServicio, getServicioById, getServiciosByMicroempresaId, configurarPorcentajeAbono, calcularMontoAbono };
+
+//funcion para retornar el id de la microempresa por el id del servicio
+
+async function getMicroempresaIdByServicioId(servicioId) {
+    try {
+        const servicio = await Servicio.findById(servicioId).exec();
+        if (!servicio) return [null, "El servicio no existe"];
+        return [servicio.idMicroempresa, null];
+    } catch (error) {
+        handleError(error, "servicio.service -> getMicroempresaIdByServicioId");
+    }
+}
+
+
+
+
+// Exportamos las funciones definidas   
+export default {
+    getServicios, 
+    createServicio, 
+    deleteServicio, 
+    updateServicio,
+    getServicioById,
+    getServiciosByMicroempresaId,
+    configurarPorcentajeAbono, 
+    calcularMontoAbono, 
+    getMicroempresaIdByServicioId 
+};

@@ -255,6 +255,7 @@ async function getMicroempresaIdByTrabajadorId(trabajadorId) {
     try {
         const microempresa = await Microempresa.findOne({ idTrabajador: trabajadorId });
         if (!microempresa) return [null, "No hay microempresas"];
+        console.log("📡 ID de la microempresa obtenido:", microempresa._id);
         return [microempresa._id, null];
     } catch (error) {
         handleError(error, "microempresa.service -> getMicroempresaIdByTrabajadorId");

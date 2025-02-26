@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { View, Text, TextInput, Button, Alert, StyleSheet, TouchableOpacity,Platform } from 'react-native';
 
 import valoracionService from '../services/valoracion.service';
-import microempresaService from '../services/microempresa.service';
+import servicioService from '../services/servicio.service';
 
 const ValoracionServicioScreen = ({ route, navigation }) => {
   const { reserva, clienteId } = route.params;
@@ -21,8 +21,8 @@ const ValoracionServicioScreen = ({ route, navigation }) => {
       return;
     }
    
-    idMicroempresa = await microempresaService.getMicroempresaIdByTrabajadorId(reserva.trabajador._id);
-  
+    //borrar <->
+    idMicroempresa = await servicioService.getMicroempresaIdByServicioId(reserva.servicio._id);
     
     const valoracionData = {
       microempresa: idMicroempresa,

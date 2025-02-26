@@ -1,12 +1,15 @@
 import React, { useEffect, useState } from 'react';
 import {
+  SafeAreaView,
   View,
   Text,
   StyleSheet,
   TouchableOpacity,
   ActivityIndicator,
   Modal,
-  FlatList
+  FlatList,
+  Platform,
+  StatusBar,
 } from 'react-native';
 import horarioService from '../services/horario.service';
 import reservaService from '../services/reserva.service';
@@ -14,13 +17,10 @@ import servicioService from '../services/servicio.service';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-
 const ConfirmacionReservaSlotScreen = () => {
   const route = useRoute();
   const navigation = useNavigation();
   const { microempresaId, trabajadorId, servicioId, fecha, trabajadorNombre } = route.params;
-
-  console.log('Datos de la ruta:', route.params);
 
   const [horarios, setHorarios] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -30,26 +30,22 @@ const ConfirmacionReservaSlotScreen = () => {
   const [error, setError] = useState(null);
   const [clienteId, setClienteId] = useState(null);
 
-    useEffect(() => {
+  useEffect(() => {
     const fetchClienteId = async () => {
-        try {
+      try {
         const userData = await AsyncStorage.getItem('user');
-       if (userData) {
-            const parsedData = JSON.parse(userData);
-            setClienteId(parsedData.id);
+        if (userData) {
+          const parsedData = JSON.parse(userData);
+          setClienteId(parsedData.id);
         }
-
-        } catch (error) {
+      } catch (error) {
         console.error('Error al obtener el ID del cliente:', error);
-        }
+      }
     };
 
     fetchClienteId();
-    }, []);
+  }, []);
 
-  
-
-  // Obtener duración del servicio
   useEffect(() => {
     const fetchDuracionServicio = async () => {
       try {
@@ -62,9 +58,7 @@ const ConfirmacionReservaSlotScreen = () => {
     fetchDuracionServicio();
   }, [servicioId]);
 
-  // Obtener horarios disponibles
-  
-    useEffect(() => {
+  useEffect(() => {
     const fetchDisponibilidad = async () => {
       if (!fecha || !duracionServicio) return;
   
@@ -85,61 +79,52 @@ const ConfirmacionReservaSlotScreen = () => {
           });
         }
   
-      
         if (response.state === 'Success') {
-            let slots = response.data;
+          let slots = response.data;
+          // Si no se seleccionó trabajador, unificar y asignar uno aleatorio
+          if (!trabajadorId) {
+            const uniqueSlots = {};
+            slots.forEach((slotEntry) => {
+              const inicio = slotEntry.slot ? slotEntry.slot.inicio : slotEntry.inicio;
+              const fin = slotEntry.slot ? slotEntry.slot.fin : slotEntry.fin;
+              const trabajador = slotEntry.trabajador || null;
           
-            // Si no hay trabajador específico, unificar y asignar trabajador aleatorio
-            if (!trabajadorId) {
-              const uniqueSlots = {};
-              slots.forEach((slotEntry) => {
-                const inicio = slotEntry.slot ? slotEntry.slot.inicio : slotEntry.inicio;
-                const fin = slotEntry.slot ? slotEntry.slot.fin : slotEntry.fin;
-                const trabajador = slotEntry.trabajador || null;
-          
-                const key = `${inicio}-${fin}`;
-                if (!uniqueSlots[key]) {
-                  uniqueSlots[key] = { inicio, fin, trabajadores: trabajador ? [trabajador] : [] };
-                } else if (trabajador) {
-                  if (!uniqueSlots[key].trabajadores.includes(trabajador)) {
-                    uniqueSlots[key].trabajadores.push(trabajador);
-                  }
+              const key = `${inicio}-${fin}`;
+              if (!uniqueSlots[key]) {
+                uniqueSlots[key] = { inicio, fin, trabajadores: trabajador ? [trabajador] : [] };
+              } else if (trabajador) {
+                if (!uniqueSlots[key].trabajadores.includes(trabajador)) {
+                  uniqueSlots[key].trabajadores.push(trabajador);
                 }
-              });
-          
-              slots = Object.values(uniqueSlots).map((slot) => {
-                if (slot.trabajadores.length > 0) {
-                  const randomIndex = Math.floor(Math.random() * slot.trabajadores.length);
-                  slot.trabajadorAsignado = slot.trabajadores[randomIndex];
-                }
-                return slot;
-              });
-            }
-          
-            // Filtrar los slots si la fecha seleccionada es hoy
-            const fechaSeleccionada = new Date(fecha);
-            const hoy = new Date();
-            console.log('Fecha seleccionada:', fechaSeleccionada, 'Hoy:', hoy);
-
-            if (fechaSeleccionada.toISOString().split('T')[0] === hoy.toISOString().split('T')[0]) {
-                const horaActual = hoy.getUTCHours() + hoy.getUTCMinutes() / 60; // Hora actual en formato decimal (UTC)
-              
-                slots = slots.filter((slot) => {
-                  const [horaInicio, minutoInicio] = slot.inicio.split(':').map(Number);
-                  const horaSlot = horaInicio + minutoInicio / 60; // Hora del slot en formato decimal
-                  return horaSlot > horaActual; // Filtrar solo los horarios futuros
-                });
               }
-              
+            });
           
-            // Ordenar slots por hora de inicio
-            slots.sort((a, b) => a.inicio.localeCompare(b.inicio));
-          
-            setHorarios(slots);
-          } else {
-            setError('No hay horarios disponibles.');
+            slots = Object.values(uniqueSlots).map((slot) => {
+              if (slot.trabajadores.length > 0) {
+                const randomIndex = Math.floor(Math.random() * slot.trabajadores.length);
+                slot.trabajadorAsignado = slot.trabajadores[randomIndex];
+              }
+              return slot;
+            });
           }
-          
+  
+          // Filtrar slots si la fecha es hoy (solo horarios futuros)
+          const fechaSeleccionada = new Date(fecha);
+          const hoy = new Date();
+          if (fechaSeleccionada.toISOString().split('T')[0] === hoy.toISOString().split('T')[0]) {
+            const horaActual = hoy.getUTCHours() + hoy.getUTCMinutes() / 60;
+            slots = slots.filter((slot) => {
+              const [horaInicio, minutoInicio] = slot.inicio.split(':').map(Number);
+              const horaSlot = horaInicio + minutoInicio / 60;
+              return horaSlot > horaActual;
+            });
+          }
+  
+          slots.sort((a, b) => a.inicio.localeCompare(b.inicio));
+          setHorarios(slots);
+        } else {
+          setError('No hay horarios disponibles.');
+        }
       } catch (err) {
         console.error('Error al obtener disponibilidad:', err);
         setError('Ocurrió un error al obtener los horarios.');
@@ -150,9 +135,7 @@ const ConfirmacionReservaSlotScreen = () => {
   
     fetchDisponibilidad();
   }, [trabajadorId, servicioId, fecha, duracionServicio]);
-  
 
-  // Función para seleccionar un slot y mostrar el modal
   const handleSlotPress = (slot) => {
     let assignedTrabajador = trabajadorId;
     let assignedTrabajadorNombre = trabajadorNombre;
@@ -160,125 +143,165 @@ const ConfirmacionReservaSlotScreen = () => {
     if (!trabajadorId && slot.trabajadores && slot.trabajadores.length > 0) {
       const randomIndex = Math.floor(Math.random() * slot.trabajadores.length);
       const trabajadorSeleccionado = slot.trabajadores[randomIndex];
-      assignedTrabajador = trabajadorSeleccionado._id || trabajadorSeleccionado.id; // Asegúrate de usar el ID correcto
-      assignedTrabajadorNombre = trabajadorSeleccionado.nombre || 'Trabajador desconocido'; // Asegúrate que el objeto tenga 'nombre'
+      assignedTrabajador = trabajadorSeleccionado._id || trabajadorSeleccionado.id;
+      assignedTrabajadorNombre = trabajadorSeleccionado.nombre || 'Trabajador desconocido';
     }
   
     setSelectedSlot({ ...slot, trabajadorAsignado: assignedTrabajador, trabajadorNombre: assignedTrabajadorNombre });
     setModalVisible(true);
-    console.log('Slot seleccionado:', slot, 'Trabajador asignado:', assignedTrabajadorNombre);
   };
-  
-  // Confirmar la reserva
+
   const confirmarReserva = async () => {
     try {
       const reservaData = {
-        trabajador: trabajadorId || selectedSlot.trabajadorAsignado, // ID correcto del trabajador
-        servicio: servicioId, // ID correcto del servicio
-        fecha, // La fecha debe estar en formato correcto
-        hora_inicio: selectedSlot.inicio, // Hora de inicio
-        cliente: clienteId, // Asegúrate de tener este ID disponible
-        estado: 'Activa', // Estado inicial de la reserva
+        trabajador: trabajadorId || selectedSlot.trabajadorAsignado,
+        servicio: servicioId,
+        fecha,
+        hora_inicio: selectedSlot.inicio,
+        cliente: clienteId,
+        estado: 'Activa',
       };
   
-      const reserva = await reservaService.createReservaHorario(reservaData);
+      const response   = await reservaService.createReservaHorario(reservaData);
+      console.log('Reserva creada:', response);
 
       if (error) {
         console.error('Error al confirmar reserva:', error);
         return;
       }
   
-      console.log('Reserva confirmada:', reserva);
       setModalVisible(false);
-      navigation.navigate('Reservas');  // Redirige a la pantalla de reservas
+      navigation.navigate('HomeNavigator', { screen: 'Reservas' });
     } catch (error) {
       console.error('Error al confirmar reserva:', error);
     }
   };
-  
-  
 
-  // Render de error
   if (error) {
     return (
-      <View style={styles.containerError}>
-        <Text style={styles.errorHeader}>Error</Text>
-        <Text style={styles.errorText}>{error}</Text>
-        <TouchableOpacity onPress={() => setError(null)} style={styles.retryButton}>
-          <Text style={styles.buttonText}>Reintentar</Text>
-        </TouchableOpacity>
-      </View>
+      <SafeAreaView style={styles.safeArea}>
+        <View style={styles.containerError}>
+          <Text style={styles.errorHeader}>Error</Text>
+          <Text style={styles.errorText}>{error}</Text>
+          <TouchableOpacity onPress={() => setError(null)} style={styles.retryButton}>
+            <Text style={styles.buttonText}>Reintentar</Text>
+          </TouchableOpacity>
+        </View>
+      </SafeAreaView>
     );
   }
 
-  // Render de carga
   if (loading) {
     return (
-      <View style={styles.loaderContainer}>
-        <ActivityIndicator size="large" color="#000" />
-        <Text>Cargando disponibilidad...</Text>
-      </View>
+      <SafeAreaView style={styles.safeArea}>
+        <View style={styles.loaderContainer}>
+          <ActivityIndicator size="large" color="#000" />
+          <Text>Cargando disponibilidad...</Text>
+        </View>
+      </SafeAreaView>
     );
   }
 
-  // Render principal con los horarios
   return (
-    <View style={styles.container}>
-      <Text style={styles.header}>Selecciona un horario</Text>
-      <FlatList
-                data={horarios}
-                keyExtractor={(item, index) => index.toString()}
-                ListEmptyComponent={<Text>No hay horarios disponibles</Text>}
-                renderItem={({ item }) => {
-                    console.log("Item:", item); // Verifica que cada slot tenga datos
-                    return (
-                    <TouchableOpacity
-                        style={styles.slotButton}
-                        onPress={() => handleSlotPress(item)}
-                    >
-                        <Text>{`${item.inicio} - ${item.fin}`}</Text>
-                    </TouchableOpacity>
-                    );
-                }}
-                />
+    <SafeAreaView style={styles.safeArea}>
+      <View style={styles.container}>
+        <Text style={styles.header}>Selecciona un horario</Text>
+        <FlatList
+          data={horarios}
+          keyExtractor={(item, index) => index.toString()}
+          numColumns={2}
+          columnWrapperStyle={styles.row}
+          ListEmptyComponent={<Text style={styles.emptyText}>No hay horarios disponibles</Text>}
+          renderItem={({ item }) => (
+            <TouchableOpacity
+              style={styles.slotButton}
+              onPress={() => handleSlotPress(item)}
+            >
+              <Text style={styles.slotText}>{`${item.inicio} - ${item.fin}`}</Text>
+            </TouchableOpacity>
+          )}
+        />
 
-
-      {/* Modal de confirmación */}
-      <Modal visible={modalVisible} transparent animationType="slide">
-        <View style={styles.modalContainer}>
-          <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Confirmar Reserva</Text>
-            {selectedSlot && (
+        <Modal visible={modalVisible} transparent animationType="slide">
+          <View style={styles.modalContainer}>
+            <View style={styles.modalContent}>
+              <Text style={styles.modalTitle}>Confirmar Reserva</Text>
+              {selectedSlot && (
                 <>
-                    <Text>Horario: {selectedSlot.inicio} - {selectedSlot.fin}</Text>
-                    <Text>Trabajador asignado: {trabajadorId ? trabajadorNombre : selectedSlot.trabajadorNombre}</Text>
+                  <Text style={styles.modalInfo}>
+                    Horario: {selectedSlot.inicio} - {selectedSlot.fin}
+                  </Text>
+                  <Text style={styles.modalInfo}>
+                    Trabajador asignado: {trabajadorId ? trabajadorNombre : selectedSlot.trabajadorNombre}
+                  </Text>
                 </>
-                )}
-
-            <TouchableOpacity onPress={confirmarReserva} style={styles.confirmButton}>
-              <Text style={styles.buttonText}>Confirmar</Text>
-            </TouchableOpacity>
-            <TouchableOpacity onPress={() => setModalVisible(false)} style={styles.cancelButton}>
-              <Text style={styles.buttonText}>Cancelar</Text>
-            </TouchableOpacity>
+              )}
+              <TouchableOpacity onPress={confirmarReserva} style={styles.confirmButton}>
+                <Text style={styles.buttonText}>Confirmar</Text>
+              </TouchableOpacity>
+              <TouchableOpacity onPress={() => setModalVisible(false)} style={styles.cancelButton}>
+                <Text style={styles.buttonText}>Cancelar</Text>
+              </TouchableOpacity>
+            </View>
           </View>
-        </View>
-      </Modal>
-    </View>
+        </Modal>
+      </View>
+    </SafeAreaView>
   );
 };
 
-// Estilos
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: 20 },
-  header: { fontSize: 20, fontWeight: 'bold', marginBottom: 20 },
-  slotButton: {
-    padding: 15,
-    backgroundColor: '#ddd',
-    borderRadius: 10,
+  safeArea: {
+    flex: 1,
+    backgroundColor: '#f0f4f7',
+    paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight : 0,
+  },
+  container: { 
+    flex: 1,
+    padding: 20,
+  },
+  header: {
+    fontSize: 22,
+    fontWeight: 'bold',
+    color: '#333',
+    marginBottom: 20,
+    textAlign: 'center',
+  },
+  row: {
+    justifyContent: 'space-between',
     marginBottom: 10,
   },
-  loaderContainer: { flex: 1, justifyContent: 'center', alignItems: 'center' },
+  slotButton: {
+    backgroundColor: '#fff',
+    paddingVertical: 15,
+    paddingHorizontal: 10,
+    borderRadius: 10,
+    marginVertical: 5,
+    flex: 1,
+    marginHorizontal: 5,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 3,
+    elevation: 2,
+  },
+  slotText: {
+    fontSize: 16,
+    color: '#333',
+  },
+  loaderContainer: { 
+    flex: 1, 
+    justifyContent: 'center', 
+    alignItems: 'center' 
+  },
+  emptyText: {
+    textAlign: 'center',
+    marginTop: 20,
+    fontSize: 16,
+    color: '#555',
+  },
   modalContainer: {
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.5)',
@@ -286,28 +309,48 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   modalContent: {
-    backgroundColor: 'white',
-    padding: 20,
-    borderRadius: 10,
+    backgroundColor: '#fff',
+    padding: 25,
+    borderRadius: 15,
     width: '80%',
+    alignItems: 'center',
+    elevation: 10,
   },
-  modalTitle: { fontSize: 18, fontWeight: 'bold', marginBottom: 10 },
+  modalTitle: { 
+    fontSize: 20, 
+    fontWeight: 'bold', 
+    marginBottom: 15, 
+    color: '#333' 
+  },
+  modalInfo: {
+    fontSize: 16,
+    marginBottom: 10,
+    color: '#555',
+  },
   confirmButton: {
     backgroundColor: 'green',
-    padding: 10,
+    padding: 12,
+    borderRadius: 8,
     marginTop: 10,
-    borderRadius: 5,
+    width: '80%',
+    alignItems: 'center',
   },
   cancelButton: {
     backgroundColor: 'red',
-    padding: 10,
+    padding: 12,
+    borderRadius: 8,
     marginTop: 10,
-    borderRadius: 5,
+    width: '80%',
+    alignItems: 'center',
   },
-  buttonText: { color: 'white', textAlign: 'center' },
+  buttonText: { 
+    color: '#fff', 
+    fontSize: 16, 
+    fontWeight: 'bold' 
+  },
   containerError: {
     flex: 1,
-    backgroundColor: '#f8d7da', // Fondo rojo claro para errores
+    backgroundColor: '#f8d7da',
     justifyContent: 'center',
     alignItems: 'center',
     padding: 20,
@@ -315,7 +358,7 @@ const styles = StyleSheet.create({
   errorHeader: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#721c24', // Rojo oscuro para destacar
+    color: '#721c24',
     marginBottom: 10,
     textAlign: 'center',
   },
@@ -325,33 +368,13 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginBottom: 20,
   },
-  errorButtons: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    width: '100%',
-    paddingHorizontal: 20,
-  },
   retryButton: {
-    backgroundColor: '#007bff', // Azul para el botón "Reintentar"
-    paddingVertical: 12,
-    paddingHorizontal: 20,
-    borderRadius: 8,
-    marginRight: 10,
-    alignItems: 'center',
-    flex: 1,
-  },
-  backButton: {
-    backgroundColor: '#dc3545', // Rojo para el botón "Volver"
+    backgroundColor: '#007bff',
     paddingVertical: 12,
     paddingHorizontal: 20,
     borderRadius: 8,
     alignItems: 'center',
-    flex: 1,
-  },
-  buttonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: 'bold',
+    alignSelf: 'center',
   },
 });
 

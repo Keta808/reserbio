@@ -106,27 +106,6 @@ const HorarioScreen = ({ navigation }) => {
     }
   };
 
-  const renderHorario = ({ item }) => (
-    <View style={styles.item}>
-      <View style={styles.itemContent}>
-        <Text style={styles.itemText}>
-          Día: {item.dia} - {item.hora_inicio} a {item.hora_fin}
-        </Text>
-      </View>
-      <View style={styles.buttonContainer}>
-        <TouchableOpacity style={styles.iconButton} onPress={() => handleEdit(item)}>
-          <Icon name="pencil" size={20} color="#007bff" />
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={styles.iconButton}
-          onPress={() => showModal('Eliminar Horario', '¿Deseas eliminar este horario?', item._id)}
-        >
-          <Icon name="trash" size={20} color="#dc3545" />
-        </TouchableOpacity>
-      </View>
-    </View>
-  );
-
   useFocusEffect(
     useCallback(() => {
       fetchHorarios();
@@ -135,61 +114,76 @@ const HorarioScreen = ({ navigation }) => {
 
   return (
     <View style={styles.container}>
-      <FlatList
-        data={horarios}
-        keyExtractor={(item) => item._id}
-        renderItem={({ item }) => (
-          <View style={styles.item}>
-            <View style={styles.itemContent}>
-              <Text style={styles.itemText}>
-                Día: {item.dia}
-              </Text>
-              {item.bloques && item.bloques.length > 0 ? (
-                item.bloques.map((bloque, index) => (
-                  <Text key={index} style={styles.bloqueText}>
-                    Bloque {index + 1}: {bloque.hora_inicio} - {bloque.hora_fin}
+      {(() => {
+        const dayOrder = {
+          lunes: 1,
+          martes: 2,
+          miércoles: 3,
+          miercoles:3,
+          jueves: 4,
+          viernes: 5,
+          sabado: 6,
+          sábado: 6,
+          domingo: 7,
+        };
+        const sortedHorarios = [...horarios].sort((a, b) => {
+          const dayA = a.dia.toLowerCase();
+          const dayB = b.dia.toLowerCase();
+          return (dayOrder[dayA] || 0) - (dayOrder[dayB] || 0);
+        });
+        return (
+          <FlatList
+            data={sortedHorarios}
+            keyExtractor={(item) => item._id}
+            contentContainerStyle={styles.listContent}
+            renderItem={({ item }) => (
+              <View style={styles.card}>
+                <View style={styles.cardContent}>
+                  <Text style={styles.dayText}>
+                    {item.dia.charAt(0).toUpperCase() + item.dia.slice(1)}
                   </Text>
-                ))
-              ) : (
-                <Text style={styles.emptyBloquesText}>Sin bloques registrados</Text>
-              )}
-            </View>
-            <View style={styles.buttonContainer}>
-              <TouchableOpacity style={styles.iconButton} onPress={() => handleEdit(item)}>
-                <Icon name="pencil" size={20} color="#007bff" />
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={styles.iconButton}
-                onPress={() => showModal('Eliminar Horario', '¿Deseas eliminar este horario?', item._id)}
-              >
-                <Icon name="trash" size={20} color="#dc3545" />
-              </TouchableOpacity>
-            </View>
-          </View>
-        )}
-      />
-  
-      {/* ✅ Botón para crear un nuevo horario */}
+                  {item.bloques && item.bloques.length > 0 ? (
+                    item.bloques.map((bloque, index) => (
+                      <Text key={index} style={styles.blockText}>
+                        {bloque.hora_inicio} - {bloque.hora_fin}
+                      </Text>
+                    ))
+                  ) : (
+                    <Text style={styles.emptyBlockText}>Sin bloques registrados</Text>
+                  )}
+                </View>
+                <View style={styles.iconContainer}>
+                  <TouchableOpacity style={styles.iconButton} onPress={() => handleEdit(item)}>
+                    <Icon name="pencil" size={24} color="#007bff" />
+                  </TouchableOpacity>
+                  <TouchableOpacity style={styles.iconButton} onPress={() => showModal('Eliminar Horario', '¿Deseas eliminar este horario?', item._id)}>
+                    <Icon name="trash" size={24} color="#dc3545" />
+                  </TouchableOpacity>
+                </View>
+              </View>
+            )}
+          />
+        );
+      })()}
       <TouchableOpacity style={styles.createButton} onPress={handleCreate}>
         <Text style={styles.createButtonText}>Añadir Nuevo Horario</Text>
       </TouchableOpacity>
-  
       <Modal
         visible={modalVisible}
         transparent
-        animationType="slide"
+        animationType="fade"
         onRequestClose={() => setModalVisible(false)}
       >
-        <View style={styles.modalContainer}>
+        <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
             <Text style={styles.modalTitle}>{modalTitle}</Text>
             <Text style={styles.modalMessage}>{modalMessage}</Text>
-            <View style={styles.modalButtons}>
-              <TouchableOpacity style={styles.modalButton} onPress={() => handleDelete(selectedHorarioId)}>
-                <Text style={styles.modalButtonText}>Eliminar</Text>
+            <View style={styles.modalActions}>
+              <TouchableOpacity style={styles.deleteButton} onPress={() => handleDelete(selectedHorarioId)}>
+                <Text style={styles.deleteButtonText}>Eliminar</Text>
               </TouchableOpacity>
-              <TouchableOpacity style={styles.modalButton} onPress={() => setModalVisible(false)}>
-                <Text style={styles.modalButtonText}>Cancelar</Text>
+              <TouchableOpacity style={styles.cancelButton} onPress={() => setModalVisible(false)}>
+                <Text style={styles.cancelButtonText}>Cancelar</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -197,150 +191,130 @@ const HorarioScreen = ({ navigation }) => {
       </Modal>
     </View>
   );
-  
-  
-};
+}
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    padding: 20,
-    backgroundColor: '#f8f9fa',
-  },
-  title: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    color: '#007bff',
-    marginBottom: 20,
-    textAlign: 'center',
-  },
-  item: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    padding: 15,
-    borderRadius: 12,
-    marginBottom: 10,
-    backgroundColor: '#ffffff',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 6,
-    elevation: 3,
-  },
-  itemContent: {
-    flex: 1,
-  },
-  itemText: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#333',
-  },
-  buttonContainer: {
-    flexDirection: 'row',
-  },
-  iconButton: {
-    backgroundColor: '#f8f9fa',
-    padding: 10,
-    borderRadius: 50,
-    marginHorizontal: 5,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 2,
-  },
-  floatingButton: {
-    position: 'absolute',
-    bottom: 20,
-    alignSelf: 'center',
-    backgroundColor: '#28a745',
-    paddingVertical: 15,
-    paddingHorizontal: 20,
-    borderRadius: 25,
-    elevation: 3,
-    width: '70%',
-    alignItems: 'center',
-  },
-  buttonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  modalContainer: {
-    backgroundColor: '#ffffff',
-    width: '85%',
-    padding: 25,
-    borderRadius: 12,
-    alignItems: 'center',
-  },
+  const styles = StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: '#f0f2f5',
+      paddingHorizontal: 20,
+      paddingTop: 20,
+    },
+    listContent: {
+      paddingBottom: 120,
+    },
+    card: {
+      flexDirection: 'row',
+      backgroundColor: '#fff',
+      padding: 20,
+      borderRadius: 16,
+      marginBottom: 15,
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 4 },
+      shadowOpacity: 0.1,
+      shadowRadius: 8,
+      elevation: 3,
+    },
+    cardContent: {
+      flex: 1,
+    },
+    dayText: {
+      fontSize: 22,
+      fontWeight: '700',
+      color: '#333',
+      marginBottom: 10,
+    },
+    blockText: {
+      fontSize: 16,
+      color: '#555',
+      marginLeft: 10,
+      marginTop: 5,
+    },
+    emptyBlockText: {
+      fontSize: 16,
+      color: '#dc3545',
+      marginLeft: 10,
+      marginTop: 5,
+      fontStyle: 'italic',
+    },
+    iconContainer: {
+      flexDirection: 'row',
+      alignItems: 'center',
+    },
+    iconButton: {
+      backgroundColor: '#f0f2f5',
+      padding: 10,
+      borderRadius: 50,
+      marginLeft: 8,
+    },
+    createButton: {
+      backgroundColor: '#28a745',
+      paddingVertical: 15,
+      paddingHorizontal: 20,
+      borderRadius: 12,
+      alignItems: 'center',
+      marginVertical: 20,
+    },
+    createButtonText: {
+      color: '#fff',
+      fontSize: 16,
+      fontWeight: '700',
+    },
+    modalOverlay: {
+      flex: 1,
+      backgroundColor: 'rgba(0, 0, 0, 0.5)',
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+    modalContent: {
+      backgroundColor: '#fff',
+      width: '85%',
+      padding: 25,
+      borderRadius: 20,
+      alignItems: 'center',
+      elevation: 10,
+    },
+    modalTitle: {
+      fontSize: 22,
+      fontWeight: '700',
+      color: '#333',
+      marginBottom: 15,
+    },
+    modalMessage: {
+      fontSize: 18,
+      color: '#555',
+      textAlign: 'center',
+      marginBottom: 20,
+    },
+    modalActions: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      width: '100%',
+    },
+    deleteButton: {
+      backgroundColor: '#dc3545',
+      paddingVertical: 12,
+      paddingHorizontal: 20,
+      borderRadius: 10,
+      width: '45%',
+      alignItems: 'center',
+    },
+    deleteButtonText: {
+      color: '#fff',
+      fontWeight: '700',
+    },
+    cancelButton: {
+      backgroundColor: '#6c757d',
+      paddingVertical: 12,
+      paddingHorizontal: 20,
+      borderRadius: 10,
+      width: '45%',
+      alignItems: 'center',
+    },
+    cancelButtonText: {
+      color: '#fff',
+      fontWeight: '700',
+    },
+  });
   
-  modalText: {
-    fontSize: 18,
-    color: '#333',
-    textAlign: 'center',
-    marginBottom: 20,
-  },
-  modalDeleteButton: {
-    backgroundColor: '#dc3545',
-    paddingVertical: 12,
-    paddingHorizontal: 25,
-    borderRadius: 8,
-    width: '100%',
-    alignItems: 'center',
-    marginBottom: 10,
-  },
-  modalDeleteButtonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
-  modalCloseButton: {
-    backgroundColor: '#6c757d',
-    paddingVertical: 12,
-    paddingHorizontal: 25,
-    borderRadius: 8,
-    width: '100%',
-    alignItems: 'center',
-  },
-  modalCloseButtonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
-  bloqueText: {
-    fontSize: 16,
-    color: '#555',
-    marginLeft: 10,
-    marginTop: 5,
-  },
-  emptyBloquesText: {
-    fontSize: 16,
-    color: '#dc3545',
-    marginLeft: 10,
-    marginTop: 5,
-    fontStyle: 'italic',
-  },
-  createButton: {
-    backgroundColor: '#28a745',
-    padding: 15,
-    borderRadius: 10,
-    alignItems: 'center',
-    margin: 20, // Añade espacio alrededor
-  },
-  createButtonText: {
-    color: 'white',
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
-  
-  
-});
-
 export default HorarioScreen;
