@@ -28,6 +28,7 @@ import ConfirmacionReservaScreen from '../screens/confirmacionReserva.screen.js'
 // import TestScreen from '../screens/testimagenes.screen.js';
 import ReservaClienteScreen from '../screens/reservasCliente.screen.js';
 import ValoracionServicioScreen from '../screens/valoracion.screen.js';
+import AceptarInvitacionScreen from '../screens/aceptarInvitacionScreen.js';
 
 // Pantallas para Trabajador
 import gestorSuscripcionScreen from '../screens/gestorSuscripcion.screen.js'; 
@@ -35,6 +36,7 @@ import CardScreen from '../screens/cardForm.screen.js';
 import TrabajadorScreen from '../screens/trabajador.screen.js';
 import HomeTrabajadorScreen from '../screens/homeTrabajador.screen.js';
 import ServicioScreen from '../screens/servicio.screen.js';
+import InvitarTrabajadorScreen from '../screens/invitarTrabajadores.screen.js';
 // Contexto de autenticación
 import { AuthContext } from '../context/auth.context';
 
@@ -109,7 +111,8 @@ const AppNavigator = () => {
       <Stack.Screen name="MicroempresaCliente" component={MicroempresaClienteScreen} />
       <Stack.Screen name="SeleccionServicio" component={SeleccionServicioScreen} />
       <Stack.Screen name="ConfirmacionReserva" component={ConfirmacionReservaScreen} />
-      <Stack.Screen name="Valoracion" component={ValoracionServicioScreen} />   
+      <Stack.Screen name="Valoracion" component={ValoracionServicioScreen} />
+      <Stack.Screen name="AceptarInvitacion" component={AceptarInvitacionScreen} />   
       <Stack.Screen name="Pago" component={PaymentScreen} /> 
       <Stack.Screen name="Login" component={LoginScreen} />
       
@@ -124,6 +127,7 @@ const AppNavigator = () => {
       <Stack.Screen name="GestorSuscripcion" component={gestorSuscripcionScreen} /> 
       <Stack.Screen name="CardScreen" component={CardScreen} />
       <Stack.Screen name="Microempresa" component={MicroempresaInicioScreeen} />
+      <Stack.Screen name="InvitarTrabajador" component={InvitarTrabajadorScreen} />
       <Stack.Screen name="EditarMicroempresa" component={FormularioEdicionMicroempresa} />
       <Stack.Screen name="SubirFotoPerfil" component={SubirFotoPerfilScreen} />
       <Stack.Screen name="SubirImagenes" component={SubirImagenesScreen} />
