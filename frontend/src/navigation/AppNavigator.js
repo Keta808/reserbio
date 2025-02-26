@@ -19,6 +19,7 @@ import SeleccionMicroempresaScreen from '../screens/seleccionMicroempresa.screen
 import SuscripcionScreen from '../screens/suscripcion.screen.js';
 import PaymentScreen from '../screens/pago.screen.js';
 import LoginScreen from '../screens/login.screen.js';
+import RegistroClienteScreen from '../screens/registroClientes.screen.js';
 // import HomeScreen from '../screens/home.screen.js';
 import CalendarScreen from '../screens/calendario.screen.js'; 
 import HomeClienteScreen from '../screens/homeCliente.screen.js';
@@ -143,8 +144,8 @@ const AppNavigator = () => {
     <Stack.Navigator screenOptions={{ headerShown: false }}>
       {isAuthenticated ? (
         (() => {
-          console.log('Valor de user:', user); // Verifica si `user` existe y muestra su contenido
-          console.log('Valor de user.kind:', user?.kind); // Verifica el valor de `kind`
+          console.log('Valor de user:', user); 
+          console.log('Valor de user.kind:', user?.kind);
           return user?.kind === 'Cliente' ? ( 
             <Stack.Screen name="Cliente" component={ClienteStack} />
           ) : (
@@ -152,7 +153,10 @@ const AppNavigator = () => {
           );
         })()
       ) : (
-        <Stack.Screen name="Login" component={LoginScreen} />
+        <>
+          <Stack.Screen name="Login" component={LoginScreen} />
+          <Stack.Screen name="RegistroCliente" component={RegistroClienteScreen} />
+        </>
       )}
     </Stack.Navigator>
   );

@@ -34,7 +34,7 @@ import authenticationMiddleware from "../middlewares/authentication.middleware.j
 const router = Router();
 
 // Define las rutas para los usuarios /api/usuarios
-router.use("/users", authenticationMiddleware, userRoutes);
+router.use("/users", userRoutes);
 // Define las rutas para la autenticación /api/auth
 router.use("/auth", authRoutes);
 
