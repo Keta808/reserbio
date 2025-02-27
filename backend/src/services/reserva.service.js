@@ -4,7 +4,6 @@ import { handleError } from "../utils/errorHandler.js";
 
 import UserModels from "../models/user.model.js";
 const { Trabajador, Cliente, User } = UserModels;
-import Disponibilidad from "../models/disponibilidad.model.js";
 import Horario from "../models/horario.model.js";
 import Enlace from "../models/enlace.model.js"; 
 import Servicio from "../models/servicio.model.js";
@@ -517,8 +516,6 @@ export default {
       finalizarReserva,
       getReservasPorFechaTrabajador,
       getReservasPorFechaMicroempresa,
-
-
       createReservaHorario,
     };
 
