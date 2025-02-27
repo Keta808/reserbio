@@ -19,7 +19,7 @@ async function getServicios() {
 
 async function createServicio(servicio) { 
     try { 
-        const { idMicroempresa, nombre, precio, duracion, descripcion, porcentajeAbono } = servicio; 
+        const { idMicroempresa, nombre, precio, duracion, descripcion, porcentajeAbono, urlPago } = servicio; 
        const servicioFound = await Servicio.findOne({ nombre: servicio.nombre });
            if (servicioFound) return [null, "El servicio ya existe"]; 
         const newServicio = new Servicio({
@@ -29,6 +29,7 @@ async function createServicio(servicio) {
             duracion, 
             descripcion,
             porcentajeAbono: porcentajeAbono || 0, 
+            urlPago: urlPago || null, 
         }); 
         await newServicio.save(); 
         return [newServicio, null]; 
@@ -49,17 +50,23 @@ async function deleteServicio(id) {
 
 async function updateServicio(id, servicio) { 
     try { 
-        const { idMicroempresa, nombre, precio, duracion, descripcion, porcentajeAbono } = servicio; 
-        const updatedServicio = await Servicio.findByIdAndUpdate(id, { 
-            idMicroempresa,
-            nombre, 
-            precio, 
-            duracion, 
-            descripcion,
-            porcentajeAbono: porcentajeAbono || 0, 
-        }, { new: true }).exec(); 
-        if (!updatedServicio) return [null, "El servicio no existe"]; 
-        return [updatedServicio, null]; 
+        if (!id) return [null, "ID del servicio no proporcionado."];
+
+        const updateFields = {};
+
+        // Solo actualizar los campos que se han enviado
+        if (servicio.idMicroempresa) updateFields.idMicroempresa = servicio.idMicroempresa;
+        if (servicio.nombre) updateFields.nombre = servicio.nombre;
+        if (servicio.precio) updateFields.precio = servicio.precio;
+        if (servicio.duracion) updateFields.duracion = servicio.duracion;
+        if (servicio.descripcion) updateFields.descripcion = servicio.descripcion;
+        if (servicio.porcentajeAbono !== undefined) updateFields.porcentajeAbono = servicio.porcentajeAbono;
+        if (servicio.urlPago !== undefined) updateFields.urlPago = servicio.urlPago;
+
+        const updatedServicio = await Servicio.findByIdAndUpdate(id, updateFields, { new: true }).exec(); 
+        
+        if (!updatedServicio) return [null, "El servicio no existe."]; 
+        return [updatedServicio, null];  
     } catch (error) { 
         handleError(error, "servicio.service -> updateServicio"); 
     } 

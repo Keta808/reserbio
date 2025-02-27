@@ -35,6 +35,7 @@ import CardScreen from '../screens/cardForm.screen.js';
 import TrabajadorScreen from '../screens/trabajador.screen.js';
 import HomeTrabajadorScreen from '../screens/homeTrabajador.screen.js';
 import ServicioScreen from '../screens/servicio.screen.js';
+import MercadoPagoScreen from '../screens/mercadopago.screen.js';
 // Contexto de autenticación
 import { AuthContext } from '../context/auth.context';
 
@@ -132,6 +133,7 @@ const AppNavigator = () => {
       <Stack.Screen name="Perfil" component={TrabajadorScreen} /> 
       <Stack.Screen name="Servicio" component={ServicioScreen} />
       <Stack.Screen name="Login" component={LoginScreen} />
+      <Stack.Screen name="VincularMercadoPago" component={MercadoPagoScreen} />
     </Stack.Navigator>
   );
   

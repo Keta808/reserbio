@@ -4,6 +4,7 @@ import { useNavigation } from '@react-navigation/native';
 import { AuthContext } from '../context/auth.context';
 // Llamar services de usuario para actualizar datos y botones
 import { getTrabajadorById, updateTrabajador } from '../services/user.service'; 
+import MicroempresaServices from '../services/microempresa.service';
 
 
 export default function TrabajadorScreen() {
@@ -19,18 +20,35 @@ export default function TrabajadorScreen() {
     const [apellido, setApellido] = useState('');
     const [telefono, setTelefono] = useState('');
     const [email, setEmail] = useState('');
-   
+    const [microempresa, setMicroempresa] = useState(null);
+    // Microempresa Data
+    useEffect(() => {
+      
+      
+      const fetchMicroempresaData = async () => {
+        try {
+          if (!user || !user.id) return;
+          
+          const response = await MicroempresaServices.obtenerMicroempresaPorTrabajador(user.id); 
+          
+          if (response?.state === 'Success' && response.data) { 
+            
+            setMicroempresa(response.data);
+        }
+        } catch (error) {
+          console.error("No Microempresa Data:", error.message || error);   
+        } 
+      }; 
+      fetchMicroempresaData();
 
+    },[]);
     useEffect(() => {
         const fetchTrabajadorData = async () => {
           try {
             if (!user) {
               throw new Error("No se pudo identificar al trabajador.");
             }
-    
             const trabajadorData = await getTrabajadorById(user.id);
-            
-
             setDataTrabajador(trabajadorData);
           } catch (error) {
             console.error("Error fetching trabajador data:", error.message || error);
@@ -39,7 +57,6 @@ export default function TrabajadorScreen() {
             setLoading(false);
           }
         };
-    
         fetchTrabajadorData();
       }, [user]);
     
@@ -66,7 +83,7 @@ export default function TrabajadorScreen() {
         setEmail(dataTrabajador.data?.email || '');
         setEditingUserId(dataTrabajador.data?._id || null);
         setModalVisible(true);
-    };
+      };
 
     const handleCancelEdit = () => {
         setModalVisible(false);
@@ -94,12 +111,11 @@ export default function TrabajadorScreen() {
         }
 
         // Enviar al backend con la estructura esperada
-        const response = await updateTrabajador(user.id, { trabajadorData: updatedData });
+        const response = await updateTrabajador(EditinguserId, { trabajadorData: updatedData });
 
           
           if (response && !response[1]) {
             setDataTrabajador({ ...dataTrabajador, data: { ...dataTrabajador.data, ...updatedData } });
-
             limpiarFormulario();
             Alert.alert('Éxito', 'Perfil actualizado correctamente.');
         } else {
@@ -146,11 +162,18 @@ export default function TrabajadorScreen() {
                 color="#007BFF"
               />
             </View>
+            {/* Mostrar opción solo si el usuario tiene una microempresa */}
+             {microempresa !== null && (
+              <View style={{ marginBottom: 10 }}>
+              <Button title="Vincular Mercado Pago" onPress={() => navigation.navigate('VincularMercadoPago', { idMicroempresa: microempresa._id })} color="#007BFF" />
+            </View>
+            )}
             <Button
               title="Volver"
               onPress={() => navigation.goBack()}
               color="#FF6347"
-            />
+            /> 
+             
           </View>
           <Modal 
             animationType="slide"
@@ -221,7 +244,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     marginBottom: 20,
     textAlign: 'center', 
-    color: '#007BFF',
+    color: '#000000',
   },
   infoContainer: {
     marginBottom: 30,
