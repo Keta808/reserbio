@@ -247,6 +247,16 @@ async function getMicroempresaIdByTrabajadorId(trabajadorId) {
     console.error("❌ Error al obtener el ID de la microempresa por trabajador:", error.response?.data || error.message);
     throw error;
   }
+} 
+
+async function obtenerMicroempresaPorTrabajador(idTrabajador) { 
+  try { 
+    const response = await instance.get(`/microempresas/maintrabajador/${idTrabajador}`); 
+    return response.data; 
+  } catch (error) {
+    console.error("Error al obtener la microempresa del main trabajador:", error.response?.data || error.message);
+    throw error;
+  }
 }
 
 export default {
@@ -264,5 +274,5 @@ export default {
   eliminarImagen,
   //-<->- BORRAR -<->-
   getMicroempresaIdByTrabajadorId,
-  
+  obtenerMicroempresaPorTrabajador, 
 };

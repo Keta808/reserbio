@@ -28,6 +28,6 @@ router.delete("/:id", microempresaController.deleteMicroempresaById);
 router.get("/categoria/:categoria", microempresaController.getMicroempresasPorCategoria);
 router.get("/user/:trabajadorId", microempresaController.getMicroempresasByUser);
 router.get("/user/:trabajadorId/id", microempresaController.getMicroempresaIdByTrabajadorId);
-
+router.get("/maintrabajador/:idTrabajador", microempresaController.obtenerMicroempresaPorTrabajador);
 // Exporta el enrutador
 export default router;

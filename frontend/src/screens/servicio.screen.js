@@ -1,9 +1,10 @@
 // Pantalla para configurar servicios 
 import React, { useEffect, useState} from 'react'; 
-import { View, Text, StyleSheet, Alert, TouchableOpacity, ScrollView, TextInput, Modal } from 'react-native';
+import { View, Text, StyleSheet, Alert, TouchableOpacity, TextInput, Modal, FlatList, ActivityIndicator } from 'react-native';
 // import { AuthContext } from '../context/auth.context';
 // import { useNavigation } from '@react-navigation/native';
 import ServicioService from "../services/servicio.service";
+import mercadopagoServices from '../services/mercadopago.service.js';
 import AntDesign from '@expo/vector-icons/AntDesign';
 
 const ServicioScreen = ({ route }) => {
@@ -17,6 +18,7 @@ const ServicioScreen = ({ route }) => {
     const [descripcion, setDescripcion] = useState('');
     const [porcentajeAbono, setPorcentajeAbono] = useState(''); 
     const [editingServicioId, setEditingServicioId] = useState(null);
+    const [vinculadoMP, setVinculadoMP] = useState(false);
     // const navigation = useNavigation();
     // const { user } = useContext(AuthContext);   
     const { id } = route.params;
@@ -45,6 +47,30 @@ const ServicioScreen = ({ route }) => {
         };
         fetchServicios();
     }, [id]);
+
+    useEffect(() => {
+        const verificarVinculacion = async () => {
+            try {
+                
+                const idMicroempresa = id;
+               
+                const [data, error] = await mercadopagoServices.getMercadoPagoAcc(idMicroempresa);
+                
+            if (error || !data || !data.state || data.state !== 'Success' || !data.data.accessToken) {
+                console.log("La microempresa no está vinculada a Mercado Pago.");
+                setVinculadoMP(false);
+                return; // 🔹 Salimos de la función sin mostrar errores en pantalla
+            }
+
+            console.log("La microempresa está vinculada a Mercado Pago.");
+            setVinculadoMP(true);
+            } catch (error) {
+                console.error('Error al verificar la vinculación con MercadoPago:', error.message);
+                setVinculadoMP(false);
+            }
+        };
+        verificarVinculacion();
+    },[id]);
     const handleEliminarServicio = async (id) => {
         try { 
             console.log("ID servicio: ", id)
@@ -165,14 +191,51 @@ const ServicioScreen = ({ route }) => {
         setShowForm(false);
     };
    
-    
-    if (loading) {
-        return (
-          <View style={styles.loadingContainer}>
-            <Text>Cargando servicios...</Text>
-          </View>
-        );
-    } 
+    const handleGenerarPago = async (idServicio) => {
+        try {
+            const [urlPago, error] = await mercadopagoServices.crearPreferenciaServicio(idServicio);
+            if (error) {
+                Alert.alert("Error", error);
+                return;
+            }
+            // Actualizar el servicio con la nueva URL de pago en el estado
+            setServicios(servicios.map(servicio => 
+                servicio._id === idServicio ? { ...servicio, urlPago } : servicio
+            ));
+            Alert.alert("Éxito", "Se ha generado la preferencia de pago.");
+        } catch (error) {
+            console.error("Error al generar la preferencia de pago:", error.message);
+            Alert.alert("Error", "Hubo un problema al generar la preferencia de pago.");
+        }
+    };
+     
+
+    const renderServicioItem = ({ item }) => (
+        <View style={styles.servicioCard}>
+            <Text style={styles.servicioName}>{item.nombre}</Text>
+            <Text style={styles.servicioDetail}>💲 Precio: ${item.precio}</Text>
+            <Text style={styles.servicioDetail}>⏳ Duración: {item.duracion} minutos</Text>
+            <Text style={styles.servicioDetail}>📖 {item.descripcion}</Text>
+            {item.porcentajeAbono !== undefined && (
+                <Text style={styles.servicioDetail}>💳 Abono: {item.porcentajeAbono}%</Text>
+            )} 
+            {/* Solo mostrar el botón si la microempresa está vinculada */}
+        {vinculadoMP && !item.urlPago && (
+            <TouchableOpacity onPress={() => handleGenerarPago(item._id)} style={styles.generarPagoButton}>
+                <Text style={styles.buttonText}>Generar Pago</Text>
+            </TouchableOpacity>
+        )} 
+        {item.urlPago && <Text style={styles.pagoGeneradoText}>✅ Pago Generado</Text>}
+            <View style={styles.buttonContainer}>
+                <TouchableOpacity onPress={() => handleEditarServicio(item)} style={styles.editButton}>
+                    <Text style={styles.buttonText}>Editar</Text>
+                </TouchableOpacity>
+                <TouchableOpacity onPress={() => handleEliminarServicio(item._id)} style={styles.deleteButton}>
+                    <Text style={styles.buttonText}>Eliminar</Text>
+                </TouchableOpacity>  
+            </View>  
+        </View>
+    ); 
     return (
         <View style={styles.container}>
             <View style={styles.header}>
@@ -182,29 +245,20 @@ const ServicioScreen = ({ route }) => {
                 </TouchableOpacity>
             </View>
 
-            <ScrollView style={styles.scrollContainer}>
-                {servicios.length === 0 && <Text style={styles.noServicesText}>No hay servicios agregados.</Text>}
-
-                {servicios.map(servicio => (
-                    <View key={servicio._id} style={styles.servicioItem}>
-                        <Text style={styles.servicioName}>{servicio.nombre}</Text>
-                        <Text style={styles.servicioDetail}>Precio: ${servicio.precio}</Text>
-                        <Text style={styles.servicioDetail}>Duración: {servicio.duracion} minutos</Text>
-                        <Text style={styles.servicioDetail}>Descripción: {servicio.descripcion}</Text>
-                        {servicio.porcentajeAbono !== undefined && (
-                            <Text style={styles.servicioDetail}>Porcentaje de Abono: {servicio.porcentajeAbono}%</Text>
-                        )} 
-                        <View style={styles.buttonContainer}>
-                            <TouchableOpacity onPress={() => handleEditarServicio(servicio)}>
-                                <Text style={styles.editButton}>Editar</Text>
-                            </TouchableOpacity>
-                            <TouchableOpacity onPress={() => handleEliminarServicio(servicio._id)}>
-                                <Text style={styles.deleteButton}>Eliminar</Text>
-                            </TouchableOpacity>  
-                        </View>  
-                    </View>
-                ))}
-            </ScrollView>
+            {loading ? (
+                <View style={styles.loadingContainer}>
+                    <ActivityIndicator size="large" color="#007BFF" />
+                    <Text>Cargando servicios...</Text>
+                </View>
+            ) : (
+                <FlatList
+                    data={servicios}
+                    keyExtractor={(item) => item._id}
+                    renderItem={renderServicioItem}
+                    contentContainerStyle={styles.listContainer}
+                    ListEmptyComponent={<Text style={styles.noServicesText}>No hay servicios agregados.</Text>}
+                />
+            )}
 
             {/* MODAL PARA FORMULARIO */}
             <Modal
@@ -242,11 +296,12 @@ const ServicioScreen = ({ route }) => {
 }; 
 
 const styles = StyleSheet.create({
+    
     title: {
         fontSize: 30,
         fontWeight: 'bold',
         textAlign: 'center',
-        color: '#696969',
+        color: '#000000',
         letterSpacing: 1,
     }, 
     header: {
@@ -256,12 +311,31 @@ const styles = StyleSheet.create({
         marginBottom: 10,
         marginTop: 15,
     },
-    scrollContainer: {
-        flexGrow: 1,
-    },
+    
     container: {
         flex: 1,
         padding: 20,
+        backgroundColor: "#f5f5f5",
+    },
+    listContainer: {
+        paddingBottom: 20,
+    },
+    noServicesText: {
+        textAlign: 'center',
+        marginTop: 20,
+        fontSize: 16,
+        color: '#666',
+    },
+    servicioCard: {
+        backgroundColor: '#fff',
+        padding: 15,
+        borderRadius: 10,
+        marginVertical: 8,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.2,
+        shadowRadius: 5,
+        elevation: 3,
     },
     modalContainer: {
         flex: 1,
@@ -292,12 +366,7 @@ const styles = StyleSheet.create({
         marginTop: 20,
         fontSize: 16,
     },
-    servicioItem: {
-        padding: 10,
-        borderBottomWidth: 1,
-        borderBottomColor: '#ccc',
-        marginBottom: 20,
-    },
+    
     servicioName: {
         fontSize: 18,
         fontWeight: 'bold',
@@ -312,44 +381,27 @@ const styles = StyleSheet.create({
         justifyContent: 'space-between',
         marginTop: 10,
     },
-    editButton: {
-        color: 'green',
-        marginRight: 10,
+    buttonText: {
+        color: '#fff',
+        fontWeight: 'bold',
     },
     deleteButton: {
-        color: 'red',
-        marginRight: 10,
-    },
-    configPorcentajeButton: {
-        color: 'orange',
-        marginRight: 10,
-    },
-    addButton: {
-        backgroundColor: 'green',
+        backgroundColor: '#d9534f',
         padding: 10,
         borderRadius: 5,
+        flex: 1,
         alignItems: 'center',
-        marginTop: 20,
+        marginLeft: 5,
     },
-    addButtonText: {
-        color: '#fff',
-        fontSize: 16,
-    },
-    backButton: {
-        backgroundColor: '#6c757d',
+    editButton: {
+        backgroundColor: '#f0ad4e',
         padding: 10,
         borderRadius: 5,
+        flex: 1,
         alignItems: 'center',
-        marginTop: 10,
+        marginRight: 5,
     },
-    backButtonText: {
-        color: '#fff',
-        fontSize: 16,
-    },
-    formContainer: {
-        marginTop: 20,
-        marginBottom: 30,
-    },
+    
     input: {
         borderWidth: 1,
         borderColor: '#ccc',
@@ -385,6 +437,20 @@ const styles = StyleSheet.create({
     cancelButtonText: {
         color: '#fff',
         fontSize: 16,
+    }, 
+    generarPagoButton: {
+        backgroundColor: '#007BFF',
+        padding: 10,
+        borderRadius: 5,
+        alignItems: 'center',
+        marginTop: 10,
+    },
+    pagoGeneradoText: {
+        color: '#28a745',
+        fontSize: 14,
+        fontWeight: 'bold',
+        textAlign: 'center',
+        marginTop: 10,
     },
 });
 
