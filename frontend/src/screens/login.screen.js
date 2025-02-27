@@ -1,21 +1,18 @@
 import React, { useState, useContext } from 'react';
-import { View, Text, TextInput, Button, StyleSheet, Alert } from 'react-native';
-
+import { View, Text, TextInput, Button, StyleSheet, Alert, TouchableOpacity } from 'react-native';
 import { AuthContext } from '../context/auth.context';
-
-
+import { useNavigation } from '@react-navigation/native';
 
 export default function LoginScreen() {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const { login } = useContext(AuthContext);
-    
+    const navigation = useNavigation();
   
     const email_prueba = 'trabajador@email.com';
     const password_prueba = 'trabajador123';
 
     const cliente_prueba= 'cliente@email.com';
-
     const password_cliente ='cliente123';
 
     const handleLogin = async () => {
@@ -24,26 +21,14 @@ export default function LoginScreen() {
         return;
       }
       try {
-          //console.log(' 1 Datos para login:', email, password);
           const dataUser = {email, password}; 
-  
           const userInfo = await login(dataUser); 
-          //console.log("userInfo", userInfo);
-        
           console.log('Usuario autenticado:', userInfo); 
-          
-          
-        
           Alert.alert('Inicio de sesión exitoso', `Bienvenido, ${email}`);
-          
-         
-        
       } catch (error) {
         Alert.alert('Error', 'El usuario o la contraseña son incorrectos');
       }
     };
-
-    //logeo temporal para no escribir todo el rato
 
     const handleLoginPrueba = async () => {
       try {
@@ -67,8 +52,10 @@ export default function LoginScreen() {
       }
     }
 
+    const handleGoToRegister = () => {
+      navigation.navigate('RegistroCliente');
+    };
 
-    console.log('LoginScreen - Rendering');
     return (
       <View style={styles.container}>
         <Text style={styles.title}>Iniciar Sesión</Text>
@@ -87,9 +74,12 @@ export default function LoginScreen() {
           secureTextEntry
         />
         <Button title="Ingresar" onPress={handleLogin} />
+        <Button title ='logeo rapido con trabajador' onPress={handleLoginPrueba} />
+        <Button title ='logeo rapido con cliente' onPress={handleLoginCliente} />
         
-        <Button title ='logeo rapido con trabajador' onPress={ handleLoginPrueba} />
-        <Button title ='logeo rapido con cliente' onPress={ handleLoginCliente} />
+        <TouchableOpacity onPress={handleGoToRegister}>
+          <Text style={styles.registerText}>¿Aún no tienes una cuenta? <Text style={styles.registerLink}>Regístrate aquí</Text></Text>
+        </TouchableOpacity>
       </View>
     );
   }
@@ -112,4 +102,13 @@ export default function LoginScreen() {
       marginBottom: 15,
       padding: 10,
     },
+    registerText: {
+      textAlign: 'center',
+      marginTop: 15,
+      fontSize: 14,
+    },
+    registerLink: {
+      color: '#007BFF',
+      fontWeight: 'bold',
+    }
   });

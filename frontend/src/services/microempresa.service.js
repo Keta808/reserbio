@@ -236,6 +236,7 @@ async function eliminarImagen(microempresaId, publicId) {
 
 //servicio que retorna SOLO el id de la microempresa por el id de su trabajador
 
+//BORRAR <-> NO SE USA
 async function getMicroempresaIdByTrabajadorId(trabajadorId) {
   try {
     const response = await instance.get(`/microempresas/user/${trabajadorId}/id`);
@@ -271,6 +272,7 @@ export default {
   pickImage,
   uploadImagenes,
   eliminarImagen,
+  //-<->- BORRAR -<->-
   getMicroempresaIdByTrabajadorId,
   obtenerMicroempresaPorTrabajador, 
 };

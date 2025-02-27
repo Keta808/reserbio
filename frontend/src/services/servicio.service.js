@@ -73,4 +73,23 @@ async function calcularMontoAbono(id, precio, porcentaje) {
     }
 }   
 
-export default { getServiciosByMicroempresaId, getServicios, createServicio, deleteServicio, updateServicio, getServicioById, calcularMontoAbono };    
+async function getMicroempresaIdByServicioId(id) {
+    try {
+        const response = await instance.get(`servicios/servicio/${id}/microempresa`);
+        return response.data.data;
+    } catch (error) {
+        console.error(`Error al obtener el ID de la microempresa del servicio con ID ${id}:`, error.response?.data || error.message);
+        throw error;
+    }
+}
+
+export default { 
+    getServiciosByMicroempresaId, 
+    getServicios, 
+    createServicio, 
+    deleteServicio, 
+    updateServicio, 
+    getServicioById, 
+    calcularMontoAbono,
+    getMicroempresaIdByServicioId
+};    

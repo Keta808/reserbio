@@ -6,12 +6,16 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   StyleSheet,
+  SafeAreaView,
+  Platform,
+  StatusBar,
+  Modal,
 } from 'react-native';
 
 import DateTimePickerModal from 'react-native-modal-datetime-picker';
-
 import { useNavigation, useRoute } from '@react-navigation/native';
 import servicioService from '../services/servicio.service.js';
+import Icon from 'react-native-vector-icons/Ionicons';
 
 const SeleccionServicioScreen = () => {
   const navigation = useNavigation();
@@ -25,9 +29,9 @@ const SeleccionServicioScreen = () => {
   const [selectedTrabajadorId, setSelectedTrabajadorId] = useState(undefined);
   const [selectedDate, setSelectedDate] = useState(null);
   const [isDatePickerVisible, setDatePickerVisibility] = useState(false);
-
-
- 
+  const [selectedTrabajadorNombre, setSelectedTrabajadorNombre] = useState(null);
+  const [descModalVisible, setDescModalVisible] = useState(false);
+  const [serviceDescription, setServiceDescription] = useState(''); 
 
   useEffect(() => {
     const fetchServicios = async () => {
@@ -35,7 +39,6 @@ const SeleccionServicioScreen = () => {
         setLoading(true);
         const data = await servicioService.getServiciosByMicroempresaId(microempresaId);
         setServicios(data.data);
-        
       } catch (err) {
         console.error('Error al obtener los servicios:', err);
         setError('No se pudo conectar con el servidor');
@@ -47,17 +50,23 @@ const SeleccionServicioScreen = () => {
     fetchServicios();
   }, [microempresaId]);
 
+  const handleShowDescription = (servicio) => {
+    setServiceDescription(servicio.descripcion);
+    setDescModalVisible(true);
+  };
+
   const handleTrabajadorSelect = (trabajadorId) => {
-    console.log('Trabajador seleccionado:', trabajadorId);
     setSelectedTrabajadorId(trabajadorId);
+    setSelectedTrabajadorNombre(trabajadores.find((t) => t._id === trabajadorId)?.nombre);
   };
 
   const handleContinue = () => {
-    navigation.navigate('ConfirmacionReserva', {
+    navigation.navigate('ConfirmacionReservaSlotScreen', {
       microempresaId,
       servicioId: selectedServicio.id || selectedServicio._id,
       trabajadorId: selectedTrabajadorId,
       fecha: selectedDate.toISOString().split('T')[0],
+      trabajadorNombre: selectedTrabajadorNombre,
     });
   };
 
@@ -65,7 +74,6 @@ const SeleccionServicioScreen = () => {
     setSelectedDate(date);
     setDatePickerVisibility(false);
   };
-  
 
   if (loading) {
     return (
@@ -86,7 +94,7 @@ const SeleccionServicioScreen = () => {
 
   const formatDate = (date) => {
     const day = String(date.getDate()).padStart(2, '0');
-    const month = String(date.getMonth() + 1).padStart(2, '0'); // Los meses van de 0 a 11
+    const month = String(date.getMonth() + 1).padStart(2, '0');
     const year = date.getFullYear();
     return `${day}-${month}-${year}`;
   };
@@ -105,49 +113,56 @@ const SeleccionServicioScreen = () => {
       <View style={styles.container}>
         <ErrorMessage
           message={error}
-          onClose={() => setError(null)} // Limpia el error al cerrar el mensaje
+          onClose={() => setError(null)}
         />
       </View>
     );
   }
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.header}>Selecciona un servicio</Text>
-      <FlatList
-        data={servicios}
-        keyExtractor={(item, index) =>
-          item.id?.toString() || item._id?.toString() || `servicio-${index}`
-        }
-        renderItem={({ item }) => (
-          <TouchableOpacity
-          
-            style={[
-              styles.card,
-              selectedServicio?._id === item._id && styles.selectedCard,
-            ]}
-            onPress={() => {
-              console.log('Servicio seleccionado:', item);
-              setSelectedServicio(item);
-            }}
-          >
-            <Text style={styles.cardTitle}>{item.nombre}</Text>
-            <Text style={styles.cardSubtitle}>{item.duracion} min</Text>
-          </TouchableOpacity>
-        )}
-        contentContainerStyle={styles.cardContainer}
-        numColumns={2}
-      />
-
-      <Text style={styles.subHeader}>Selecciona un trabajador</Text>
-      <FlatList
+    <SafeAreaView style={styles.safeArea}>
+      <View style={styles.container}>
+        <Text style={styles.header}>Selecciona un servicio</Text>
+        <FlatList
+          data={servicios}
+          keyExtractor={(item, index) =>
+            item.id?.toString() || item._id?.toString() || `servicio-${index}`
+          }
+          contentContainerStyle={styles.listContent}
+          renderItem={({ item }) => (
+            <TouchableOpacity
+              style={[
+                styles.card,
+                selectedServicio?._id === item._id && styles.selectedCard,
+              ]}
+              onPress={() => setSelectedServicio(item)}
+            >
+              <View style={styles.cardTextContainer}>
+                <Text style={styles.cardTitle}>{item.nombre}</Text>
+                <Text style={styles.cardSubtitle}>{item.duracion} min</Text>
+              </View>
+              <TouchableOpacity
+                style={styles.infoButton}
+                onPress={() => handleShowDescription(item)}
+              >
+                <Icon name="information-circle-outline" size={20} color="#007bff" />
+              </TouchableOpacity>
+            </TouchableOpacity>
+          )}
+          numColumns={2}
+          columnWrapperStyle={styles.cardRow}
+        />
+  
+        <Text style={styles.subHeader}>Selecciona un trabajador</Text>
+        <FlatList
           data={[
-            ...trabajadores.map((item) => ({ id: item._id, nombre: item.nombre })),
+            ...trabajadores.map((t) => ({ id: t._id, nombre: t.nombre })),
             { id: null, nombre: 'No tengo preferencia' },
           ]}
           keyExtractor={(item, index) =>
             item.id?.toString() || `trabajador-${index}`
           }
+          contentContainerStyle={styles.workerContainer}
           renderItem={({ item }) => (
             <TouchableOpacity
               style={[
@@ -159,216 +174,260 @@ const SeleccionServicioScreen = () => {
               <Text style={styles.workerName}>{item.nombre}</Text>
             </TouchableOpacity>
           )}
-          contentContainerStyle={styles.workerContainer}
-          numColumns={2} // Define que haya 2 columnas
-          columnWrapperStyle={{ justifyContent: 'space-between', marginBottom: 10 }} // Ajusta espaciado entre columnas
-          showsVerticalScrollIndicator={false}
+          numColumns={2}
+          columnWrapperStyle={styles.workerRow}
         />
-
-
-      <Text style={styles.subHeader}>Selecciona una fecha</Text>
-              <TouchableOpacity
+  
+        <Text style={styles.subHeader}>Selecciona una fecha</Text>
+        <TouchableOpacity
           style={styles.datePickerButton}
           onPress={() => setDatePickerVisibility(true)}
         >
           <Text style={styles.datePickerText}>
-         
             {selectedDate ? formatDate(selectedDate) : 'Selecciona una fecha'}
           </Text>
         </TouchableOpacity>
-
         <DateTimePickerModal
-        isVisible={isDatePickerVisible}
-        mode="date"
-        onConfirm={handleDateConfirm}
-        onCancel={() => setDatePickerVisibility(false)}
-        minimumDate={new Date()}
-        maximumDate={(() => {
-          const maxDate = new Date();
-          maxDate.setDate(maxDate.getDate() + 7);
-          return maxDate;
-        })()}
-        themeVariant="light" // Fuerza el tema claro
-        locale="es-ES" // Esto asegura que el modal use el idioma español
-      />
-
+          isVisible={isDatePickerVisible}
+          mode="date"
+          onConfirm={handleDateConfirm}
+          onCancel={() => setDatePickerVisibility(false)}
+          minimumDate={new Date()}
+          maximumDate={(() => {
+            const max = new Date();
+            max.setDate(max.getDate() + 7);
+            return max;
+          })()}
+          themeVariant="light"
+          locale="es-ES"
+        />
+  
         <View style={styles.buttonContainer}>
-          <TouchableOpacity
-            style={styles.backButton}
-            onPress={() => navigation.goBack()}
-          >
+          <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
             <Text style={styles.buttonText}>Atrás</Text>
           </TouchableOpacity>
-
           <TouchableOpacity
             style={[
               styles.continueButton,
-              (!selectedServicio || selectedTrabajadorId === undefined  || !selectedDate) && styles.disabledButton,
+              (!selectedServicio || selectedTrabajadorId === undefined || !selectedDate) &&
+                styles.disabledButton,
             ]}
             onPress={handleContinue}
-            disabled={!selectedServicio || selectedTrabajadorId === undefined  || !selectedDate}
+            disabled={!selectedServicio || selectedTrabajadorId === undefined || !selectedDate}
           >
             <Text style={styles.buttonText}>Continuar</Text>
           </TouchableOpacity>
         </View>
-    </View>
+      </View>
+  
+      {/* Modal para mostrar la descripción del servicio */}
+      <Modal
+        visible={descModalVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setDescModalVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Descripción del Servicio</Text>
+            <Text style={styles.modalMessage}>{serviceDescription}</Text>
+            <TouchableOpacity style={styles.cancelButton} onPress={() => setDescModalVisible(false)}>
+              <Text style={styles.cancelButtonText}>Cerrar</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+    </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    backgroundColor: '#f8f9fa',
+    marginTop: Platform.OS === 'android' ? StatusBar.currentHeight : 0,
+  },
   container: {
     flex: 1,
-    padding: 16,
-    backgroundColor: '#f5f5f5',
+    paddingHorizontal: 20,
+    paddingVertical: 20,
+    backgroundColor: '#f8f9fa',
   },
   header: {
-    fontSize: 26,
-    fontWeight: 'bold',
-    marginBottom: 20,
+    fontSize: 24,
+    fontWeight: '700',
     textAlign: 'center',
     color: '#007bff',
-    marginTop:'20%',
+    marginBottom: 12,
   },
-  cardContainer: {
+  listContent: {
+    paddingBottom: 20,
+  },
+  cardRow: {
     justifyContent: 'space-between',
+    marginBottom: 10,
   },
   card: {
     backgroundColor: '#fff',
-    padding: 16,
-    borderRadius: 12,
-    margin: 10,
+    borderRadius: 8,
+    padding: 12,
     flex: 1,
+    marginHorizontal: 5,
+    marginBottom: 10,
+    minHeight: 95,
+    justifyContent: 'center',
     alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 2,
   },
   selectedCard: {
     backgroundColor: '#e0f7fa',
     borderColor: '#007bff',
     borderWidth: 1,
   },
+  cardTextContainer: {
+    alignItems: 'center',
+  },
   cardTitle: {
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: '600',
-    textAlign: 'center',
     color: '#333',
+    textAlign: 'center',
   },
   cardSubtitle: {
-    fontSize: 14,
+    fontSize: 12,
     color: '#666',
     textAlign: 'center',
     marginTop: 4,
   },
-  
+  infoButton: {
+    position: 'absolute',
+    top: 8,
+    right: 8,
+    padding: 4,
+  },
   subHeader: {
-    fontSize: 22,
+    fontSize: 20,
     fontWeight: '600',
     marginVertical: 12,
     textAlign: 'center',
     color: '#444',
   },
-
   workerContainer: {
-    justifyContent: 'space-between', // Asegura espacio entre las columnas
-    paddingHorizontal: 10, // Margen lateral
+    paddingHorizontal: 8,
+  },
+  workerRow: {
+    justifyContent: 'space-between',
+    marginBottom: 10,
   },
   workerCard: {
     backgroundColor: '#fff',
-    padding: 12,
-    borderRadius: 8,
+    paddingVertical: 10,
+    paddingHorizontal: 5,
+    borderRadius: 6,
     alignItems: 'center',
     justifyContent: 'center',
+    width: '48%',
+    marginBottom: 10,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
+    shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.1,
-    shadowRadius: 6,
-    elevation: 3,
-    width: '45%', // Ajusta el ancho para que quepan dos por fila con margen
-    marginBottom: 10, // Espaciado entre filas
+    shadowRadius: 1,
+    elevation: 2,
   },
   selectedWorkerCard: {
     backgroundColor: '#e0f7fa',
-    borderColor: '#007bff',
     borderWidth: 1,
+    borderColor: '#007bff',
   },
   workerName: {
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: '500',
-    textAlign: 'center',
     color: '#333',
-
+    textAlign: 'center',
   },
   datePickerButton: {
     backgroundColor: '#fff',
-    padding: 12,
-    borderRadius: 8,
-    alignItems: 'center',
-    borderColor: '#ccc',
+    paddingVertical: 10,
+    borderRadius: 6,
     borderWidth: 1,
-    marginVertical: 20,
+    borderColor: '#ccc',
+    alignItems: 'center',
+    marginVertical: 16,
   },
   datePickerText: {
-    fontSize: 16,
+    fontSize: 14,
     color: '#007bff',
   },
   buttonContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginTop: 30,
-    paddingHorizontal: 10,
-    marginBottom: '10%',
+    marginTop: 20,
+    paddingHorizontal: 16,
   },
   backButton: {
-    backgroundColor: '#dc3545', // Color rojo para el botón "Atrás"
-    paddingVertical: 12,
-    paddingHorizontal: 20,
-    borderRadius: 8,
-    alignItems: 'center',
-    justifyContent: 'center',
+    backgroundColor: '#dc3545',
     flex: 1,
-    marginRight: 10,
+    marginRight: 8,
+    paddingVertical: 10,
+    borderRadius: 6,
+    alignItems: 'center',
   },
   continueButton: {
-    backgroundColor: '#007bff', // Color azul para el botón "Continuar"
-    paddingVertical: 12,
-    paddingHorizontal: 20,
-    borderRadius: 8,
-    alignItems: 'center',
-    justifyContent: 'center',
+    backgroundColor: '#007bff',
     flex: 1,
-    marginLeft: 10,
+    marginLeft: 8,
+    paddingVertical: 10,
+    borderRadius: 6,
+    alignItems: 'center',
   },
   disabledButton: {
-    backgroundColor: '#b0c4de', // Color gris para el estado deshabilitado
+    backgroundColor: '#b0c4de',
   },
   buttonText: {
     color: '#fff',
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: '600',
     textAlign: 'center',
   },
-
-  //error
-  errorMessageContainer: {
-    backgroundColor: '#f8d7da',
-    padding: 16,
-    borderRadius: 8,
-    marginBottom: 20,
-  },
-  errorMessageText: {
-    color: '#721c24',
-    fontSize: 16,
-    marginBottom: 10,
-  },
-  errorMessageButton: {
-    backgroundColor: '#f5c6cb',
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-    borderRadius: 8,
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'center',
     alignItems: 'center',
   },
-  errorMessageButtonText: {
-    color: '#721c24',
-    fontSize: 14,
-    fontWeight: 'bold',
+  modalContent: {
+    backgroundColor: '#fff',
+    width: '80%',
+    padding: 20,
+    borderRadius: 15,
+    alignItems: 'center',
+    elevation: 10,
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: '#333',
+    marginBottom: 10,
+  },
+  modalMessage: {
+    fontSize: 16,
+    color: '#555',
+    textAlign: 'center',
+    marginBottom: 20,
+  },
+  cancelButton: {
+    backgroundColor: '#6c757d',
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 8,
+  },
+  cancelButtonText: {
+    color: '#fff',
+    fontWeight: '700',
   },
 });
 

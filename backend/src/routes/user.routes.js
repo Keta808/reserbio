@@ -14,16 +14,19 @@ import authenticationMiddleware from "../middlewares/authentication.middleware.j
 /** Instancia del enrutador */
 const router = Router();
 
-// Define el middleware de autenticación para todas las rutas
+// 🔓 **Rutas públicas (Sin autenticación)**
+router.post("/createcliente", usuarioController.createCliente); // Permitir registro sin autenticación
+router.post("/createtrabajador", usuarioController.createTrabajador); // Permitir registro sin autenticación
+router.post("/createuser", usuarioController.createUser); // Permitir creación de usuario sin autenticación
+
+// 🔒 **Aplicar autenticación a todas las rutas siguientes**
 router.use(authenticationMiddleware);
-// Define las rutas para los usuarios
-router.get("/", isAdmin, usuarioController.getUsers);
-router.post("/createuser", isAdmin, usuarioController.createUser);
-router.post("/createtrabajador", isAdmin, usuarioController.createTrabajador);
-router.post("/createcliente", isAdmin, usuarioController.createCliente);
+
+// 🔒 **Rutas protegidas**
+router.get("/", usuarioController.getUsers);
 router.post("/", isAdmin, usuarioController.createAdministrador);
 router.get("/:id", isAdmin, usuarioController.getUserById);
-router.delete("/:id", isAdmin, usuarioController.deleteUser); 
+router.delete("/:id", isAdmin, usuarioController.deleteUser);
 router.get("/trabajador/:id", usuarioController.getTrabajadorById);
 router.post("/trabajador/:id", usuarioController.updateTrabajador);
 
