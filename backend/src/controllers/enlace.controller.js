@@ -139,6 +139,28 @@ async function updateEnlaceParcial(req, res) {
     }
 }
 
+/** Obtiene la micreoempresa a la que pertenece el trabajador */
+export async function getMicroempresasByTrabajador(req, res) {
+    try {
+      const { userId } = req.params;
+  
+      if (!userId) {
+        return res.status(400).json({ message: "ID de trabajador requerido", state: "Error" });
+      }
+  
+      const microempresas = await EnlaceService.obtenerMicroempresasPorTrabajador(userId);
+      
+      if (!microempresas.length) {
+        return res.status(404).json({ message: "No se encontraron microempresas para este trabajador", state: "Error" });
+      }
+  
+      return res.status(200).json({ state: "Success", data: microempresas });
+    } catch (error) {
+      console.error("❌ Error al obtener microempresas:", error);
+      return res.status(500).json({ message: error.message, state: "Error" });
+    }
+  }
+
 export default {
     getEnlaces,
     createEnlace,
@@ -146,4 +168,5 @@ export default {
     updateEnlace,
     getTrabajadoresPorMicroempresa,
     updateEnlaceParcial,
+    getMicroempresasByTrabajador,
 };

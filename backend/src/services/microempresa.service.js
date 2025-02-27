@@ -2,6 +2,7 @@
 "use strict";
 
 import Microempresa from "../models/microempresa.model.js";
+import cloudinary from "../config/cloudinary.js";
 import Enlace from "../models/enlace.model.js";
 import { handleError } from "../utils/errorHandler.js";
 
@@ -76,14 +77,22 @@ async function createMicroempresa(microempresa) {
             imagenes,
         } = microempresa;
 
-        // Verificar si la microempresa ya existe por email
-        const microempresaFound = await Microempresa.findOne({ email: microempresa.email });
-        if (microempresaFound) return [null, "La microempresa ya existe"];
+        // 📌 **Verificar si el trabajador ya tiene una microempresa**
+        const existingMicroempresa = await Microempresa.findOne({ idTrabajador });
+        if (existingMicroempresa) {
+            return [null, "El trabajador ya tiene una microempresa registrada"];
+        }
 
-        // URL de imagen de perfil predeterminada
+        // 📌 **Verificar si ya existe una microempresa con el mismo email**
+        const microempresaFound = await Microempresa.findOne({ email: microempresa.email });
+        if (microempresaFound) {
+            return [null, "La microempresa ya existe con este email"];
+        }
+
+        // 📌 **URL de imagen de perfil predeterminada**
         const defaultProfileImageUrl = "https://res.cloudinary.com/dzkna5hbk/image/upload/v1737576587/defaultProfile_ysxp6x.webp";
 
-        // Crear la nueva microempresa con la imagen predeterminada si no se proporciona
+        // 📌 **Crear la nueva microempresa con la imagen predeterminada si no se proporciona**
         const newMicroempresa = new Microempresa({
             nombre,
             descripcion,
@@ -100,7 +109,7 @@ async function createMicroempresa(microempresa) {
             },
         });
 
-        // Guardar la microempresa en la base de datos
+        // 📌 **Guardar la microempresa en la base de datos**
         await newMicroempresa.save();
 
         return [newMicroempresa, null];
@@ -186,15 +195,35 @@ async function updateMicroempresaById(id, microempresa) {
  */
 async function deleteMicroempresaById(id) {
     try {
-        const deletedMicroempresa = await Microempresa.findByIdAndDelete(id);
-        if (!deletedMicroempresa) return [null, "La microempresa no existe"];
+        // 📌 **Buscar la microempresa antes de eliminarla**
+        const microempresa = await Microempresa.findById(id);
+        if (!microempresa) return [null, "La microempresa no existe"];
 
+        // 📌 **Eliminar la foto de perfil en Cloudinary**
+        if (microempresa.fotoPerfil?.public_id) {
+            console.log(`🗑 Eliminando foto de perfil: ${microempresa.fotoPerfil.public_id}`);
+            await cloudinary.uploader.destroy(microempresa.fotoPerfil.public_id);
+        }
+
+        // 📌 **Eliminar todas las imágenes de la galería**
+        if (microempresa.imagenes.length > 0) {
+            for (const img of microempresa.imagenes) {
+                console.log(`🗑 Eliminando imagen de la galería: ${img.public_id}`);
+                await cloudinary.uploader.destroy(img.public_id);
+            }
+        }
+
+        // 📌 **Eliminar la microempresa después de eliminar las imágenes**
+        const deletedMicroempresa = await Microempresa.findByIdAndDelete(id);
+        if (!deletedMicroempresa) return [null, "Error al eliminar la microempresa"];
+
+        console.log(`✅ Microempresa eliminada con éxito: ${deletedMicroempresa._id}`);
         return [deletedMicroempresa, null];
     } catch (error) {
         handleError(error, "microempresa.service -> deleteMicroempresaById");
         return [null, "Error al eliminar la microempresa"];
     }
-} 
+}
 
 // eslint-disable-next-line require-jsdoc
 async function getMicroempresasPorCategoria(categoria) {
