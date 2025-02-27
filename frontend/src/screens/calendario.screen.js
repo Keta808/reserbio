@@ -25,6 +25,8 @@ const AgendaScreen = () => {
   const [refreshing, setRefreshing] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState(null);
+  const [errorModal, setErrorModal] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
 
   // Ref para mantener la fecha seleccionada actualizada en el PanResponder
   const selectedDateRef = useRef(selectedDate);
@@ -38,17 +40,20 @@ const AgendaScreen = () => {
       if (!refreshing) setLoading(true);
       const userData = await AsyncStorage.getItem('user');
       if (!userData) {
-        console.error('No se encontró el objeto user en AsyncStorage');
+        setErrorMessage('No se encontró el objeto user en AsyncStorage');
+        setErrorModal(true);
+        setItems({});
         return;
       }
       const user = JSON.parse(userData);
       const workerId = user.id;
-      console.log("ID del trabajador:", workerId);
       const agendaData = await reservaService.getReservasByTrabajadorId(workerId);
-      console.log("Data transformada para Agenda:", agendaData);
-      setItems(agendaData);
+      // Si agendaData es nulo, se asigna objeto vacío
+      setItems(agendaData || {});
     } catch (error) {
-      console.error("Error al obtener reservas:", error);
+      setErrorMessage("Actualmente no hay reservas asociadas a tu cuenta.");
+      setErrorModal(true);
+      setItems({});
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -73,7 +78,6 @@ const AgendaScreen = () => {
   const days = generateDays();
 
   const onDateSelected = (date) => {
-    console.log("Fecha seleccionada:", moment(date).format("YYYY-MM-DD"));
     setSelectedDate(date);
   };
 
@@ -84,7 +88,6 @@ const AgendaScreen = () => {
 
   // Modal de cancelación de reserva
   const openCancelModal = (event) => {
-    console.log("Evento para modal:", event);
     setSelectedEvent(event);
     setModalVisible(true);
   };
@@ -92,15 +95,15 @@ const AgendaScreen = () => {
   const confirmCancel = async () => {
     if (selectedEvent) {
       try {
-        const result = await reservaService.cancelReserva(selectedEvent.id);
-        console.log("Reserva cancelada:", result);
+        await reservaService.cancelReserva(selectedEvent.id);
         const updatedItems = { ...items };
         if (updatedItems[selectedKey]) {
           updatedItems[selectedKey] = updatedItems[selectedKey].filter(e => e.id !== selectedEvent.id);
           setItems(updatedItems);
         }
       } catch (error) {
-        console.error("Error al cancelar reserva:", error);
+        setErrorMessage("Error al cancelar reserva: " + error.message);
+        setErrorModal(true);
       } finally {
         setModalVisible(false);
         setSelectedEvent(null);
@@ -113,23 +116,20 @@ const AgendaScreen = () => {
     setSelectedEvent(null);
   };
 
-  // PanResponder para detectar swipe horizontal en la agenda y cambiar el día
+  // PanResponder para detectar swipe horizontal en la agenda y cambiar el día acumulativamente
   const panResponder = useRef(
     PanResponder.create({
       onMoveShouldSetPanResponder: (evt, gestureState) => {
         return Math.abs(gestureState.dx) > 20;
       },
       onPanResponderRelease: (evt, gestureState) => {
-        console.log("Gesture dx:", gestureState.dx);
         if (gestureState.dx < -30) {
-          // Swipe a la izquierda: sumar un día basado en la fecha seleccionada actual
+          // Swipe a la izquierda: sumar un día a partir de la fecha seleccionada actual
           const newDate = moment(selectedDateRef.current).add(1, 'days').toDate();
-          console.log("Swipe izquierda, nuevo día:", moment(newDate).format("YYYY-MM-DD"));
           setSelectedDate(newDate);
         } else if (gestureState.dx > 30) {
-          // Swipe a la derecha: restar un día basado en la fecha seleccionada actual
+          // Swipe a la derecha: restar un día a partir de la fecha seleccionada actual
           const newDate = moment(selectedDateRef.current).subtract(1, 'days').toDate();
-          console.log("Swipe derecha, nuevo día:", moment(newDate).format("YYYY-MM-DD"));
           setSelectedDate(newDate);
         }
       },
@@ -194,27 +194,24 @@ const AgendaScreen = () => {
               refreshControl={
                 <RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); fetchData(); }} />
               }
-              renderItem={({ item }) => {
-                console.log("Evento recibido:", item);
-                return (
-                  <View style={styles.eventItem}>
-                    <View style={styles.eventInfo}>
-                      <Text style={styles.serviceName}>
-                        Servicio: {item.servicioNombre}
-                      </Text>
-                      <Text style={styles.clientName}>
-                        Cliente: {item.clienteNombre}
-                      </Text>
-                      <Text style={styles.eventTime}>
-                        Hora de servicio: {moment.parseZone(item.start).format('HH:mm')} - {moment.parseZone(item.end).format('HH:mm')}
-                      </Text>
-                    </View>
-                    <TouchableOpacity style={styles.cancelButton} onPress={() => openCancelModal(item)}>
-                      <Text style={styles.cancelButtonText}>X</Text>
-                    </TouchableOpacity>
+              renderItem={({ item }) => (
+                <View style={styles.eventItem}>
+                  <View style={styles.eventInfo}>
+                    <Text style={styles.serviceName}>
+                      Servicio: {item.servicioNombre}
+                    </Text>
+                    <Text style={styles.clientName}>
+                      Cliente: {item.clienteNombre}
+                    </Text>
+                    <Text style={styles.eventTime}>
+                      Hora de servicio: {moment.parseZone(item.start).format('HH:mm')} - {moment.parseZone(item.end).format('HH:mm')}
+                    </Text>
                   </View>
-                );
-              }}
+                  <TouchableOpacity style={styles.cancelButton} onPress={() => openCancelModal(item)}>
+                    <Text style={styles.cancelButtonText}>X</Text>
+                  </TouchableOpacity>
+                </View>
+              )}
             />
           )}
         </View>
@@ -242,6 +239,25 @@ const AgendaScreen = () => {
               </View>
             </View>
           </View>
+        </Modal>
+
+        {/* Modal de error */}
+        <Modal
+          transparent
+          animationType="fade"
+          visible={errorModal}
+          onRequestClose={() => setErrorModal(false)}
+        >
+
+          <TouchableOpacity style={styles.errorModalOverlay} onPress={() => setErrorModal(false)}>
+            <View style={styles.errorModalContainer}>
+              <Text style={styles.errorModalTitle}></Text>
+              <Text style={styles.errorModalMessage}>{errorMessage}</Text>
+              <TouchableOpacity style={styles.errorModalCloseButton} onPress={() => setErrorModal(false)}>
+                <Text style={styles.errorModalCloseButtonText}>Cerrar</Text>
+              </TouchableOpacity>
+            </View>
+          </TouchableOpacity>
         </Modal>
       </View>
     </SafeAreaView>
@@ -432,6 +448,42 @@ const styles = StyleSheet.create({
   },
   modalButtonTextConfirm: {
     color: '#fff',
+  },
+  errorModalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  errorModalContainer: {
+    width: '80%',
+    backgroundColor: '#fff',
+    borderRadius: 8,
+    padding: 20,
+    alignItems: 'center',
+  },
+  errorModalTitle: {
+    fontSize: 22,
+    fontWeight: 'bold',
+    marginBottom: 10,
+    color: '#D32F2F',
+  },
+  errorModalMessage: {
+    fontSize: 18,
+    textAlign: 'center',
+    marginBottom: 20,
+    color: '#333',
+  },
+  errorModalCloseButton: {
+    backgroundColor: '#D32F2F',
+    paddingVertical: 10,
+    paddingHorizontal: 15,
+    borderRadius: 6,
+  },
+  errorModalCloseButtonText: {
+    fontSize: 18,
+    color: '#fff',
+    fontWeight: 'bold',
   },
 });
 

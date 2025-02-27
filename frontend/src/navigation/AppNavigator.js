@@ -13,8 +13,8 @@ import SubirImagenesScreen from '../screens/subidaImagenes.screen.js';
 import FormularioEdicionMicroempresa from '../screens/formularioEdicionMicroempresa.screen.js';
 import ListaMicroempresasScreen from '../screens/listaMicroempresas.screen.js';
 import PerfilTrabajadorScreen from '../screens/perfilTrabajador.screen.js';
-import DisponibilidadScreen from '../screens/disponibilidad.screen.js';
-import FormularioCreacionHorasScreen from '../screens/formularioCreacionHorario.screen.js';
+// ------> import DisponibilidadScreen from '../screens/disponibilidad.screen.js';
+// ------> import FormularioCreacionHorasScreen from '../screens/formularioCreacionHorario.screen.js';
 import SeleccionMicroempresaScreen from '../screens/seleccionMicroempresa.screen.js';
 import SuscripcionScreen from '../screens/suscripcion.screen.js';
 import PaymentScreen from '../screens/pago.screen.js';
@@ -25,7 +25,7 @@ import CalendarScreen from '../screens/calendario.screen.js';
 import HomeClienteScreen from '../screens/homeCliente.screen.js';
 import MicroempresaClienteScreen from '../screens/microempresaCliente.screen.js';
 import SeleccionServicioScreen from '../screens/seleccionServicio.screen.js';
-import ConfirmacionReservaScreen from '../screens/confirmacionReserva.screen.js';
+// ------>  import ConfirmacionReservaScreen from '../screens/confirmacionReserva.screen.js';
 // import TestScreen from '../screens/testimagenes.screen.js';
 import ReservaClienteScreen from '../screens/reservasCliente.screen.js';
 import ValoracionServicioScreen from '../screens/valoracion.screen.js';
@@ -74,9 +74,7 @@ const HomeTrabajadorNavigator = () => (
 <Tab.Navigator lazy={true}>
     <Tab.Screen name="HomeTrabajador" component={HomeTrabajadorScreen} />  
     <Tab.Screen name="Calendario" component={CalendarScreen} />
-    {/* <Tab.Screen name="Microempresa" component={MicroempresaInicioScreeen} /> */}
     <Tab.Screen name="SeleccionMicroempresa" component={SeleccionMicroempresaScreen} /> 
-    <Tab.Screen name="Horario" component={DisponibilidadScreen} /> 
     <Tab.Screen name="Perfil" component={TrabajadorScreen} />
     <Tab.Screen name="HorarioTEST" component={Horario} /> 
 </Tab.Navigator>
@@ -120,7 +118,6 @@ const AppNavigator = () => {
       <Stack.Screen name ="ListaMicroempresas" component={ListaMicroempresasScreen} />  
       <Stack.Screen name="MicroempresaCliente" component={MicroempresaClienteScreen} />
       <Stack.Screen name="SeleccionServicio" component={SeleccionServicioScreen} />
-      <Stack.Screen name="ConfirmacionReserva" component={ConfirmacionReservaScreen} />
       <Stack.Screen name="Valoracion" component={ValoracionServicioScreen} />
       <Stack.Screen name="AceptarInvitacion" component={AceptarInvitacionScreen} />   
       <Stack.Screen name="Pago" component={PaymentScreen} /> 
@@ -133,7 +130,6 @@ const AppNavigator = () => {
   const TrabajadorStack = () => (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
       <Stack.Screen name="HomeNavigator" component={HomeTrabajadorNavigator} />
-      <Stack.Screen name="FormularioCreacionHoras" component={FormularioCreacionHorasScreen} />
       <Stack.Screen name="SeleccionMicroempresa" component={SeleccionMicroempresaScreen} /> 
       <Stack.Screen name="GestorSuscripcion" component={gestorSuscripcionScreen} /> 
       <Stack.Screen name="CardScreen" component={CardScreen} />

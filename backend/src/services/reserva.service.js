@@ -364,7 +364,7 @@ async function getReservasPorFechaTrabajador(workerId, date) {
         trabajador: reserva.trabajador
       }));
   
-      console.log("reservas en servicio backend getReservasPorFechaTrabajador", reservasFormateadas);
+      //console.log("reservas en servicio backend getReservasPorFechaTrabajador", reservasFormateadas);
       return { reservas: reservasFormateadas };
     } catch (error) {
       console.error("Error al obtener reservas para el trabajador:", error);
@@ -411,6 +411,7 @@ async function getReservasPorFechaMicroempresa(serviceId, date) {
         servicio: reserva.servicio,
         trabajador: reserva.trabajador
       }));
+      console.log("reservas en servicio backend getReservasPorFechaMicroempresa", reservasFormateadas);
   
       return { reservas: reservasFormateadas };
     } catch (error) {

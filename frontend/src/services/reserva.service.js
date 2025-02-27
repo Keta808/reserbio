@@ -49,21 +49,6 @@ async function getReservasByTrabajadorId(trabajadorId) {
       throw error;
     }
   }
-  
-
-
-async function createReserva(data) {
-    try {
-        const response = await instance.post("/reservas", data);
-        return response.data;
-    } catch (error) {
-        console.error(
-        "Error al crear la reserva:",
-        error.response?.data || error.message
-        );
-        throw error;
-    }
-}
 
 //eliminar una reserva 
 
@@ -164,13 +149,10 @@ async function createReservaHorario(data) {
 
 export default {
     getReservasByTrabajadorId,
-    createReserva,
     deleteReserva,
     cancelReserva,
     getReservasByCliente,
     getReservasPorFechaTrabajador,
     getReservasPorFechaMicroempresa,
-
     createReservaHorario
-
 };
