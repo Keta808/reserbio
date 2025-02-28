@@ -4,7 +4,7 @@ import { useNavigation } from '@react-navigation/native';
 import { AuthContext } from '../context/auth.context';
 // Llamar services de usuario para actualizar datos y botones
 import { getTrabajadorById, updateTrabajador } from '../services/user.service'; 
-import MicroempresaServices from '../services/microempresa.service';
+import MicroempresaServices from '../services/microempresa.service.js';
 
 
 export default function TrabajadorScreen() {
@@ -45,9 +45,7 @@ export default function TrabajadorScreen() {
     useEffect(() => {
         const fetchTrabajadorData = async () => {
           try {
-            if (!user) {
-              throw new Error("No se pudo identificar al trabajador.");
-            }
+            if (!user || !user.id) return;
             const trabajadorData = await getTrabajadorById(user.id);
             setDataTrabajador(trabajadorData);
           } catch (error) {
@@ -168,11 +166,7 @@ export default function TrabajadorScreen() {
               <Button title="Vincular Mercado Pago" onPress={() => navigation.navigate('VincularMercadoPago', { idMicroempresa: microempresa._id })} color="#007BFF" />
             </View>
             )}
-            <Button
-              title="Volver"
-              onPress={() => navigation.goBack()}
-              color="#FF6347"
-            /> 
+           
              
           </View>
           <Modal 

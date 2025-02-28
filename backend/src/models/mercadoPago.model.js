@@ -24,7 +24,7 @@ const MercadoPagoAccSchema = new mongoose.Schema({
     },
     mercadopagoAccountStatus: {
       type: String,
-      enum: ["pendiente", "activa", "rechazada"],
+      enum: ["pending", "active", "rejected"],
       default: "pendiente",
     },
   }); 

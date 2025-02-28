@@ -35,5 +35,22 @@ async function registrarCliente(data) {
     throw error;
   }
 }
-
-export { getTrabajadorById, updateTrabajador, registrarCliente };
+async function getClienteById(id) {
+  try {
+    const response = await instance.get(`/users/cliente/${id}`);
+    return response.data;
+  } catch (error) {
+    console.log(error);
+    throw error;
+  }
+}
+async function updateCliente(id, data) {
+  try {
+    const response = await instance.post(`/users/cliente/${id}`, data);
+    return response.data;
+  } catch (error) {
+    console.error(`Error al actualizar el cliente con ID ${id}:`, error.response?.data || error.message);
+    throw error;
+  }
+}
+export { getTrabajadorById, updateTrabajador, registrarCliente, getClienteById };

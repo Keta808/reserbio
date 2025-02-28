@@ -1,3 +1,4 @@
+/* eslint-disable prefer-const */
 /* eslint-disable quote-props */
 /* eslint-disable space-before-blocks */
 /* eslint-disable max-len */
@@ -173,9 +174,20 @@ async function crearPreferenciaServicio(idServicio){
         
         const [montoAbono, error] = servicioService.calcularMontoAbono(idServicio, servicio.precio, servicio.porcentajeAbono); 
         if (error) return [null, error];
-        const microempresaMP = await MercadoPagoAcc.findOne({ idMicroempresa: servicio.idMicroempresa }); 
-        if (!microempresaMP || !microempresaMP.accessToken) return [null, "No hay cuenta de MercadoPago vinculada."]; 
-        const accessToken = microempresaMP.accessToken; 
+        // Refrescar los tokens antes de continuar
+        console.log("Intentando refrescar los tokens de la microempresa...");
+        const [microempresaMP, refreshError] = await refreshToken(servicio.idMicroempresa);
+        if (refreshError) {
+            console.log("Error al refrescar el token:", refreshError);
+            return [null, "No se pudo actualizar el token de acceso."];
+        }
+
+        if (!microempresaMP || !microempresaMP.accessToken) {
+            return [null, "No se pudo obtener el token de acceso después de refrescar."];
+        }
+        const accessToken = microempresaMP.accessToken;
+        if (!accessToken) return [null, "No se pudo obtener el token de acceso después de refrescar."];
+        
         const notificationURL = MP_WEBHOOK_URL;
         console.log("Microempresa: ", microempresaMP); 
         console.log("ACCESS TOKEN: ", accessToken);
@@ -226,7 +238,7 @@ async function crearPreferenciaServicio(idServicio){
         handleError(error, "mercadoPago.service -> crearPreferenciaServicio");
         return [null, error];
     }
-}
+} 
 
 export default { 
     crearMercadoPagoAcc, 

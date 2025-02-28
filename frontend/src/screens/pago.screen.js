@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { View, Alert, StyleSheet, ActivityIndicator, Modal, Text } from 'react-native';
-import PaymentForm from '../components/paymentform.component'; // Ruta del componente
+import PaymentForm from '../components/paymentform.component.js'; // Ruta del componente
 // LLAMAR A FUNCION GENERAR TOKEN ID
-import { obtenerSuscripcion, getIssuers, getIdentificationTypes, cardForm } from '../services/suscripcion.service'; 
+import { obtenerSuscripcion, getIssuers, getIdentificationTypes, cardForm } from '../services/suscripcion.service.js'; 
 import  { logout }  from '../services/auth.services';
 
 
@@ -10,8 +10,12 @@ import  { logout }  from '../services/auth.services';
 const PaymentScreen = ({ route, navigation }) => {
   const { selectedPlan, user } = route.params;
   const [isLoading, setIsLoading] = useState(false);
+  console.log("Plan seleccionado:", selectedPlan);
+  console.log("Usuario autenticado:", user);
+  // Función para procesar el pago
 
   const handlePayment = async (paymentData) => { 
+    console.log("HandlePayment PaymentData:", paymentData);
     setIsLoading(true); // Mostrar el indicador de carga
     try { 
       console.log("Datos enviados al backend para generar cardTokenId:", paymentData);

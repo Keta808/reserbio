@@ -45,28 +45,32 @@ const PaymentForm = ({ onSubmit, fetchDynamicData, selectedPlan }) => {
   }; 
   // handler para la fecha de expiracion
   const handleExpirationDateChange = (input) => {
-    const formattedInput = input.replace(/\D/g, ""); // Solo números
+    const formattedInput = input.replace(/\D/g, ""); // Eliminar caracteres no numéricos
     let month = "";
     let year = "";
-  
-    if (formattedInput.length >= 1) {
-      month = formattedInput.slice(0, 2);
+
+    if (formattedInput.length > 0) {
+        month = formattedInput.slice(0, 2);
+    }
+
+    if (formattedInput.length > 2) {
+        year = formattedInput.slice(2, 4);
+    }
+
+    // Solo validar cuando el usuario haya ingresado los dos primeros dígitos del mes
+    if (month.length === 2) {
+        const monthNumber = parseInt(month, 10);
+        if (monthNumber < 1 || monthNumber > 12) {
+            return; // Si es inválido, no actualizar el estado (pero no bloquear la entrada)
+        }
     }
   
-    if (formattedInput.length >= 3) {
-      year = formattedInput.slice(2, 4);
-    }
-  
-    // Validar que el mes sea válido (01 a 12)
-    if (month && (parseInt(month, 10) < 1 || parseInt(month, 10) > 12)) {
-      return; // No actualizar si el mes no es válido
-    }
-  
-    setExpirationMonth(month);
-    setExpirationYear(year);
+    
   
     const formattedDate = month + (year ? `/${year}` : "");
     setExpirationDate(formattedDate);
+    setExpirationMonth(month);
+    setExpirationYear(year);
   }; 
   // handler para el codigo de seguridad
   const handleSecurityCodeChange = (input) => {
@@ -78,38 +82,55 @@ const PaymentForm = ({ onSubmit, fetchDynamicData, selectedPlan }) => {
     }
   }; 
   // Validar si el Rut ingresado es valido con Algoritmo
-  const validarRut = (rut) => {  
-    if (!/^[0-9]+[-|‐]{1}[0-9kK]{1}$/.test(rut)) return false;
+  const validarRut = (rut) => { 
+    console.log("validarRut:", rut); 
+    if (!/^[0-9]+-[0-9kK]{1}$/.test(rut)) {
+      console.log("Formato de RUT incorrecto");
+      return false;
+    }
     const [body, verifier] = rut.split("-");
     let sum = 0;
     let multiplier = 2;
   
     for (let i = body.length - 1; i >= 0; i--) {
-      sum += body[i] * multiplier;
+      sum += parseInt(body[i], 10) * multiplier;
       multiplier = multiplier === 7 ? 2 : multiplier + 1;
     }
   
     const expectedVerifier = 11 - (sum % 11);
     const verifierChar = expectedVerifier === 11 ? "0" : expectedVerifier === 10 ? "K" : expectedVerifier.toString();
-  
+
+    console.log("verifierChar esperado:", verifierChar);
+    console.log("verifier ingresado:", verifier.toUpperCase());
+
     return verifier.toUpperCase() === verifierChar;
   };
   
 
   const formatRut = (input) => {
-    const cleanInput = input.replace(/[^0-9kK]/g, ""); // Elimina todo lo que no sea números o 'k/K'
-    const body = cleanInput.slice(0, -1); // Parte numérica
-    const verifier = cleanInput.slice(-1).toUpperCase(); // Dígito verificador en mayúscula
-    return `${body}${verifier}`;
-  };
+    // Eliminar todo lo que no sea números o la letra K/k
+    const cleanInput = input.replace(/[^0-9kK]/g, "");
+    
+    if (cleanInput.length <= 1) return cleanInput; // Si hay solo un dígito, retornar tal cual
+    
+    const body = cleanInput.slice(0, -1); // Números del RUT
+    const verifier = cleanInput.slice(-1).toUpperCase(); // Último dígito (verificador)
+  
+    return `${body}-${verifier}`;
+  }; 
+
   const handleIdentificationNumberChange = (input) => { 
     if (identificationType === "RUT") {
+      
+     
       const formattedRut = formatRut(input);
+      console.log("formattedRut:", formattedRut);
       setIdentificationNumber(formattedRut);
     } else {
       setIdentificationNumber(input);
     }
-  }; 
+  };
+
   const handleEmailChange = (input) => {
     setCardholderEmail(input);
     setEmailError(""); // Limpiar el error al cambiar el texto
@@ -126,19 +147,26 @@ const PaymentForm = ({ onSubmit, fetchDynamicData, selectedPlan }) => {
   
 
   const handleSubmit = () => { 
+    console.log("handleSubmit..."); 
     
     if (!cardNumber || !expirationDate || !securityCode || !cardholderName || !identificationNumber || !cardholderEmail) {
+      console.log("Faltan campos por completar");
       Alert.alert("Error", "Por favor complete todos los campos.");
       return;
     } 
+    
     if (!issuer || !identificationType) {
+      console.log("Banco o tipo de documento no seleccionado");
       Alert.alert("Error", "Seleccione el banco y el tipo de documento.");
       return;
     }  
+    
     if (identificationType === "RUT" && !validarRut(identificationNumber)) {
+      console.log("RUT no válido");
       Alert.alert("Error", "El RUT ingresado no es válido.");
       return;
-    }
+    } 
+    
     
     const cleanCardNumber = cardNumber.replace(/\s/g, ""); // cardNumber sin espacios  
     const fullExpirationYear = `20${expirationYear}`; 
@@ -184,7 +212,7 @@ const PaymentForm = ({ onSubmit, fetchDynamicData, selectedPlan }) => {
       {/* Resto del formulario */}
       <TextInput style={styles.input} placeholder="Número de tarjeta"  keyboardType="numeric" maxLength={19}  value={cardNumber} onChangeText={handleCardNumberChange} />
       <TextInput style={styles.input} placeholder="MM/YY" value={expirationDate} onChangeText={handleExpirationDateChange} keyboardType="numeric" maxLength={5} />
-      <TextInput style={styles.input} placeholder="Código de seguridad" value={securityCode} onChangeText={handleSecurityCodeChange} keyboardType="numeric" maxLength={4} />
+      <TextInput style={styles.input} placeholder="Código de seguridad (CVV)" value={securityCode} onChangeText={handleSecurityCodeChange} keyboardType="numeric" maxLength={4} />
       <TextInput style={styles.input} placeholder="Titular de la tarjeta" value={cardholderName} onChangeText={setCardholderName} />
       
       <Picker selectedValue={issuer} onValueChange={(value) => setIssuer(value)} style={styles.picker}>
@@ -204,7 +232,13 @@ const PaymentForm = ({ onSubmit, fetchDynamicData, selectedPlan }) => {
       <TextInput style={styles.input} placeholder="Correo electrónico" value={cardholderEmail} onChangeText={handleEmailChange} keyboardType="email-address" onBlur={validateEmail} />
       {emailError ? <Text style={styles.errorText}>{emailError}</Text> : null}
 
-      <Button title="Pagar" onPress={handleSubmit}/>
+      <Button title="Pagar" onPress={handleSubmit}/> 
+      <View style={styles.disclaimerContainer}>
+            <Text style={styles.disclaimerText}>
+              Nota: La suscripción al plan seleccionado se cobrará de manera mensual una vez obtenido el plan. 
+              Puedes gestionar tu suscripción a través de la aplicación. 
+            </Text>
+          </View>
     </View>
   );
 };
@@ -247,6 +281,20 @@ const styles = StyleSheet.create({
   planPrice: {
     fontSize: 16,
     color: '#888',
+  },
+  disclaimerContainer: {
+    marginTop: 20,
+    marginBottom: 30,
+    padding: 15,
+    backgroundColor: '#f9f9f9',
+    borderRadius: 8,
+    borderColor: '#ddd',
+    borderWidth: 1,
+  },
+  disclaimerText: {
+    fontSize: 12,
+    color: '#888',
+    textAlign: 'center',
   },
 });
 
