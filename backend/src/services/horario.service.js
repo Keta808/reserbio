@@ -91,7 +91,9 @@ async function updateHorarioById(horarioId, data) {
 
 async function deleteHorarioById(horarioId) {
     try {
+        console.log("horarioId en deleteHorarioById service ", horarioId);
         const horario = await Horario.findByIdAndDelete(horarioId).exec();
+        console.log("horario en deleteHorarioById", horario);
         if (!horario) return [null, 'El horario no existe'];
         return [horario, null];
     }
