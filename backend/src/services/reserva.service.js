@@ -6,7 +6,6 @@ import { handleError } from "../utils/errorHandler.js";
 
 import UserModels from "../models/user.model.js";
 const { Trabajador, Cliente, User } = UserModels;
-import Disponibilidad from "../models/disponibilidad.model.js";
 import Horario from "../models/horario.model.js";
 import Enlace from "../models/enlace.model.js"; 
 import Servicio from "../models/servicio.model.js";
@@ -366,7 +365,7 @@ async function getReservasPorFechaTrabajador(workerId, date) {
         trabajador: reserva.trabajador
       }));
   
-      console.log("reservas en servicio backend getReservasPorFechaTrabajador", reservasFormateadas);
+      //console.log("reservas en servicio backend getReservasPorFechaTrabajador", reservasFormateadas);
       return { reservas: reservasFormateadas };
     } catch (error) {
       console.error("Error al obtener reservas para el trabajador:", error);
@@ -413,6 +412,7 @@ async function getReservasPorFechaMicroempresa(serviceId, date) {
         servicio: reserva.servicio,
         trabajador: reserva.trabajador
       }));
+      console.log("reservas en servicio backend getReservasPorFechaMicroempresa", reservasFormateadas);
   
       return { reservas: reservasFormateadas };
     } catch (error) {
@@ -518,8 +518,6 @@ export default {
       finalizarReserva,
       getReservasPorFechaTrabajador,
       getReservasPorFechaMicroempresa,
-
-
       createReservaHorario,
     };
 

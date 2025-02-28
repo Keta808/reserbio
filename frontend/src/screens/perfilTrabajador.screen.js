@@ -1,8 +1,48 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, Button } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useNavigation } from '@react-navigation/native';
+import { useAuth } from '../context/auth.context';
 
-export default function PerfilTrabajadorScreen({ route, navigation }) {
-  const { trabajador } = route.params || {};
+export default function PerfilTrabajadorScreen({ route }) {
+  const navigation = useNavigation();
+  const { isAuthenticated } = useAuth(); // 🔹 Verifica si el usuario está autenticado
+  const [trabajador, setTrabajador] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchTrabajador = async () => {
+      try {
+        if (!isAuthenticated) {
+          return; // Si ya se cerró sesión, no hacer nada
+        }
+
+        const storedUser = await AsyncStorage.getItem('user');
+        if (!storedUser) {
+          throw new Error('No se encontró usuario en AsyncStorage.');
+        }
+        setTrabajador(JSON.parse(storedUser));
+      } catch (error) {
+        console.error('Error al obtener datos del trabajador:', error);
+        if (isAuthenticated) { // Solo mostrar error si sigue autenticado
+          Alert.alert('Error', 'No se pudo cargar la información del trabajador.');
+        }
+        navigation.navigate('HomeTrabajador');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchTrabajador();
+  }, [isAuthenticated]); // 🔹 Se ejecuta solo si el usuario sigue autenticado
+
+  if (loading) {
+    return (
+      <View style={styles.container}>
+        <Text style={styles.loadingText}>Cargando perfil...</Text>
+      </View>
+    );
+  }
 
   if (!trabajador) {
     return (
@@ -32,12 +72,12 @@ export default function PerfilTrabajadorScreen({ route, navigation }) {
       <View style={styles.buttonContainer}>
         <Button
           title="Reservar"
-          onPress={() => navigation.navigate('Reservar', { trabajadorId: trabajador._id })}
+          onPress={() => navigation.navigate('Reservar', { trabajadorId: trabajador.id })}
           color="blue"
         />
         <Button
           title="Volver al Inicio"
-          onPress={() => navigation.navigate('HomeNavigator')}
+          onPress={() => navigation.navigate('HomeTrabajador')}
           color="#007BFF"
         />
       </View>
@@ -76,6 +116,11 @@ const styles = StyleSheet.create({
   error: {
     color: 'red',
     textAlign: 'center',
+  },
+  loadingText: {
+    textAlign: 'center',
+    fontSize: 18,
+    color: 'gray',
   },
 });
 

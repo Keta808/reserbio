@@ -207,6 +207,23 @@ async function updateEnlaceParcial(id, fieldsToUpdate) {
     }
 }
 
+/** Obtiene la microempresa a la que pertenece el trabajador*/
+async function obtenerMicroempresasPorTrabajador(userId) {
+    try {
+      const enlaces = await Enlace.find({ id_trabajador: userId, estado: true }).populate("id_microempresa");
+  
+      if (!enlaces.length) return [];
+  
+      // Extraer solo las microempresas de los enlaces
+      const microempresas = enlaces.map(enlace => enlace.id_microempresa);
+  
+      return microempresas;
+    } catch (error) {
+      console.error("❌ Error en obtenerMicroempresasPorTrabajador:", error);
+      throw new Error(error.message);
+    }
+  }
+
 export default {
     getEnlaces,
     createEnlace,
@@ -214,4 +231,5 @@ export default {
     updateEnlace,
     getTrabajadoresPorMicroempresa,
     updateEnlaceParcial,
+    obtenerMicroempresasPorTrabajador
 };

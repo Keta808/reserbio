@@ -281,6 +281,41 @@ async function updateCliente(id, cliente) {
   }
 }
 
+/**
+ * Convierte un Cliente en Trabajador, manteniendo los mismos datos.
+ * @param {string} id - ID del usuario Cliente
+ * @returns {Array} - [NuevoTrabajador, null] si tuvo éxito, [null, error] si falló.
+ */
+async function userChange(id) {
+  try {
+      if (!id) return [null, "ID de usuario no proporcionado."];
+
+      const user = await UserModels.Cliente.findById(id);
+      if (!user) return [null, "El usuario (cliente) no existe."];
+
+      // 📌 Verificar si ya existe como Trabajador
+      const existingTrabajador = await UserModels.Trabajador.findOne({ email: user.email });
+      if (existingTrabajador) return [existingTrabajador, null]; // Si ya existe, lo reutilizamos
+
+      const newTrabajador = new UserModels.Trabajador({
+          nombre: user.nombre,
+          apellido: user.apellido,
+          telefono: user.telefono,
+          email: user.email,
+          password: user.password,
+          state: user.state,
+      });
+
+      await newTrabajador.save();
+      console.log("✅ Usuario cambiado a Trabajador:", newTrabajador);
+
+      return [newTrabajador, null];
+  } catch (error) {
+      console.error("❌ Error al cambiar el usuario a Trabajador:", error.message);
+      handleError(error, "user.service -> userChange");
+      return [null, error.message];
+  }
+}
 
 export default {
   getUsers,
@@ -293,5 +328,7 @@ export default {
   deleteUser,
   getTrabajadorById,
   updateTrabajador,
+  userChange,
   getClienteById,
+  updateCliente,
 };

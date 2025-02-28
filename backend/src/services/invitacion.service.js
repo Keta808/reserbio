@@ -6,6 +6,8 @@ import Microempresa from "../models/microempresa.model.js";
 import nodemailer from "nodemailer";
 import dotenv from "dotenv";
 import mongoose from "mongoose";
+import UserService from "../services/user.service.js"; // ✅ Importar el servicio completo
+import UserModels from "../models/user.model.js";
 
 dotenv.config(); // Cargar variables de entorno
 
@@ -109,35 +111,31 @@ async function aceptarInvitacionPorCodigo(codigo, userId) {
             throw new Error("La microempresa asociada a la invitación no existe.");
         }
 
-        // 📌 **Verificar si ya existe un enlace entre el trabajador y la microempresa**
-        let enlace = await Enlace.findOne({ id_trabajador: userId, id_microempresa: invitacion.idMicroempresa });
+        let trabajadorId = userId; // Por defecto, usar el mismo ID recibido
 
-        if (enlace) {
-            if (enlace.estado === false) {
-                // 📌 **Si el enlace está inactivo, se reactiva en lugar de crear uno nuevo**
-                const [enlaceReactivado, error] = await updateEnlaceParcial(enlace._id, { estado: true, fecha_inicio: new Date(), fecha_termino: null });
-
-                if (error) throw new Error(error);
-                enlace = enlaceReactivado;
-            } else {
-                throw new Error("El usuario ya es parte de esta microempresa");
-            }
-        } else {
-            // 📌 **Si el enlace no existe, se crea uno nuevo**
-            enlace = await Enlace.create({
-                id_trabajador: userId,
-                id_role: invitacion.id_role,
-                id_microempresa: invitacion.idMicroempresa,
-                fecha_inicio: new Date(),
-                estado: true
-            });
+        // 📌 **Verificar si el usuario es Cliente y transformarlo en Trabajador**
+        const user = await UserModels.Cliente.findById(userId);
+        if (user) { // ✅ Si existe, convertirlo en Trabajador
+            console.log(`🔄 Transformando Cliente ${user.email} en Trabajador...`);
+            const [nuevoTrabajador, error] = await UserService.userChange(userId);
+            if (error) throw new Error(error);
+            trabajadorId = nuevoTrabajador._id; // ✅ Actualizar ID del trabajador
         }
 
-        // 📌 **Actualizar la microempresa para incluir el nuevo enlace en `trabajadores`**
+        // 📌 **Crear un nuevo enlace para el historial**
+        const nuevoEnlace = await Enlace.create({
+            id_trabajador: trabajadorId,
+            id_role: invitacion.id_role,
+            id_microempresa: invitacion.idMicroempresa,
+            fecha_inicio: new Date(),
+            estado: true,
+        });
+
+        // 📌 **Actualizar la microempresa para incluir el nuevo enlace**
         await Microempresa.findByIdAndUpdate(
             invitacion.idMicroempresa,
-            { $addToSet: { trabajadores: enlace._id } }, // ✅ Agregar solo el ID del Enlace
-            { new: true }
+            { $addToSet: { trabajadores: nuevoEnlace._id } }, // ✅ Agregar solo el ID del Enlace
+            { new: true },
         );
 
         // 📌 **Actualizar estado de la invitación**
@@ -200,5 +198,3 @@ export default {
     aceptarInvitacionPorCodigo,
     obtenerInvitaciones,
 };
-
-

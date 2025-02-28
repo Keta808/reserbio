@@ -59,11 +59,12 @@ export const AuthProvider = ({ children }) => {
   // Función para cerrar sesión
   const logout = async () => {
     try {
+      setUser(null);
+      setIsAuthenticated(false);
       await logoutService(); // Simula el servicio de logout
       await AsyncStorage.removeItem('user'); // Limpia el usuario de AsyncStorage
       await AsyncStorage.removeItem('token'); // Limpia el token de AsyncStorage
-      setUser(null);
-      setIsAuthenticated(false);
+      
       console.log('Usuario cerró sesión correctamente');
     } catch (error) {
       console.error('Error durante el cierre de sesión:', error);

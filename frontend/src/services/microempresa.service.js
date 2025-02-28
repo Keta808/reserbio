@@ -109,20 +109,20 @@ async function updateMicroempresa(id, datosActualizados) {
   }
 }
 
-async function getMicroempresasByUser(trabajadorId) {
+async function getMicroempresasByUser(userId) {
   try {
-    // ✅ URL CORREGIDA
-    const response = await instance.get(`/microempresas/user/${trabajadorId}`);
-    // console.log('📡 Microempresas obtenidas:', response);
-    return response.data;
+    // ✅ Buscar en `Enlace` las microempresas asociadas al `userId` del trabajador
+    const response = await instance.get(`/enlaces/microempresas/${userId}`);
+    
+    console.log('📦 Microempresas obtenidas por enlaces:', response.data);
+
+    return response.data; 
   } catch (error) {
-    console.error(
-      '❌ Error al obtener datos de las microempresas:',
-      error.response?.data || error.message
-    );
+    console.error('❌ Error al obtener microempresas:', error.response?.data || error.message);
     throw error;
   }
 }
+
 
 async function getMicroempresasPorCategoria(categoria) {
   try {
