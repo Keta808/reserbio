@@ -161,6 +161,32 @@ export async function getMicroempresasByTrabajador(req, res) {
     }
   }
 
+  /**
+ * Controlador para desvincular un trabajador de una microempresa
+ * @param {Object} req - Request de Express
+ * @param {Object} res - Response de Express
+ */
+export async function desvincularTrabajador(req, res) {
+    try {
+        const { idEnlace } = req.params; // 📌 Extraer ID del enlace desde la URL
+
+        if (!idEnlace) {
+            return res.status(400).json({ error: "El ID del enlace es requerido." });
+        }
+
+        const resultado = await EnlaceService.desvincularTrabajador(idEnlace);
+
+        if (resultado.error) {
+            return res.status(400).json({ error: resultado.error });
+        }
+
+        return res.status(200).json({ message: resultado.message });
+    } catch (error) {
+        console.error("❌ Error en desvincularTrabajador:", error.message);
+        return res.status(500).json({ error: "Error interno del servidor." });
+    }
+}
+
 export default {
     getEnlaces,
     createEnlace,
@@ -169,4 +195,5 @@ export default {
     getTrabajadoresPorMicroempresa,
     updateEnlaceParcial,
     getMicroempresasByTrabajador,
+    desvincularTrabajador,
 };

@@ -140,6 +140,19 @@ async function getTrabajadorById(id) {
   } catch (error) {
     handleError(error, "user.service -> getTrabajadorById");
   }
+} 
+
+async function getClienteById(id) {
+  try {
+    const cliente = await Cliente.findById({ _id: id })
+      .select("-password")
+      .populate("state")
+      .exec();
+    if (!cliente) return [null, "El cliente no existe"];
+    return [cliente, null];
+  }catch (error) {
+    handleError(error, "user.service -> getClienteById");
+  }
 }
 /**
  * Crea un nuevo administrador en la base de datos
@@ -252,6 +265,21 @@ async function updateTrabajador(id, trabajador) {
     handleError(error, "user.service -> updateTrabajador");
   }
 }
+async function updateCliente(id, cliente) {
+  try {
+    if (!id) return [null, "No se recibió el ID del cliente"];  
+    const existingCliente = await Cliente.findById(id).exec();  
+    if (!existingCliente) return [null, "El cliente no existe"];
+    if(cliente.nombre) existingCliente.nombre = cliente.nombre;
+    if(cliente.apellido) existingCliente.apellido = cliente.apellido;
+    if(cliente.telefono) existingCliente.telefono = cliente.telefono;
+    if(cliente.email) existingCliente.email = cliente.email;
+    await existingCliente.save();
+    return [existingCliente, null];
+  } catch (error) {
+    handleError(error, "user.service -> updateCliente");
+  }
+}
 
 /**
  * Convierte un Cliente en Trabajador, manteniendo los mismos datos.
@@ -301,4 +329,6 @@ export default {
   getTrabajadorById,
   updateTrabajador,
   userChange,
+  getClienteById,
+  updateCliente,
 };

@@ -207,6 +207,33 @@ async function updateTrabajador(req, res) {
     respondError(req, res, 400, error.message);
   }
 }
+async function getClienteById(req, res) {
+  try { 
+    const { error } = userIdSchema.validate(req.params);
+    if (error) return respondError(req, res, 400, error.message);
+    const [cliente, errorCliente] = await UserService.getClienteById(req.params.id);
+    if (errorCliente) return respondError(req, res, 404, errorCliente);
+    respondSuccess(req, res, 200, cliente);
+  } catch (error) {
+    handleError(error, "user.controller -> getClienteById");
+    respondError(req, res, 400, error.message);
+  }
+ }
+async function updateCliente(req, res) {
+  try {
+    const { error } = userIdSchema.validate(req.params);
+    if (error) return respondError(req, res, 400, error.message);
+    const { clienteData } = req.body;
+    if (!clienteData) return respondError(req, res, 400, "No se envió información para actualizar");
+
+    const { cliente, errorCliente } = await UserService.updateCliente(req.params.id, clienteData);
+    if (errorCliente) return respondError(req, res, 404, errorCliente);
+    respondSuccess(req, res, 200, cliente);
+  } catch {
+    handleError(error, "user.controller -> updateCliente");
+    respondError(req, res, 400, error.message);
+  }
+}
 
 export default {
   getUsers,
@@ -219,4 +246,6 @@ export default {
   deleteUser,
   getTrabajadorById,
   updateTrabajador,
+  getClienteById,
+  updateCliente,
 };

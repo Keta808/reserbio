@@ -1,3 +1,5 @@
+/* eslint-disable require-jsdoc */
+/* eslint-disable max-len */
 import Reserva from '../models/reserva.model.js'; 
 import { handleError } from "../utils/errorHandler.js"; 
 

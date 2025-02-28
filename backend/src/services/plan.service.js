@@ -123,7 +123,7 @@ async function crearPlanBasico() {
         // Guardar el plan en la base de datos
         const newPlan = new Plan({
             tipo_plan: 'Plan Basico',
-            precio: 3990,
+            precio: 3900,
             mercadoPagoId: response.data.id,
             estado: response.data.status,
             fecha_creacion: response.data.date_created,

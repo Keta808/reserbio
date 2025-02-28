@@ -32,6 +32,7 @@ import SeleccionServicioScreen from '../screens/seleccionServicio.screen.js';
 import ReservaClienteScreen from '../screens/reservasCliente.screen.js';
 import ValoracionServicioScreen from '../screens/valoracion.screen.js';
 import AceptarInvitacionScreen from '../screens/aceptarInvitacionScreen.js';
+import PerfilClienteScreen from '../screens/perfilCliente.screen.js';
 
 // Pantallas para Trabajador
 import gestorSuscripcionScreen from '../screens/gestorSuscripcion.screen.js'; 
@@ -70,7 +71,9 @@ const HomeClienteNavigator = () => (
     <Tab.Screen name="ListaMicroempresas" component={ListaMicroempresasScreen} />
     <Tab.Screen name="HomeCliente" component={HomeClienteScreen} />
     <Tab.Screen name="Reservas" component={ReservaClienteScreen} /> 
+    <Tab.Screen name="Perfil" component={PerfilClienteScreen} />
     <Tab.Screen name="Suscripcion" component={SuscripcionScreen} />
+    
   </Tab.Navigator>
 );
 const HomeTrabajadorNavigator = () => {

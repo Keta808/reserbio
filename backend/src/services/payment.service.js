@@ -148,6 +148,28 @@ async function refundPayment(paymentId) {
         handleError(error, "payment.service -> refundPayment");
         return [null, error];
     }
+} 
+// verificar pago por url
+async function verificarPago(urlPago, idMicroempresa) { 
+    try { 
+        if (!urlPago) return [null, "Falta la url de pago"]; 
+        const paymentId = urlPago.split("/").pop(); 
+        const mercadoPagoAcc = await MercadoPagoAcc.findOne({ idMicroempresa });
+        if (!mercadoPagoAcc || !mercadoPagoAcc.accessToken) {
+            return [null, "No hay cuenta de MercadoPago vinculada a esta microempresa"];
+        } 
+        const accessToken = mercadoPagoAcc.accessToken;
+        const response = await axios.get(`https://api.mercadopago.com/v1/payments/${paymentId}`, {
+            headers: { Authorization: `Bearer ${accessToken}` },
+        });
+        
+        if (!response.data) return [null, "No se pudo verificar el pago."];
+        
+        return [response.data, null];
+    } catch (error) {
+        handleError(error, "payment.service -> verificarPago");
+        return [null, error]; 
+    }
 }
 
-export default { createPayment, getPayments, getPaymentById, deletePayment, updatePayment, procesarNotificacionPago, refundPayment };
+export default { createPayment, getPayments, getPaymentById, deletePayment, updatePayment, procesarNotificacionPago, refundPayment, verificarPago };

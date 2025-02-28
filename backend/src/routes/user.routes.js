@@ -29,6 +29,8 @@ router.get("/:id", isAdmin, usuarioController.getUserById);
 router.delete("/:id", isAdmin, usuarioController.deleteUser);
 router.get("/trabajador/:id", usuarioController.getTrabajadorById);
 router.post("/trabajador/:id", usuarioController.updateTrabajador);
+router.get("/cliente/:id", usuarioController.getClienteById);
+router.post("/cliente/:id", usuarioController.updateCliente);
 
 // Exporta el enrutador
 export default router;

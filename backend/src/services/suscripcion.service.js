@@ -195,6 +195,7 @@ async function updateSuscripcionCard(preapprovalId, newCardTokenId, idUser){
 }
 // Funcion para generar cardTokenId
 async function cardForm(paymentData){
+    console.log("CardForm..."); 
     try { 
         // DEPURACION: Mostrar datos recibidos
         console.log("CARD FORM: Datos recibidos para generar cardTokenId:", paymentData);
@@ -240,7 +241,9 @@ async function cardForm(paymentData){
 
 // Funcion obtener Suscripcion 
 async function obtenerSuscripcion(plan, user, cardTokenId, payer_email){
+    console.log("SERVICES OBTENER SUS: Datos recibidos:", { plan, user, cardTokenId, payer_email });
     try {
+        console.log("obteniendo...");
         if (!plan || !user || !cardTokenId || !payer_email){
             return [null, "Faltan datos para crear la suscripción."];
         }
