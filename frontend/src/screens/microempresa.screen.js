@@ -16,6 +16,9 @@ import { Image } from "expo-image";
 import ServiciosService from "../services/servicio.service";
 import MicroempresaService from "../services/microempresa.service";
 import { useFocusEffect } from "@react-navigation/native";
+import EnlaceService from "../services/enlace.service";
+import Icon from "react-native-vector-icons/Ionicons";
+import Ionicons from 'react-native-vector-icons/Ionicons';
 
 export default function MicroempresaScreen({ route, navigation }) {
   const { id, userId } = route.params || {};
@@ -28,28 +31,44 @@ export default function MicroempresaScreen({ route, navigation }) {
   // Funciones de fetch definidas fuera o dentro del componente...
   const fetchMicroempresa = async () => {
     try {
-      if (!id) {
-        Alert.alert("Error", "No se proporcionó el ID de la microempresa.");
-        setLoading(false);
-        return;
-      }
+        if (!id) {
+            Alert.alert("Error", "No se proporcionó el ID de la microempresa.");
+            setLoading(false);
+            return;
+        }
 
-      console.log("📥 Fetching microempresa with ID:", id);
-      const response = await MicroempresaService.getMicroempresaData(id);
+        console.log("📥 Fetching microempresa with ID:", id);
 
-      if (response) {
-        console.log("📋 Datos de la microempresa obtenidos:", response);
-        setMicroempresa(response.data);
-      } else {
-        console.warn("⚠️ Respuesta inesperada del servicio:", response);
-        Alert.alert("Error", "No se pudieron cargar los datos de la microempresa.");
-      }
+        // 📌 Obtener datos de la microempresa
+        const responseMicroempresa = await MicroempresaService.getMicroempresaData(id);
+        if (!responseMicroempresa) {
+            console.warn("⚠️ Respuesta inesperada del servicio:", responseMicroempresa);
+            Alert.alert("Error", "No se pudieron cargar los datos de la microempresa.");
+            return;
+        }
+
+        // 📌 Obtener los trabajadores con `enlaceId`
+        const responseTrabajadores = await EnlaceService.obtenerTrabajadoresMicroempresa(id);
+        if (!responseTrabajadores || !responseTrabajadores.data) {
+            console.warn("⚠️ No se pudieron obtener los trabajadores correctamente.");
+            Alert.alert("Error", "No se pudieron cargar los trabajadores.");
+            return;
+        }
+
+        // 📌 Fusionar datos: agregar los trabajadores con `enlaceId`
+        const microempresaActualizada = {
+            ...responseMicroempresa.data,
+            trabajadores: responseTrabajadores.data, // Sustituimos la lista de trabajadores por la versión con enlaceId
+        };
+
+        console.log("📌 Microempresa con trabajadores actualizados:", microempresaActualizada);
+        setMicroempresa(microempresaActualizada);
+
     } catch (error) {
-      console.error("❌ Error al obtener los datos de la microempresa:", error.message);
-      Alert.alert("Error", "No se pudieron cargar los datos de la microempresa.");
+        console.error("❌ Error al obtener los datos de la microempresa:", error.message);
+        Alert.alert("Error", "No se pudieron cargar los datos de la microempresa.");
     }
-  };
-  
+};
 
   const fetchFotoPerfil = async () => {
     try {
@@ -129,6 +148,48 @@ export default function MicroempresaScreen({ route, navigation }) {
     );
   };
 
+  const handleDeleteTrabajador = (trabajador) => {
+    if (!trabajador.enlaceId) {
+      console.error("❌ Error: enlaceId no definido para este trabajador:", trabajador);
+      Alert.alert("Error", "No se pudo encontrar el enlace del trabajador.");
+      return;
+    }
+  
+    Alert.alert(
+      "Confirmar eliminación",
+      `¿Estás seguro de que quieres desvincular a ${trabajador.nombre}?`,
+      [
+        {
+          text: "Cancelar",
+          style: "cancel",
+        },
+        {
+          text: "Eliminar",
+          style: "destructive",
+          onPress: async () => {
+            try {
+              // 📌 Llamamos a la función del servicio para desvincular
+              console.log("🚨 Solicitando desvinculación del trabajador con enlace ID:", trabajador.enlaceId);
+              await EnlaceService.desvincularTrabajador(trabajador.enlaceId);
+              
+              Alert.alert("Éxito", "Trabajador desvinculado correctamente");
+  
+              // 📌 Actualizamos el estado para reflejar el cambio en la UI
+              setMicroempresa((prev) => ({
+                ...prev,
+                trabajadores: prev.trabajadores.filter((t) => t.enlaceId !== trabajador.enlaceId),
+              }));
+            } catch (error) {
+              console.error("❌ Error al desvincular trabajador:", error);
+              Alert.alert("Error", "No se pudo desvincular el trabajador.");
+            }
+          },
+        },
+      ],
+      { cancelable: true }
+    );
+  };  
+
   // Usando useFocusEffect para refrescar cada vez que la pantalla se enfoque
   useFocusEffect(
     React.useCallback(() => {
@@ -153,6 +214,7 @@ export default function MicroempresaScreen({ route, navigation }) {
       </View>
     );
   }
+  console.log("📌 Lista de trabajadores con enlaceId:", microempresa.trabajadores);
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -235,21 +297,36 @@ export default function MicroempresaScreen({ route, navigation }) {
   
               {/* 🔄 Muestra los trabajadores correctamente con una clave única */}
               {microempresa.trabajadores.length > 0 ? (
+
                 <FlatList
                   data={microempresa.trabajadores}
-                  key={"flatlist_trabajadores"} // 👈 Clave única para evitar el error
+                  keyExtractor={(item) => item.enlaceId || item._id} // Evita claves nulas
+                  numColumns={2} 
                   renderItem={({ item }) => (
-                    <TouchableOpacity
-                      style={styles.card}
-                      onPress={() => navigation.navigate("Trabajador", { trabajador: item })}
-                    >
-                      <Text style={styles.cardTitle}>{item.nombre}</Text>
-                      <Text style={styles.cardDetail}>{item.telefono}</Text>
-                    </TouchableOpacity>
+                    <View style={styles.trabajadorCard}>
+                      {/* 📌 Verifica que los datos no sean nulos */}
+                      <TouchableOpacity
+                        style={styles.trabajadorInfo}
+                        onPress={() => navigation.navigate("Trabajador", { trabajador: item })}
+                      >
+                        <Text style={styles.cardTitle}>{item.nombre || "Sin nombre"}</Text>
+                        <Text style={styles.cardDetail}>{item.telefono || "Sin teléfono"}</Text>
+                      </TouchableOpacity>
+                
+                      {/* ✅ Corrección: Botón de eliminar con Icon */}
+                      <TouchableOpacity
+                        style={styles.deleteTrabajadorButton}
+                        onPress={() => handleDeleteTrabajador(item)}
+                      >
+                        <Ionicons name="trash-outline" size={20} color="white" />
+                      </TouchableOpacity>
+                    </View>
                   )}
-                  keyExtractor={(item) => item._id}
-                  numColumns={2}
                 />
+                
+              
+                           
+              
               ) : (
                 <Text style={styles.noImagesText}>No hay trabajadores aún.</Text>
               )}
@@ -270,26 +347,29 @@ export default function MicroempresaScreen({ route, navigation }) {
               <View style={styles.galleryContainer}>
                 {microempresa.imagenes.length > 0 ? (
                   <FlatList
-                    data={microempresa.imagenes}
-                    horizontal
-                    keyExtractor={(item) => item.public_id}
-                    contentContainerStyle={{ paddingHorizontal: 10 }}
-                    renderItem={({ item }) => (
-                      <View style={styles.galleryImageContainer}>
-                        <Image
-                          source={{ uri: item.url }}
-                          style={styles.galleryImage}
-                          contentFit="cover"
-                        />
-                        <TouchableOpacity
-                          style={styles.deleteImageButton}
-                          onPress={() => handleDeleteImage(item.public_id)}
-                        >
-                          <Text style={styles.deleteImageButtonText}>X</Text>
-                        </TouchableOpacity>
-                      </View>
-                    )}
-                  />
+                  data={microempresa.imagenes}
+                  horizontal
+                  keyExtractor={(item) => item.public_id}
+                  contentContainerStyle={{ paddingHorizontal: 10 }}
+                  renderItem={({ item }) => (
+                    <View style={styles.galleryImageContainer}>
+                      <Image
+                        source={{ uri: item.url }}
+                        style={styles.galleryImage}
+                        contentFit="cover"
+                      />
+                
+                      {/* 🗑️ Botón de eliminar imagen */}
+                      <TouchableOpacity
+                        style={styles.deleteTrabajadorButton}
+                        onPress={() => handleDeleteImage(item.public_id)}
+                      >
+                        <Ionicons name="trash-outline" size={20} color="white" />
+                      </TouchableOpacity>
+                    </View>
+                  )}
+                />
+                
                 ) : (
                   <Text style={styles.noImagesText}>No hay imágenes disponibles</Text>
                 )}
@@ -455,20 +535,14 @@ const styles = StyleSheet.create({
     position: "absolute",
     top: 5,
     right: 5,
-    backgroundColor: "#FF3B30",
-    width: 20,
-    height: 20,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: "#000",
-    alignItems: "center",
-    justifyContent: "center",
+    backgroundColor: "transparent", // 📌 Sin fondo para solo mostrar el icono
   },
-  deleteImageButtonText: {
-    color: "#fff",
-    fontSize: 14,
-    fontWeight: "bold",
+  
+  deleteImageIcon: {
+    fontSize: 22, // 📌 Tamaño adecuado para la imagen
+    color: "#FF3B30", // 📌 Rojo para destacar
   },
+  
   noImagesText: {
     fontSize: 14,
     color: "gray",
@@ -497,5 +571,36 @@ const styles = StyleSheet.create({
     color: "red",
     fontSize: 16,
   },
+  deleteTrabajadorButton: {
+    position: "absolute",
+    top: 5,
+    right: 5,
+    backgroundColor: "#FF3B30",
+    width: 25, // 📌 Tamaño más pequeño
+    height: 25,
+    borderRadius: 12.5, // 📌 Asegura que sea un círculo
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  
+  deleteTrabajadorIcon: {
+    fontSize: 16, // 📌 Ajusta el tamaño del icono
+    color: "white",
+  },
+  trabajadorCard: {
+    backgroundColor: "#fff",
+    borderRadius: 8,
+    padding: 10,
+    margin: 5,
+    width: "45%",
+    alignItems: "center",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 3,
+    position: "relative",
+  },  
+  
 });
 
