@@ -31,20 +31,53 @@ function generateInvitationCode() {
  */
 async function crearInvitacion({ idMicroempresa, email }) {
     try {
-        // Verificar que la microempresa existe
+        // 🏢 **Verificar que la microempresa existe**
         const microempresa = await Microempresa.findById(idMicroempresa);
         if (!microempresa) throw new Error("La microempresa no existe");
 
-        // Verificar si ya tiene 10 trabajadores
-        const totalTrabajadores = await Enlace.countDocuments({ id_microempresa: idMicroempresa });
-        if (totalTrabajadores >= 10) throw new Error("La microempresa ya alcanzó el límite de 10 trabajadores");
+        // 🛠 **Verificar si ya tiene 10 trabajadores (solo los activos)**
+        const totalTrabajadoresActivos = await Enlace.countDocuments({
+            id_microempresa: idMicroempresa,
+            estado: true, // 📌 Filtra solo trabajadores activos
+        });
 
-        // Generar el código único para la invitación
+        console.log("📌 Cantidad total de trabajadores en la BD (incluye inactivos):", await Enlace.countDocuments({ id_microempresa: idMicroempresa }));
+        console.log("✅ Trabajadores activos:", totalTrabajadoresActivos);
+        console.log("🔍 Lista completa de trabajadores en microempresa:", microempresa.trabajadores);
+
+        if (totalTrabajadoresActivos >= 10) {
+            throw new Error("La microempresa ya alcanzó el límite de 10 trabajadores");
+        }
+
+        // 🛠 **Verificar si ya existe una invitación activa para el mismo email**
+        const invitacionExistente = await Invitacion.findOne({
+            idMicroempresa,
+            email,
+            estado: "pendiente",
+        });
+
+        if (invitacionExistente) {
+            throw new Error("Ya existe una invitación activa para este usuario");
+        }
+
+        // 🔑 **Generar el código único para la invitación**
         const codigoInvitacion = generateInvitationCode();
         console.log("🔑 Código generado en backend:", codigoInvitacion);
         if (!codigoInvitacion) throw new Error("Error: codigoInvitacion no se generó correctamente.");
 
-        // 📩 **Enviar email con el código numérico**
+        // 📌 **Guardar la invitación en la base de datos ANTES de enviar el correo**
+        const nuevaInvitacion = await Invitacion.create({
+            idMicroempresa,
+            email,
+            id_role: new mongoose.Types.ObjectId("67a4f4fd19fd800efa096295"), // ID del rol "Trabajador"
+            estado: "pendiente",
+            codigoInvitacion,
+            fechaExpiracion: new Date(Date.now() + 10 * 60 * 1000), // Expira en 10 minutos
+        });
+
+        console.log("✅ Invitación guardada correctamente en la BD:", nuevaInvitacion);
+
+        // 📩 **Enviar email con el código numérico SOLO SI LA INVITACIÓN SE GUARDÓ**
         await transporter.sendMail({
             from: process.env.EMAIL_USER,
             to: email,
@@ -59,22 +92,13 @@ async function crearInvitacion({ idMicroempresa, email }) {
 
         console.log("📩 Código enviado a:", email);
 
-        // 📌 **Guardar la invitación en la base de datos**
-        const nuevaInvitacion = await Invitacion.create({
-            idMicroempresa,
-            email,
-            id_role: new mongoose.Types.ObjectId("67a4f4fd19fd800efa096295"), // ID del rol "Trabajador"
-            estado: "pendiente",
-            codigoInvitacion,
-            fechaExpiracion: new Date(Date.now() + 10 * 60 * 1000), // Expira en 10 minutos
-        });
-
         return { message: "Invitación enviada con éxito", data: nuevaInvitacion };
     } catch (error) {
         console.error("❌ Error al enviar la invitación:", error.message);
         throw new Error(error.message);
     }
 }
+
 
 /**
  * Verifica si un código de invitación es válido

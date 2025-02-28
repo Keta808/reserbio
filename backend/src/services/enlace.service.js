@@ -9,6 +9,7 @@ const { Trabajador } = UserModels;
 import Role from "../models/role.model.js";
 import Microempresa from "../models/microempresa.model.js";
 import { handleError } from "../utils/errorHandler.js";
+import nodemailer from "nodemailer";
 
 /** */
 async function getEnlaces() {
@@ -132,7 +133,12 @@ async function getTrabajadoresPorMicroempresa(id_microempresa) {
         }   
 
         // Extraer y devolver solo la información de los trabajadores
-        const trabajadores = enlaces.map(enlace => enlace.id_trabajador);
+        const trabajadores = enlaces.map(enlace => ({
+            _id: enlace.id_trabajador._id,
+            nombre: enlace.id_trabajador.nombre,
+            telefono: enlace.id_trabajador.telefono,
+            enlaceId: enlace._id, // 👈 Aquí agregamos el ID del enlace
+          }));
 
         return [trabajadores, null];
     } catch (error) {
@@ -224,6 +230,74 @@ async function obtenerMicroempresasPorTrabajador(userId) {
     }
   }
 
+  // 📩 Configuración del transporte de correo
+const transporter = nodemailer.createTransport({
+    service: "Gmail",
+    auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS,
+    },
+});
+
+/**
+ * Desvincula a un trabajador de una microempresa
+ * @param {string} idEnlace - ID del enlace a actualizar
+ * @returns {Promise} - Resultado de la operación
+ */
+async function desvincularTrabajador(idEnlace) {
+    const session = await mongoose.startSession();
+    session.startTransaction();
+    try {
+        // 📌 1️⃣ Buscar el enlace en la base de datos
+        const enlace = await Enlace.findById(idEnlace).populate("id_trabajador").exec();
+        if (!enlace) throw new Error("El enlace no existe");
+
+        // 📌 2️⃣ Obtener información del trabajador y la microempresa
+        const trabajador = enlace.id_trabajador;
+        if (!trabajador) throw new Error("No se encontró información del trabajador");
+
+        const microempresa = await Microempresa.findById(enlace.id_microempresa).exec();
+        if (!microempresa) throw new Error("No se encontró la microempresa");
+
+        // 📌 3️⃣ Cambiar estado del enlace a `false`
+        enlace.estado = false;
+        await enlace.save({ session });
+
+        // 📌 4️⃣ Eliminar al trabajador del array de trabajadores en la microempresa
+        await Microempresa.findByIdAndUpdate(
+            enlace.id_microempresa,
+            { $pull: { trabajadores: idEnlace } },
+            { new: true, session }
+        );
+
+        // 📩 5️⃣ Enviar correo de notificación al trabajador
+        await transporter.sendMail({
+            from: process.env.EMAIL_USER,
+            to: trabajador.email,
+            subject: "Has sido desvinculado de una microempresa",
+            html: `
+                <p>Hola <strong>${trabajador.nombre}</strong>,</p>
+                <p>Te informamos que has sido desvinculado de la microempresa <strong>${microempresa.nombre}</strong>.</p>
+                <p>Si crees que esto fue un error, contacta con el administrador de la microempresa.</p>
+                <p>Saludos,<br>Equipo de soporte</p>
+            `,
+        });
+
+        console.log(`📩 Correo enviado a ${trabajador.email}`);
+
+        // 📌 6️⃣ Confirmar la transacción
+        await session.commitTransaction();
+
+        return { message: "Trabajador desvinculado correctamente" };
+    } catch (error) {
+        await session.abortTransaction();
+        handleError(error, "enlace.service -> desvincularTrabajador");
+        return { error: error.message };
+    } finally {
+        session.endSession();
+    }
+}
+
 export default {
     getEnlaces,
     createEnlace,
@@ -231,5 +305,6 @@ export default {
     updateEnlace,
     getTrabajadoresPorMicroempresa,
     updateEnlaceParcial,
-    obtenerMicroempresasPorTrabajador
+    obtenerMicroempresasPorTrabajador,
+    desvincularTrabajador,
 };
