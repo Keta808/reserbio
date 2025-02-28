@@ -32,6 +32,11 @@ const ServicioSchema = new mongoose.Schema({
         min: 0,
         max: 100,
     },
+    urlPago: {
+        type: String,
+        default: null,
+      
+    },
     },   
 );
 const Servicio = mongoose.model("Servicio", ServicioSchema); 

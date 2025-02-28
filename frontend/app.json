@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "reserbio",
-    "slug": "reserbio",
+    "slug": "frontend",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/reserbio_icon.png",
@@ -24,7 +24,7 @@
         "WRITE_EXTERNAL_STORAGE"
       ],
       "adaptiveIcon": {
-        "foregroundImage": "./assets/adaptive-icon.png",
+        "foregroundImage": "./assets/reserbio_icon.png",
         "backgroundColor": "#ffffff"
       },
       "newArchEnabled": true,
@@ -38,6 +38,7 @@
       "eas": {
         "projectId": "0ef5ecb3-2895-4850-95de-833122ce57a3"
       }
-    }
+    },
+    "owner": "reserbio"
   }
 }

@@ -235,6 +235,8 @@ async function eliminarImagen(microempresaId, publicId) {
 
 
 //servicio que retorna SOLO el id de la microempresa por el id de su trabajador
+
+//BORRAR <-> NO SE USA
 async function getMicroempresaIdByTrabajadorId(trabajadorId) {
   try {
     const response = await instance.get(`/microempresas/user/${trabajadorId}/id`);
@@ -243,6 +245,16 @@ async function getMicroempresaIdByTrabajadorId(trabajadorId) {
     return idMicroempresa[0];
   } catch (error) {
     console.error("❌ Error al obtener el ID de la microempresa por trabajador:", error.response?.data || error.message);
+    throw error;
+  }
+} 
+
+async function obtenerMicroempresaPorTrabajador(idTrabajador) { 
+  try { 
+    const response = await instance.get(`/microempresas/maintrabajador/${idTrabajador}`); 
+    return response.data; 
+  } catch (error) {
+    console.error("Error al obtener la microempresa del main trabajador:", error.response?.data || error.message);
     throw error;
   }
 }
@@ -260,6 +272,7 @@ export default {
   pickImage,
   uploadImagenes,
   eliminarImagen,
+  //-<->- BORRAR -<->-
   getMicroempresaIdByTrabajadorId,
-  
+  obtenerMicroempresaPorTrabajador, 
 };

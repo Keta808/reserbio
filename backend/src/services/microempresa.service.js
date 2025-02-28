@@ -1,3 +1,4 @@
+/* eslint-disable max-len */
 /* eslint-disable require-jsdoc */
 "use strict";
 
@@ -277,13 +278,29 @@ async function getMicroempresasByUser(trabajadorId) {
       throw new Error("Error al obtener microempresas del trabajador");
     }
 }
+// Misma funcion getMicroempresasByUser pero para 1 sola microempresa y con validaciones(para evitar errores)
+async function obtenerMicroempresaPorTrabajador(idTrabajador) {
+    try {
+        if (!idTrabajador) {
+            return [null, "El id del trabajador es inválido"];
+        }
+        const microempresa = await Microempresa.findOne({ idTrabajador: idTrabajador });
 
-//servicio que retorna SOLO el id de la microempresa por el id de su trabajador
+        if (!microempresa) return [null, "No se encontró una microempresa para este usuario."];
+
+        return [microempresa, null];     
+    } catch (error) {
+        handleError(error, "microempresa.service -> obtenerMicroempresaPorTrabajador");
+        return [null, "Error al obtener la microempresa"]; 
+    }
+}
+// servicio que retorna SOLO el id de la microempresa por el id de su trabajador
 
 async function getMicroempresaIdByTrabajadorId(trabajadorId) {
     try {
         const microempresa = await Microempresa.findOne({ idTrabajador: trabajadorId });
         if (!microempresa) return [null, "No hay microempresas"];
+        console.log("📡 ID de la microempresa obtenido:", microempresa._id);
         return [microempresa._id, null];
     } catch (error) {
         handleError(error, "microempresa.service -> getMicroempresaIdByTrabajadorId");
@@ -303,7 +320,6 @@ export default {
     getMicromempresaPorNombre,
     getMicroempresasByUser,
     getMicroempresaIdByTrabajadorId,
-
-    
+    obtenerMicroempresaPorTrabajador,
 };
 

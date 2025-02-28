@@ -21,6 +21,8 @@ router.get("/servicios/:id", servicioController.getServiciosByMicroempresaId);
 router.post("/servicio/:id", servicioController.configurarPorcentajeAbono);
 router.post("/servicios/:id", servicioController.calcularMontoAbono);
 
+router.get("/servicio/:id/microempresa", servicioController.getMicroempresaIdByServicioId);
+
 
 export default router; 
 

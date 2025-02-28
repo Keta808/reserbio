@@ -147,9 +147,9 @@ export default function MicroempresaClienteScreen({ route, navigation }) {
                     <Text style={styles.servicioName}>{servicio.nombre}</Text>
                     <Text style={styles.servicioDetail}>Precio: ${servicio.precio}</Text>
                     <Text style={styles.servicioDetail}>{servicio.descripcion}</Text> 
-                    {servicio.porcentajeAbono !== undefined && (
-                      <Text style={styles.servicioDetail}>Porcentaje de Abono: {servicio.porcentajeAbono}%</Text>
-                  )} 
+                    {montoAbono[servicio._id] && montoAbono[servicio._id] > 0 && (
+                      <Text style={styles.servicioAbono}>Abono para reservar: ${montoAbono[servicio._id]}</Text>
+                    )}
                   </View>
                 ))}
               </View>
