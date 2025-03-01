@@ -89,7 +89,7 @@ const HomeTrabajadorNavigator = () => {
         initialParams={{ id: microempresa?._id }} // ✅ Se asegura de que el ID se pase correctamente
       />
       <Tab.Screen name="Perfil" component={TrabajadorScreen} />
-      <Tab.Screen name="HorarioTEST" component={Horario} /> 
+      <Tab.Screen name="Horario" component={Horario} /> 
     </Tab.Navigator>
   );
 };
@@ -159,7 +159,7 @@ const AppNavigator = () => {
       <Stack.Screen name="Login" component={LoginScreen} />
       <Stack.Screen name="VincularMercadoPago" component={MercadoPagoScreen} />
 
-      <Stack.Screen name="HorarioTEST" component={Horario} />
+      <Stack.Screen name="Horario" component={Horario} />
       <Stack.Screen name="EditarHorario" component={EditarHorarioScreen} /> 
      
     </Stack.Navigator>

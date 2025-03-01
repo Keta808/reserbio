@@ -123,11 +123,17 @@ const ConfirmacionReservaSlotScreen = () => {
           slots.sort((a, b) => a.inicio.localeCompare(b.inicio));
           setHorarios(slots);
         } else {
-          setError('No hay horarios disponibles.');
+          // Usamos el mensaje del backend si existe
+          setError(response.message || response.error || 'No hay horarios disponibles.');
         }
       } catch (err) {
         console.error('Error al obtener disponibilidad:', err);
-        setError('Ocurrió un error al obtener los horarios.');
+        // Si es un error de Axios y contiene data con message, se usa ese mensaje.
+        if (err.response && err.response.data && err.response.data.message) {
+          setError(err.response.data.message);
+        } else {
+          setError(err.message || 'Ocurrió un error al obtener los horarios.');
+        }
       } finally {
         setLoading(false);
       }
@@ -162,7 +168,7 @@ const ConfirmacionReservaSlotScreen = () => {
         estado: 'Activa',
       };
   
-      const response   = await reservaService.createReservaHorario(reservaData);
+      const response = await reservaService.createReservaHorario(reservaData);
       console.log('Reserva creada:', response);
 
       if (error) {
@@ -183,9 +189,11 @@ const ConfirmacionReservaSlotScreen = () => {
         <View style={styles.containerError}>
           <Text style={styles.errorHeader}>Error</Text>
           <Text style={styles.errorText}>{error}</Text>
-          <TouchableOpacity onPress={() => setError(null)} style={styles.retryButton}>
-            <Text style={styles.buttonText}>Reintentar</Text>
-          </TouchableOpacity>
+          <View style={styles.errorButtonsContainer}>
+            <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backNavButton}>
+              <Text style={styles.buttonText}>Volver atrás</Text>
+            </TouchableOpacity>
+          </View>
         </View>
       </SafeAreaView>
     );
@@ -221,6 +229,14 @@ const ConfirmacionReservaSlotScreen = () => {
             </TouchableOpacity>
           )}
         />
+
+        {/* Botón de volver atrás posicionado en la parte inferior izquierda */}
+        <TouchableOpacity
+          style={styles.backNavigationButton}
+          onPress={() => navigation.goBack()}
+        >
+          <Text style={styles.buttonText}>Volver atrás</Text>
+        </TouchableOpacity>
 
         <Modal visible={modalVisible} transparent animationType="slide">
           <View style={styles.modalContainer}>
@@ -348,6 +364,7 @@ const styles = StyleSheet.create({
     fontSize: 16, 
     fontWeight: 'bold' 
   },
+  // Estilos para la vista de error
   containerError: {
     flex: 1,
     backgroundColor: '#f8d7da',
@@ -368,13 +385,36 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginBottom: 20,
   },
+  errorButtonsContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    width: '100%',
+  },
   retryButton: {
     backgroundColor: '#007bff',
     paddingVertical: 12,
     paddingHorizontal: 20,
     borderRadius: 8,
     alignItems: 'center',
-    alignSelf: 'center',
+    marginHorizontal: 5,
+  },
+  backNavButton: {
+    backgroundColor: '#6c757d',
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderRadius: 8,
+    alignItems: 'center',
+    marginHorizontal: 5,
+  },
+  // Botón de volver atrás en la pantalla principal
+  backNavigationButton: {
+    position: 'absolute',
+    bottom: 20,
+    left: 20,
+    backgroundColor: '#6c757d',
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderRadius: 8,
   },
 });
 

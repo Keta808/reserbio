@@ -82,10 +82,11 @@ async function updateHorarioById(req, res) {
 
 async function deleteHorarioById(req, res) {
   try {
-    const { error } = horarioIdSchema.validate(req.params);
-    if (error) return respondError(req, res, 400, error.message);
-
-    const [deletedHorario, errorHorario] = await HorarioService.deleteHorarioById(req.params.id);
+    console.log("deleteHorarioById");
+    console.log(req.params);
+    const horarioId = req.params.horarioId;
+    if (!horarioId) return respondError(req, res, 400, "El ID del horario es requerido");
+    const [deletedHorario, errorHorario] = await HorarioService.deleteHorarioById(horarioId);
     if (errorHorario) return respondError(req, res, 400, errorHorario);
 
     respondSuccess(req, res, 200, deletedHorario);

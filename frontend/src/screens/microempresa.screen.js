@@ -21,6 +21,7 @@ import Icon from "react-native-vector-icons/Ionicons";
 import Ionicons from 'react-native-vector-icons/Ionicons';
 
 export default function MicroempresaScreen({ route, navigation }) {
+
   const { id, userId } = route.params || {};
   const [microempresa, setMicroempresa] = useState(null);
   const [fotoPerfilUrl, setFotoPerfilUrl] = useState(null);
@@ -28,16 +29,18 @@ export default function MicroempresaScreen({ route, navigation }) {
   const [servicios, setServicios] = useState([]);
   const [montoAbono, setMontoAbono] = useState({});
 
+
   // Funciones de fetch definidas fuera o dentro del componente...
   const fetchMicroempresa = async () => {
     try {
+      console.log("📥 Fetching microempresa with ID:", id)  ;
         if (!id) {
             Alert.alert("Error", "No se proporcionó el ID de la microempresa.");
             setLoading(false);
             return;
         }
 
-        console.log("📥 Fetching microempresa with ID:", id);
+
 
         // 📌 Obtener datos de la microempresa
         const responseMicroempresa = await MicroempresaService.getMicroempresaData(id);
