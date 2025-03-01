@@ -77,8 +77,8 @@ const HomeClienteNavigator = () => (
   </Tab.Navigator>
 );
 const HomeTrabajadorNavigator = () => {
-  const { microempresa } = useMicroempresa(); // ✅ Moverlo aquí, fuera del return
-
+  const { microempresa } = useMicroempresa();
+ 
   return (
     <Tab.Navigator lazy={true}>
       <Tab.Screen name="HomeTrabajador" component={HomeTrabajadorScreen} />  
@@ -86,13 +86,14 @@ const HomeTrabajadorNavigator = () => {
       <Tab.Screen 
         name="Microempresa" 
         component={MicroempresaInicioScreeen} 
-        initialParams={{ id: microempresa?._id }} // ✅ Se asegura de que el ID se pase correctamente
+        initialParams={microempresa?._id ? { id: microempresa._id } : undefined}
       />
       <Tab.Screen name="Perfil" component={TrabajadorScreen} />
       <Tab.Screen name="Horario" component={Horario} /> 
     </Tab.Navigator>
   );
 };
+
 
 const AppNavigator = () => {
   const { setIsAuthenticated, isAuthenticated ,user} = useContext(AuthContext); // Asumimos que el contexto tiene este método
