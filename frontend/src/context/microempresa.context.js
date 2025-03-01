@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
-import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useAuth } from "./auth.context"; // Importamos el AuthContext
 import MicroempresaService from "../services/microempresa.service";
 
 // Crear el contexto
@@ -10,12 +10,25 @@ export const useMicroempresa = () => useContext(MicroempresaContext);
 
 // Proveedor del contexto
 export const MicroempresaProvider = ({ children }) => {
+    const { user, isAuthenticated } = useAuth(); // Obtenemos el usuario autenticado
     const [microempresa, setMicroempresa] = useState(null);
 
-    const fetchMicroempresa = async (userId) => {
+    // Función para obtener la microempresa del usuario
+    const fetchMicroempresa = async () => {
+        if (!user || !isAuthenticated) {
+            setMicroempresa(null); // Si no hay usuario, limpiar estado
+            return;
+        }
+
+        // 📌 **Solo cargar microempresa si el usuario es Trabajador o Admin**
+        if (user.kind !== "Trabajador") {
+            console.log("ℹ️ Usuario es Cliente, no se buscarán microempresas.");
+            setMicroempresa(null);
+            return;
+        }
+        
         try {
-            if (!userId) return;
-            const response = await MicroempresaService.getMicroempresasByUser(userId);
+            const response = await MicroempresaService.getMicroempresasByUser(user.id);
             if (Array.isArray(response.data) && response.data.length > 0) {
                 setMicroempresa(response.data[0]); // Guardamos la microempresa en el contexto
             } else {
@@ -26,6 +39,11 @@ export const MicroempresaProvider = ({ children }) => {
             setMicroempresa(null);
         }
     };
+
+    // Ejecutar automáticamente cada vez que cambia el usuario autenticado
+    useEffect(() => {
+        fetchMicroempresa();
+    }, [user, isAuthenticated]);
 
     return (
         <MicroempresaContext.Provider value={{ microempresa, fetchMicroempresa }}>

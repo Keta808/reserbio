@@ -9,6 +9,7 @@ import MicroempresaService from "../services/microempresa.service.js";
 import Microempresa from "../models/microempresa.model.js";
 import { microempresaBodySchema, microempresaIdSchema } from "../schema/microempresa.schema.js";
 import { handleError } from "../utils/errorHandler.js";
+import mongoose from "mongoose";
 
 /**
  * Obtiene todas las microempresas de la base de datos

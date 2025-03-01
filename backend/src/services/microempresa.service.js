@@ -5,7 +5,9 @@
 import Microempresa from "../models/microempresa.model.js";
 import cloudinary from "../config/cloudinary.js";
 import Enlace from "../models/enlace.model.js";
+import enlaceService from "./enlace.service.js";
 import { handleError } from "../utils/errorHandler.js";
+import mongoose from "mongoose";
 
 /**
  * Obtiene todas las microempresas de la base de datos
@@ -65,6 +67,8 @@ async function getMicroempresasForPage(page = 1, limit = 10) {
  * @returns {Promise} Promesa con el objeto de microempresa creado
  */
 async function createMicroempresa(microempresa) {
+    const session = await mongoose.startSession();
+    session.startTransaction(); // Inicia la transacción explícitamente
     try {
         const {
             nombre,
@@ -85,13 +89,14 @@ async function createMicroempresa(microempresa) {
         }
 
         // 📌 **Verificar si ya existe una microempresa con el mismo email**
-        const microempresaFound = await Microempresa.findOne({ email: microempresa.email });
+        const microempresaFound = await Microempresa.findOne({ email });
         if (microempresaFound) {
             return [null, "La microempresa ya existe con este email"];
         }
 
         // 📌 **URL de imagen de perfil predeterminada**
-        const defaultProfileImageUrl = "https://res.cloudinary.com/dzkna5hbk/image/upload/v1737576587/defaultProfile_ysxp6x.webp";
+        const defaultProfileImageUrl =
+            "https://res.cloudinary.com/dzkna5hbk/image/upload/v1737576587/defaultProfile_ysxp6x.webp";
 
         // 📌 **Crear la nueva microempresa con la imagen predeterminada si no se proporciona**
         const newMicroempresa = new Microempresa({
@@ -106,17 +111,37 @@ async function createMicroempresa(microempresa) {
             imagenes,
             fotoPerfil: {
                 url: defaultProfileImageUrl,
-                public_id: null, // No hay un public_id para la imagen predeterminada
+                public_id: null,
             },
         });
 
         // 📌 **Guardar la microempresa en la base de datos**
-        await newMicroempresa.save();
+        await newMicroempresa.save({ session });
+
+        // 📌 **Confirmar la transacción antes de crear el enlace**
+        await session.commitTransaction();
+        session.endSession(); // ✅ Finalizamos la sesión antes de continuar
+
+        // 📌 **Ahora creamos el enlace fuera de la transacción**
+        const [, enlaceError] = await enlaceService.createEnlace({
+            id_trabajador: idTrabajador,
+            id_role: "66f97c98608cc1793de890ad", // ID de Admin de la microempresa
+            id_microempresa: newMicroempresa._id,
+            fecha_inicio: new Date(),
+            estado: true,
+        });
+
+        if (enlaceError) {
+            throw new Error("Error al crear el enlace del dueño: " + enlaceError);
+        }
 
         return [newMicroempresa, null];
     } catch (error) {
+        await session.abortTransaction(); // 📌 **Si hay error, deshacemos la transacción**
         handleError(error, "microempresa.service -> createMicroempresa");
         return [null, "Error interno al crear la microempresa"];
+    } finally {
+        session.endSession(); // 📌 **Nos aseguramos de cerrar la sesión**
     }
 }
 
