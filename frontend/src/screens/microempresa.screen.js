@@ -17,8 +17,8 @@ import ServiciosService from "../services/servicio.service";
 import MicroempresaService from "../services/microempresa.service";
 import { useFocusEffect } from "@react-navigation/native";
 import EnlaceService from "../services/enlace.service";
-import Icon from "react-native-vector-icons/Ionicons";
 import Ionicons from 'react-native-vector-icons/Ionicons';
+import { useAuth } from "../context/auth.context";
 
 export default function MicroempresaScreen({ route, navigation }) {
 
@@ -28,7 +28,7 @@ export default function MicroempresaScreen({ route, navigation }) {
   const [loading, setLoading] = useState(true);
   const [servicios, setServicios] = useState([]);
   const [montoAbono, setMontoAbono] = useState({});
-
+  const { user } = useAuth();
 
   // Funciones de fetch definidas fuera o dentro del componente...
   const fetchMicroempresa = async () => {
@@ -253,11 +253,11 @@ export default function MicroempresaScreen({ route, navigation }) {
   
               {/* 🛠️ Botón "Editar Microempresa" debajo de los datos */}
               <View style={styles.buttonContainer}>
-                <Button
-                  title="Editar Microempresa"
-                  onPress={() => navigation.navigate("EditarMicroempresa", { id, userId, modo: "editar" })}
-                  color="#007BFF"
-                />
+              <Button
+  title="Editar Microempresa"
+  onPress={() => navigation.navigate("EditarMicroempresa", { id, userId: user?.id, modo: "editar" })}
+  color="#007BFF"
+/>
               </View>
             </View>
   
@@ -387,14 +387,17 @@ export default function MicroempresaScreen({ route, navigation }) {
               </View>
             </View>
   
-            {/* 📌 Botones finales: Reservar y Volver al Inicio */}
-            <View style={styles.buttonContainer}>
-              <Button
-                title="Volver al Inicio"
-                onPress={() => navigation.navigate("HomeNavigator")}
-                color="#007BFF"
-              />
-            </View>
+            <Button
+              title="Volver al Inicio"
+              onPress={() => {
+              navigation.reset({
+              index: 0,
+              routes: [{ name: "HomeNavigator" }],
+                });
+              }}
+              color="#007BFF"
+            />
+
           </View>
         }
         contentContainerStyle={styles.listContainer}

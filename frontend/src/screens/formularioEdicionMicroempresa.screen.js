@@ -6,6 +6,7 @@ import { Image } from "expo-image";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import ActionSheet from "react-native-actions-sheet";
 import MicroempresaService from "../services/microempresa.service.js";
+import { useAuth } from "../context/auth.context";
 
 const CATEGORIAS = [
     "Barberia", "Peluqueria", "Estetica", "Masajes", "Manicure",
@@ -13,10 +14,12 @@ const CATEGORIAS = [
 ];
 
 const EditarMicroempresaScreen = ({ route, navigation }) => {
-    const { id, userId, modo } = route.params || {};
+    const { id, userId = user?.id, modo } = route.params || {};
     console.log("📝 ID recibido en edición:", id);
     console.log("🔄 User ID recibido:", userId);
     console.log("✏️ Modo recibido:", modo);
+    const { user } = useAuth();
+    
 
     const [nombre, setNombre] = useState("");
     const [descripcion, setDescripcion] = useState("");
