@@ -40,8 +40,6 @@ export default function MicroempresaScreen({ route, navigation }) {
             return;
         }
 
-
-
         // 📌 Obtener datos de la microempresa
         const responseMicroempresa = await MicroempresaService.getMicroempresaData(id);
         if (!responseMicroempresa) {

@@ -28,7 +28,7 @@ router.get("/cliente/:id", reservaController.getReservasByCliente);
 router.put("/finalizar/:id", reservaController.finalizarReserva);   // Actualiza el estado de la reserva a finalizada
 router.get("/horas/trabajador/:workerId/:date", reservaController.getReservasPorFechaTrabajador);  // Obtiene las reservas activas de un trabajador en una fecha determinada
 router.get("/horas/microempresa/:serviceId/:date", reservaController.getReservasPorFechaMicroempresa);  // Obtiene las reservas activas de la microempresa en una fecha determinada
-
+router.get('/count/:clientId/:microempresaId', reservaController.getActiveReservationCount); // Obtiene la cantidad de reservas activas de un cliente en una microempresa
 //test para crear reserva con horario
 router.post('/crear-reserva-horario', reservaController.createReservaHorario);
 

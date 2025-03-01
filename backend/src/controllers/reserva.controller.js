@@ -109,10 +109,10 @@ async function updateReserva(req, res) {
 
 async function deleteReserva(req, res) {
     try {
-        const { error } = reservaIdSchema.validate(req.params);
-        if (error) return respondError(req, res, 400, error.message);
+       const id = req.params.id;
+       console.log("controller delete",id);
 
-        const [reserva, errorReserva] = await ReservaService.deleteReserva(req.params.id);
+        const [reserva, errorReserva] = await ReservaService.deleteReserva(id);
         if (errorReserva) return respondError(req, res, 400, errorReserva);
 
         respondSuccess(req, res, 200, reserva);
@@ -271,6 +271,21 @@ const getReservasPorFechaTrabajador = async (req, res) => {
     }
 }
 
+
+async function getActiveReservationCount(req, res) {
+  try {
+    const { clientId, microempresaId } = req.params;
+    const [count, error] = await ReservaService.getActiveReservationCount(clientId, microempresaId);
+    if (error) return respondError(req, res, 400, error);
+
+    respondSuccess(req, res, 200, { count });
+  } catch (error) {
+    handleError(error, "reserva.controller -> getActiveReservationCount");
+    respondError(req, res, 400, error.message);
+  }
+}
+
+
 export default { 
     getReservas,
     getReservasByTrabajador, 
@@ -284,5 +299,6 @@ export default {
     getReservasPorFechaMicroempresa,
   
     createReservaHorario,
+    getActiveReservationCount,
   };
 

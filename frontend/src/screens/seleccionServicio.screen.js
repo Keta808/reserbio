@@ -11,11 +11,13 @@ import {
   StatusBar,
   Modal,
 } from 'react-native';
-
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import DateTimePickerModal from 'react-native-modal-datetime-picker';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import servicioService from '../services/servicio.service.js';
 import Icon from 'react-native-vector-icons/Ionicons';
+import reservaService from '../services/reserva.service.js';
+
 
 const SeleccionServicioScreen = () => {
   const navigation = useNavigation();
@@ -32,6 +34,10 @@ const SeleccionServicioScreen = () => {
   const [selectedTrabajadorNombre, setSelectedTrabajadorNombre] = useState(null);
   const [descModalVisible, setDescModalVisible] = useState(false);
   const [serviceDescription, setServiceDescription] = useState('');
+
+  // Estado para controlar el modal de límite excedido
+  const [showLimitModal, setShowLimitModal] = useState(false);
+
 
   useEffect(() => {
     const fetchServicios = async () => {
@@ -60,14 +66,32 @@ const SeleccionServicioScreen = () => {
     setSelectedTrabajadorNombre(trabajadores.find((t) => t._id === trabajadorId)?.nombre);
   };
 
-  const handleContinue = () => {
-    navigation.navigate('ConfirmacionReservaSlotScreen', {
-      microempresaId,
-      servicioId: selectedServicio.id || selectedServicio._id,
-      trabajadorId: selectedTrabajadorId,
-      fecha: selectedDate.toISOString().split('T')[0],
-      trabajadorNombre: selectedTrabajadorNombre,
-    });
+  const handleContinue = async () => {
+    try {
+      // Obtenemos el usuario desde AsyncStorage
+      const userData = await AsyncStorage.getItem('user');
+      if (!userData) throw new Error('No se encontró información del usuario');
+      const user = JSON.parse(userData);
+      const clientId = user.id;
+      
+      // Llamamos al servicio para obtener el conteo de reservas activas para este cliente en la microempresa
+      const data = await reservaService.getActiveReservationCount(clientId, microempresaId);
+      console.log('Conteo de reservas activas:', data);
+      // Se espera que data tenga la forma { count: <número> }
+      if (data.data.count >= 2) {
+        setShowLimitModal(true);
+      } else {
+        navigation.navigate('ConfirmacionReservaSlotScreen', {
+          microempresaId,
+          servicioId: selectedServicio.id || selectedServicio._id,
+          trabajadorId: selectedTrabajadorId,
+          fecha: selectedDate.toISOString().split('T')[0],
+          trabajadorNombre: selectedTrabajadorNombre,
+        });
+      }
+    } catch (error) {
+      console.error('Error al continuar:', error);
+    }
   };
 
   const handleDateConfirm = (date) => {
@@ -234,7 +258,31 @@ const SeleccionServicioScreen = () => {
           </View>
         </View>
       </Modal>
+
+      {/* Modal para límite de reservas excedido */}
+      <Modal
+        visible={showLimitModal}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowLimitModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.limitModalContainer}>
+            <Text style={styles.limitModalTitle}>Límite Excedido</Text>
+            <Text style={styles.limitModalMessage}>
+              Ya has excedido el límite de reservas activas por cliente con esta microempresa.
+            </Text>
+            <TouchableOpacity
+              style={styles.limitModalButton}
+              onPress={() => navigation.navigate('HomeNavigator', { screen: 'Reservas' })}
+            >
+              <Text style={styles.limitModalButtonText}>Ir a Mis Reservas</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
+
   );
 };
 
@@ -560,6 +608,38 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontWeight: 'bold',
   },
+
+  limitModalContainer: {
+    backgroundColor: '#fff',
+    padding: 20,
+    borderRadius: 15,
+    alignItems: 'center',
+    width: '80%',
+  },
+  limitModalTitle: {
+    fontSize: 22,
+    fontWeight: '700',
+    color: '#333',
+    marginBottom: 10,
+  },
+  limitModalMessage: {
+    fontSize: 16,
+    color: '#555',
+    textAlign: 'center',
+    marginBottom: 20,
+  },
+  limitModalButton: {
+    backgroundColor: '#007bff',
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 8,
+  },
+  limitModalButtonText: {
+    color: '#fff',
+    fontWeight: '700',
+    fontSize: 16,
+  },
+  
 });
 
 export default SeleccionServicioScreen;
