@@ -27,6 +27,10 @@ const MercadoPagoAccSchema = new mongoose.Schema({
       enum: ["pending", "active", "rejected"],
       default: "pendiente",
     },
+    fechaExpiracion: {
+      type: Date,
+      default: null,
+    },
   }); 
 
 const MercadoPagoAcc = mongoose.model("MercadoPagoAcc", MercadoPagoAccSchema);

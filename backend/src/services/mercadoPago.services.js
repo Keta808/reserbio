@@ -8,12 +8,19 @@
 import axios from "axios";
 import MercadoPagoAcc from "../models/mercadoPago.model.js"; 
 import servicioService from "./servicio.service.js"; 
-
+import crypto from "crypto";
 import { CLIENT_ID, CLIENT_SECRET } from "../config/configEnv.js"; 
 import { MP_REDIRECT_URI, MP_WEBHOOK_URL } from "../config/configEnv.js";
 
 import { handleError } from "../utils/errorHandler.js";
+const sessionStore = new Map(); 
 
+function generarCodeVerifier() {
+    return crypto.randomBytes(32).toString("base64url");
+}
+function generarCodeChallenge(codeVerifier) {
+    return crypto.createHash("sha256").update(codeVerifier).digest("base64url");
+}
 async function crearMercadoPagoAcc(idMicroempresa) {
     try {
         const newMercadoPagoAcc = new MercadoPagoAcc({ idMicroempresa });   
@@ -77,38 +84,48 @@ async function onBoarding(code, idMicroempresa) {
     try {
         if (!code || !idMicroempresa) {
             return [null, "Código o ID de microempresa no proporcionados."];
+        } 
+         
+        const storedCodeVerifier = sessionStore.get(idMicroempresa);
+        
+        if (!storedCodeVerifier) {
+            return [null, "No se encontró el código de verificación para esta microempresa"];
         }
+
         //  Solicitar tokens a Mercado Pago
         const response = await axios.post("https://api.mercadopago.com/oauth/token", {
-            client_id: CLIENT_ID,
             client_secret: CLIENT_SECRET,
+            client_id: CLIENT_ID,
             grant_type: "authorization_code",
             code: code,
+            code_verifier: storedCodeVerifier,
             redirect_uri: MP_REDIRECT_URI, 
-            test_token: true,
         }, {
             headers: { "Content-Type": "application/x-www-form-urlencoded" }, 
         });
+        
         if (!response.data) {
             return [null, "No se pudo obtener el token de acceso."];
         } 
         console.log("Respuesta MP ONBOARDING: ", response.data);
-        const { access_token, refresh_token, public_key, user_id } = response.data; 
+        const { access_token, refresh_token, public_key, user_id, expires_in } = response.data; 
         if (!access_token) {
             return [null, "No se recibió el token de acceso."];
         }
-        const newMercadoPagoAcc = new MercadoPagoAcc( 
-            { idMicroempresa },
-            { 
-              accessToken: access_token,
-              refreshToken: refresh_token,
-              mercadopagoUserId: user_id,
-              public_key: public_key,
-              mercadopagoAccountStatus: "activa",
-            },
-            { upsert: true, new: true },
-    );
+        const fechaExpiracion = new Date(Date.now() + expires_in * 1000);
 
+        const newMercadoPagoAcc = new MercadoPagoAcc({
+            idMicroempresa,
+            accessToken: access_token,
+            refreshToken: refresh_token,
+            mercadopagoUserId: user_id,
+            public_key: public_key,
+            mercadopagoAccountStatus: "active",
+            fechaExpiracion,
+          
+        });
+        await newMercadoPagoAcc.save();
+        console.log("CUENTA DE MERCADO PAGO CREADA: ", newMercadoPagoAcc);
         return [newMercadoPagoAcc, null];
     } catch (error) {
         handleError(error, "mercadoPago.service -> onBoarding");
@@ -119,10 +136,15 @@ async function onBoarding(code, idMicroempresa) {
 async function generarUrlOnBoarding(idMicroempresa) { 
   try {
     if (!idMicroempresa) return [null, "No se especificó la microempresa."]; 
-        console.log("ID MICROEMPRESA: ", idMicroempresa); 
-        console.log("CLIENT_ID: ", CLIENT_ID);
-        console.log("REDIRECT_URI: ", MP_REDIRECT_URI);
-        const authUrl = `https://auth.mercadopago.com/authorization?client_id=${CLIENT_ID}&response_type=code&platform_id=mp&redirect_uri=${MP_REDIRECT_URI}&state=${idMicroempresa}`; 
+    const mercadoPagoAcc = await MercadoPagoAcc.findOne({ idMicroempresa });
+    if (mercadoPagoAcc) return [null, "Ya hay una cuenta vinculada para esta microempresa."];  
+        
+        const codeVerifier = generarCodeVerifier();
+        const codeChallenge = generarCodeChallenge(codeVerifier);
+
+        sessionStore.set(idMicroempresa, codeVerifier);
+       
+        const authUrl = `https://auth.mercadopago.com/authorization?client_id=${CLIENT_ID}&response_type=code&platform_id=mp&redirect_uri=${MP_REDIRECT_URI}&state=${idMicroempresa}&code_challenge=${codeChallenge}&code_challenge_method=S256`; 
         return [authUrl, null];
   } catch (error) { 
     handleError(error, "mercadoPago.service -> generarUrlOnBoarding");
@@ -139,8 +161,8 @@ async function refreshToken(idMicroempresa){
         if (!mercadoPagoAcc.refreshToken) return [null, "No hay token de refresco."];
         // Solicitar un nuevo accessToken a Mercado Pago
         const response = await axios.post("https://api.mercadopago.com/oauth/token", {
-            client_id: CLIENT_ID,
             client_secret: CLIENT_SECRET,
+            client_id: CLIENT_ID,
             grant_type: "refresh_token",
             refresh_token: mercadoPagoAcc.refreshToken,
         }, {
@@ -148,13 +170,16 @@ async function refreshToken(idMicroempresa){
         });
         if (!response.data) return [null, "No se pudo obtener el token de acceso."];
         console.log("Respuesta MP REFRESH TOKEN: ", response.data);
-        const { access_token, refresh_token, public_key, user_id } = response.data;
+        const { access_token, refresh_token, public_key, user_id, expires_in } = response.data;
         
-        if (!access_token) return [null, "No se recibió el token de acceso."];
+        if (!access_token) return [null, "No se recibió el token de acceso."]; 
+        const expirationDate = new Date(Date.now() + expires_in * 1000);
+
         mercadoPagoAcc.accessToken = access_token;
         mercadoPagoAcc.refreshToken = refresh_token;
         mercadoPagoAcc.public_key = public_key;
         mercadoPagoAcc.mercadopagoUserId = user_id;
+        mercadoPagoAcc.fechaExpiracion = expirationDate;
         await mercadoPagoAcc.save();
         console.log("TOKENS REFRESCADOS: ", mercadoPagoAcc);
         return [mercadoPagoAcc, null];
@@ -175,10 +200,10 @@ async function crearPreferenciaServicio(idServicio){
         const [montoAbono, error] = servicioService.calcularMontoAbono(idServicio, servicio.precio, servicio.porcentajeAbono); 
         if (error) return [null, error];
         // Refrescar los tokens antes de continuar
-        console.log("Intentando refrescar los tokens de la microempresa...");
-        const [microempresaMP, refreshError] = await refreshToken(servicio.idMicroempresa);
-        if (refreshError) {
-            console.log("Error al refrescar el token:", refreshError);
+        console.log("verificando...");
+        const [microempresaMP, tokenError] = await verificarExpiracion(servicio.idMicroempresa);
+        if (tokenError) {
+            console.log("Error al refrescar el token:", tokenError);
             return [null, "No se pudo actualizar el token de acceso."];
         }
 
@@ -239,6 +264,21 @@ async function crearPreferenciaServicio(idServicio){
         return [null, error];
     }
 } 
+async function verificarExpiracion(idMicroempresa){
+    try {
+        const mercadoPagoAcc = await MercadoPagoAcc.findOne({ idMicroempresa });
+        if (!mercadoPagoAcc) return [null, "No hay cuenta vinculada para esa microempresa."];
+        const ahora = new Date();
+        if (ahora < mercadoPagoAcc.fechaExpiracion) {
+            return [mercadoPagoAcc, null];
+        };
+        console.log("TOKEN EXPIRADO, REFRESCANDO...");
+        return await refreshToken(idMicroempresa);
+    } catch (error) {
+        handleError(error, "mercadoPago.service -> verificarExpiracion");
+        return [null, error];
+    }
+}
 
 export default { 
     crearMercadoPagoAcc, 
@@ -250,4 +290,5 @@ export default {
     getMercadoPagoAccs,
     refreshToken,
     crearPreferenciaServicio,
+    verificarExpiracion,
 }; 

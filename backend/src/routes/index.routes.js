@@ -52,7 +52,7 @@ router.use("/planes", authenticationMiddleware, planRoutes);
 import SuscripcionRoutes from "./suscripcion.routes.js";
 router.use("/suscripcion", authenticationMiddleware, SuscripcionRoutes); 
 import mercadoPagoRoutes from "./mercadoPago.routes.js";
-router.use("/mercadopago", authenticationMiddleware, mercadoPagoRoutes);
+router.use("/mercadopago", mercadoPagoRoutes);
 import paymentRoutes from "./payment.routes.js";
 router.use("/payments", authenticationMiddleware, paymentRoutes);
 
