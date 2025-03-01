@@ -485,34 +485,39 @@ async function getReservasPorFechaMicroempresa(serviceId, date) {
         const clienteFound = await Cliente.findById(cliente);
         if (!clienteFound) return [null, "El cliente no existe"];
 
-        // Validar si el cliente ya tiene 2 reservas activas
-        const reservasActivas = await Reserva.find({ cliente, estado: 'Activa' });
-        if (reservasActivas.length >= 2) return [null, "El cliente ya tiene 2 reservas activas"];
-
         // Validar existencia del servicio y obtener duración
         const servicioFound = await Servicio.findById(servicio);
         if (!servicioFound) return [null, "El servicio no existe"];
         const duracion = servicioFound.duracion;
 
+        // VALIDACIÓN: contar solo reservas activas de este cliente para la microempresa correspondiente
+        // Se asume que la función getActiveReservationCount ya está implementada en este módulo o importada
+        const [activeCount, countError] = await getActiveReservationCount(
+            cliente, 
+            servicioFound.idMicroempresa.toString()
+        );
+        if (activeCount >= 1) {
+            return [null, "El cliente ya tiene una reserva activa en esta microempresa"];
+        }
+
         // Convertir fecha y hora a Date
-        const fechaReserva = stringToDateOnly(fecha); // Convertir DD-MM-YYYY a Date
-        const horaInicioDate = stringToDate(hora_inicio, fecha); // Convertir HH:MM con fecha a Date
+        const fechaReserva = stringToDateOnly(fecha); // Convierte DD-MM-YYYY a Date
+        const horaInicioDate = stringToDate(hora_inicio, fecha); // Convierte HH:MM con fecha a Date
         const horaFin = new Date(horaInicioDate);
         horaFin.setMinutes(horaFin.getMinutes() + duracion);
 
         // Verificar disponibilidad por bloques de horario
-        const diaSemana = diasSemana[fechaReserva.getDay()]; // Obtener el día de la semana (ej.: 'miércoles')
+        const diaSemana = diasSemana[fechaReserva.getDay()]; // Ej.: 'miércoles'
         const horario = await Horario.findOne({ trabajador, dia: diaSemana });
 
         if (!horario || horario.bloques.length === 0) {
             return [null, "El trabajador no tiene bloques disponibles para este día"];
         }
 
-        // Verificar si el bloque cubre completamente la duración del servicio
+        // Verificar si algún bloque cubre la duración del servicio
         let bloqueDisponible = horario.bloques.some(bloque => {
             const bloqueInicio = new Date(`${fechaReserva.toDateString()} ${bloque.hora_inicio}`);
             const bloqueFin = new Date(`${fechaReserva.toDateString()} ${bloque.hora_fin}`);
-
             return horaInicioDate >= bloqueInicio && horaFin <= bloqueFin;
         });
 
@@ -558,6 +563,7 @@ async function getReservasPorFechaMicroempresa(serviceId, date) {
 
 
 
+
 async function getActiveReservationCount(clientId, microempresaId) {
     try {
       // Buscar reservas activas del cliente y popular el campo 'servicio'
@@ -596,7 +602,7 @@ export default {
       getReservasPorFechaMicroempresa,
       createReservaHorario,
       getActiveReservationCount
-      
+
     };
 
 
