@@ -24,6 +24,7 @@ router.post("/", reservaController.createReserva);
 router.delete("/:id", reservaController.deleteReserva);
 router.put("/:id", reservaController.updateReserva);
 router.put("/cancelar/:id", reservaController.cancelReserva);
+router.put("/cancelarCliente/:id", reservaController.cancelReservaCliente); // Cancela la reserva desde el lado del cliente
 router.get("/cliente/:id", reservaController.getReservasByCliente);
 router.put("/finalizar/:id", reservaController.finalizarReserva);   // Actualiza el estado de la reserva a finalizada
 router.get("/horas/trabajador/:workerId/:date", reservaController.getReservasPorFechaTrabajador);  // Obtiene las reservas activas de un trabajador en una fecha determinada

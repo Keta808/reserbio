@@ -82,6 +82,23 @@ async function cancelReserva(id) {
     }
 }
 
+//cancela una reserva desde el lado del cliente
+
+async function cancelReservaCliente(id) {
+    try {
+        const response = await instance.put(`/reservas/cancelarCliente/${id}`);
+        return response.data;
+    } catch (error) {
+        console.error(
+        "Error al cancelar la reserva:",
+        error.response?.data || error.message
+        );
+        throw error;
+    }
+}
+
+
+
 //get reservas by cliente id
 
 async function getReservasByCliente(clienteId) {
@@ -167,6 +184,7 @@ export default {
     getReservasByTrabajadorId,
     deleteReserva,
     cancelReserva,
+    cancelReservaCliente,
     getReservasByCliente,
     getReservasPorFechaTrabajador,
     getReservasPorFechaMicroempresa,

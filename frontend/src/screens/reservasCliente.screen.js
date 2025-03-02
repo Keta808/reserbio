@@ -120,7 +120,7 @@ const ReservaClienteScreen = () => {
     if (reservaSeleccionada && !confirming) {
       setConfirming(true);
       try {
-        await reservaService.cancelReserva(reservaSeleccionada);
+        await reservaService.cancelReservaCliente(reservaSeleccionada);
         fetchReservas(clienteId);
       } catch (error) {
         console.error('Error al cancelar la reserva:', error);
@@ -384,7 +384,10 @@ const styles = StyleSheet.create({
     marginTop: 20,
   },
   cancelButton: {
-    marginLeft: 10,
+    position: 'absolute',
+    alignContent: 'flex-end', 
+    right: 10,
+    top: 10,
   },
   actionButtonsContainer: {
     flexDirection: 'row',

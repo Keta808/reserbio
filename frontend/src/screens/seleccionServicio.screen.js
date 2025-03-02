@@ -76,9 +76,9 @@ const SeleccionServicioScreen = () => {
       
       // Llamamos al servicio para obtener el conteo de reservas activas para este cliente en la microempresa
       const data = await reservaService.getActiveReservationCount(clientId, microempresaId);
-      console.log('Conteo de reservas activas:', data);
+
       // Se espera que data tenga la forma { count: <número> }
-      if (data.data.count >= 2) {
+      if (data.data.count >= 1) {
         setShowLimitModal(true);
       } else {
         navigation.navigate('ConfirmacionReservaSlotScreen', {
@@ -274,10 +274,14 @@ const SeleccionServicioScreen = () => {
             </Text>
             <TouchableOpacity
               style={styles.limitModalButton}
-              onPress={() => navigation.navigate('HomeNavigator', { screen: 'Reservas' })}
+              onPress={() => {
+                setShowLimitModal(false);
+                navigation.navigate('HomeNavigator', { screen: 'Reservas' });
+              }}
             >
               <Text style={styles.limitModalButtonText}>Ir a Mis Reservas</Text>
             </TouchableOpacity>
+
           </View>
         </View>
       </Modal>

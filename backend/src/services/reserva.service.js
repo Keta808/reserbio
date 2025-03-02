@@ -241,6 +241,45 @@ async function updateReserva(id, estado) {
 
 }
 
+async function cancelReservaCliente(id) {   
+    try {
+        // Actualiza la reserva y cambia su estado a "Cancelada"
+        const reserva = await Reserva.findByIdAndUpdate(
+            id,
+            { estado: 'Cancelada' },
+            { new: true, runValidators: true }
+        ).populate('cliente').populate('trabajador');
+
+        // Si no se encuentra la reserva, devuelve un error
+        if (!reserva) {
+            return [null, 'Reserva no encontrada'];
+        }   
+        const nombreTrabajador = reserva.trabajador.nombre;
+        // Se crea explícitamente un objeto Date para asegurar un parseo correcto
+        const horaInicio = moment(new Date(reserva.hora_inicio)).format('HH:mm');
+        const fechaFormateada = moment(new Date(reserva.fecha)).format('DD/MM/YYYY');
+
+    
+        await transporter.sendMail({
+            from: process.env.EMAIL_USER,
+            to: reserva.trabajador.email,
+            subject: "Reserva cancelada",   
+            text: `Estimado/a ${nombreTrabajador},
+
+Le informamos que la reserva programada con el cliente ${reserva.cliente.nombre} para el día ${fechaFormateada} a las ${horaInicio} horas ha sido cancelada.
+Si desea modificar su horario, realice los cambios necesarios en la pestaña Horario de la App.
+
+Atentamente,
+El equipo de Reserbio`,
+        });
+        // Devuelve la reserva actualizada y un error nulo
+        return [reserva, null];
+            } catch (error) {
+                console.error('Error en cancelReserva:', error.message || error);
+                return [null, error.message];
+            }
+        }
+
 
 /**
  * Cambia el estado de una reserva a Cancelado
@@ -277,24 +316,12 @@ Atentamente,
 El equipo de Reserbio`,
         });
 
-        await transporter.sendMail({
-            from: process.env.EMAIL_USER,
-            to: reserva.trabajador.email,
-            subject: "Reserva cancelada",   
-            text: `Estimado/a ${nombreTrabajador},
-
-Le informamos que la reserva programada con el cliente ${reserva.cliente.nombre} para el día ${fechaFormateada} a las ${horaInicio} horas ha sido cancelada.
-Si desea modificar su horario, realice los cambios necesarios en la pestaña Horario de la App.
-
-Atentamente,
-El equipo de Reserbio`,
-        });
 
         // Devuelve la reserva actualizada y un error nulo
         return [reserva, null];
     } catch (error) {
         console.error('Error en cancelReserva:', error.message || error);
-        return [null, error.message];
+      return [null, error.message];
     }
 }
 
@@ -596,6 +623,7 @@ export default {
       deleteReserva, 
       updateReserva, 
       cancelReserva, 
+      cancelReservaCliente,
       getReservasByCliente, 
       finalizarReserva,
       getReservasPorFechaTrabajador,
