@@ -123,12 +123,10 @@ const ConfirmacionReservaSlotScreen = () => {
           slots.sort((a, b) => a.inicio.localeCompare(b.inicio));
           setHorarios(slots);
         } else {
-          // Usamos el mensaje del backend si existe
           setError(response.message || response.error || 'No hay horarios disponibles.');
         }
       } catch (err) {
         console.error('Error al obtener disponibilidad:', err);
-        // Si es un error de Axios y contiene data con message, se usa ese mensaje.
         if (err.response && err.response.data && err.response.data.message) {
           setError(err.response.data.message);
         } else {
@@ -220,7 +218,7 @@ const ConfirmacionReservaSlotScreen = () => {
           numColumns={2}
           columnWrapperStyle={styles.row}
           ListEmptyComponent={<Text style={styles.emptyText}>No hay horarios disponibles</Text>}
-          renderItem={({ item }) => (
+          renderItem={({ item, index }) => (
             <TouchableOpacity
               style={styles.slotButton}
               onPress={() => handleSlotPress(item)}
@@ -252,12 +250,15 @@ const ConfirmacionReservaSlotScreen = () => {
                   </Text>
                 </>
               )}
-              <TouchableOpacity onPress={confirmarReserva} style={styles.confirmButton}>
-                <Text style={styles.buttonText}>Confirmar</Text>
-              </TouchableOpacity>
-              <TouchableOpacity onPress={() => setModalVisible(false)} style={styles.cancelButton}>
-                <Text style={styles.buttonText}>Cancelar</Text>
-              </TouchableOpacity>
+              <View style={styles.modalButtonsRow}>
+                
+                <TouchableOpacity onPress={() => setModalVisible(false)} style={[styles.modalButton, styles.modalButtonCancel]}>
+                  <Text style={styles.buttonText}>Volver</Text>
+                </TouchableOpacity>
+                <TouchableOpacity onPress={confirmarReserva} style={[styles.modalButton, styles.modalButtonConfirm]}>
+                  <Text style={styles.buttonText}>Confirmar</Text>
+                </TouchableOpacity>
+              </View>
             </View>
           </View>
         </Modal>
@@ -288,13 +289,14 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   slotButton: {
+    width: '48%',
+    height: 70, // Altura fija para uniformidad
     backgroundColor: '#fff',
     paddingVertical: 15,
     paddingHorizontal: 10,
     borderRadius: 10,
     marginVertical: 5,
-    flex: 1,
-    marginHorizontal: 5,
+    // Al usar FlatList con numColumns, el marginHorizontal se aplica automáticamente en la distribución
     alignItems: 'center',
     justifyContent: 'center',
     shadowColor: '#000',
@@ -303,9 +305,11 @@ const styles = StyleSheet.create({
     shadowRadius: 3,
     elevation: 2,
   },
+  // Eliminamos el estilo lastSlotFullWidth para que todos tengan el mismo tamaño
   slotText: {
     fontSize: 16,
     color: '#333',
+    textAlign: 'center',
   },
   loaderContainer: { 
     flex: 1, 
@@ -326,45 +330,48 @@ const styles = StyleSheet.create({
   },
   modalContent: {
     backgroundColor: '#fff',
-    padding: 25,
-    borderRadius: 15,
-    width: '80%',
+    padding: 30,
+    borderRadius: 20,
+    width: '85%',
     alignItems: 'center',
-    elevation: 10,
+    elevation: 15,
   },
   modalTitle: { 
-    fontSize: 20, 
+    fontSize: 22, 
     fontWeight: 'bold', 
-    marginBottom: 15, 
+    marginBottom: 20, 
     color: '#333' 
   },
   modalInfo: {
-    fontSize: 16,
-    marginBottom: 10,
+    fontSize: 18,
+    marginBottom: 15,
     color: '#555',
+    textAlign: 'center',
   },
-  confirmButton: {
-    backgroundColor: 'green',
-    padding: 12,
-    borderRadius: 8,
-    marginTop: 10,
-    width: '80%',
-    alignItems: 'center',
+  modalButtonsRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    width: '100%',
+    marginTop: 20,
   },
-  cancelButton: {
-    backgroundColor: 'red',
-    padding: 12,
-    borderRadius: 8,
-    marginTop: 10,
-    width: '80%',
+  modalButton: {
+    flex: 1,
+    paddingVertical: 15,
+    borderRadius: 10,
     alignItems: 'center',
+    marginHorizontal: 5,
+  },
+  modalButtonConfirm: {
+    backgroundColor: '#28a745',
+  },
+  modalButtonCancel: {
+    backgroundColor: '#dc3545',
   },
   buttonText: { 
     color: '#fff', 
     fontSize: 16, 
     fontWeight: 'bold' 
   },
-  // Estilos para la vista de error
   containerError: {
     flex: 1,
     backgroundColor: '#f8d7da',
@@ -406,7 +413,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginHorizontal: 5,
   },
-  // Botón de volver atrás en la pantalla principal
   backNavigationButton: {
     position: 'absolute',
     bottom: 20,

@@ -82,6 +82,23 @@ async function cancelReserva(id) {
     }
 }
 
+//cancela una reserva desde el lado del cliente
+
+async function cancelReservaCliente(id) {
+    try {
+        const response = await instance.put(`/reservas/cancelarCliente/${id}`);
+        return response.data;
+    } catch (error) {
+        console.error(
+        "Error al cancelar la reserva:",
+        error.response?.data || error.message
+        );
+        throw error;
+    }
+}
+
+
+
 //get reservas by cliente id
 
 async function getReservasByCliente(clienteId) {
@@ -147,12 +164,30 @@ async function createReservaHorario(data) {
 }
 
 
+async function getActiveReservationCount(clientId, microempresaId) {
+    try {
+        const response = await instance.get(`/reservas/count/${clientId}/${microempresaId}`);
+        return response.data; // Se espera que el backend retorne { count: número }
+    } catch (error) {
+        console.error(
+            "Error al obtener el conteo de reservas activas:",
+            error.response?.data || error.message
+        );
+        throw error;
+    }
+}
+
+
+
+
 export default {
     getReservasByTrabajadorId,
     deleteReserva,
     cancelReserva,
+    cancelReservaCliente,
     getReservasByCliente,
     getReservasPorFechaTrabajador,
     getReservasPorFechaMicroempresa,
-    createReservaHorario
+    createReservaHorario,
+    getActiveReservationCount,
 };

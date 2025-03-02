@@ -10,6 +10,22 @@ import Horario from "../models/horario.model.js";
 import Enlace from "../models/enlace.model.js"; 
 import Servicio from "../models/servicio.model.js";
 
+
+import  dotenv from "dotenv";   
+import nodemailer from "nodemailer";    
+import moment from "moment";    
+
+dotenv.config(); // Cargar variables de entorno
+
+const transporter = nodemailer.createTransport({
+    service: "Gmail",
+    auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS,
+    },
+});
+
+
 /*
 Obtiene todas las reservas de la base de datos 
 */
@@ -198,11 +214,15 @@ async function createReserva(reserva) {
 
 async function deleteReserva(id) {
     try {
-        return await Reserva.findByIdAndDelete(id);
+        
+        const reserva = await Reserva.findByIdAndDelete(id);
+        return [reserva, null];
     } catch (error) {
         handleError(error, "reserva.service -> deleteReserva");
+        return [null, error.message];
     }
 }
+
 
 /**
  * Cambia el estado de la reserva
@@ -221,6 +241,45 @@ async function updateReserva(id, estado) {
 
 }
 
+async function cancelReservaCliente(id) {   
+    try {
+        // Actualiza la reserva y cambia su estado a "Cancelada"
+        const reserva = await Reserva.findByIdAndUpdate(
+            id,
+            { estado: 'Cancelada' },
+            { new: true, runValidators: true }
+        ).populate('cliente').populate('trabajador');
+
+        // Si no se encuentra la reserva, devuelve un error
+        if (!reserva) {
+            return [null, 'Reserva no encontrada'];
+        }   
+        const nombreTrabajador = reserva.trabajador.nombre;
+        // Se crea explícitamente un objeto Date para asegurar un parseo correcto
+        const horaInicio = moment(new Date(reserva.hora_inicio)).format('HH:mm');
+        const fechaFormateada = moment(new Date(reserva.fecha)).format('DD/MM/YYYY');
+
+    
+        await transporter.sendMail({
+            from: process.env.EMAIL_USER,
+            to: reserva.trabajador.email,
+            subject: "Reserva cancelada",   
+            text: `Estimado/a ${nombreTrabajador},
+
+Le informamos que la reserva programada con el cliente ${reserva.cliente.nombre} para el día ${fechaFormateada} a las ${horaInicio} horas ha sido cancelada.
+Si desea modificar su horario, realice los cambios necesarios en la pestaña Horario de la App.
+
+Atentamente,
+El equipo de Reserbio`,
+        });
+        // Devuelve la reserva actualizada y un error nulo
+        return [reserva, null];
+            } catch (error) {
+                console.error('Error en cancelReserva:', error.message || error);
+                return [null, error.message];
+            }
+        }
+
 
 /**
  * Cambia el estado de una reserva a Cancelado
@@ -233,20 +292,39 @@ async function cancelReserva(id) {
             id,
             { estado: 'Cancelada' },
             { new: true, runValidators: true }
-        );
+        ).populate('cliente').populate('trabajador');
 
         // Si no se encuentra la reserva, devuelve un error
         if (!reserva) {
             return [null, 'Reserva no encontrada'];
         }
 
+        const emailCliente = reserva.cliente.email;
+        const nombreTrabajador = reserva.trabajador.nombre;
+        // Se crea explícitamente un objeto Date para asegurar un parseo correcto
+        const horaInicio = moment(new Date(reserva.hora_inicio)).format('HH:mm');
+        const fechaFormateada = moment(new Date(reserva.fecha)).format('DD/MM/YYYY');
+
+        await transporter.sendMail({
+            from: process.env.EMAIL_USER,
+            to: emailCliente,
+            subject: "Reserva cancelada",
+            text: `Estimado/a cliente,
+Le informamos que su reserva programada con ${nombreTrabajador} para el día ${fechaFormateada} a las ${horaInicio} horas ha sido cancelada.          
+            
+Atentamente,
+El equipo de Reserbio`,
+        });
+
+
         // Devuelve la reserva actualizada y un error nulo
         return [reserva, null];
     } catch (error) {
         console.error('Error en cancelReserva:', error.message || error);
-        return [null, error.message];
+      return [null, error.message];
     }
 }
+
 
 
 //get reservas cliente
@@ -434,34 +512,39 @@ async function getReservasPorFechaMicroempresa(serviceId, date) {
         const clienteFound = await Cliente.findById(cliente);
         if (!clienteFound) return [null, "El cliente no existe"];
 
-        // Validar si el cliente ya tiene 2 reservas activas
-        const reservasActivas = await Reserva.find({ cliente, estado: 'Activa' });
-        if (reservasActivas.length >= 2) return [null, "El cliente ya tiene 2 reservas activas"];
-
         // Validar existencia del servicio y obtener duración
         const servicioFound = await Servicio.findById(servicio);
         if (!servicioFound) return [null, "El servicio no existe"];
         const duracion = servicioFound.duracion;
 
+        // VALIDACIÓN: contar solo reservas activas de este cliente para la microempresa correspondiente
+        // Se asume que la función getActiveReservationCount ya está implementada en este módulo o importada
+        const [activeCount, countError] = await getActiveReservationCount(
+            cliente, 
+            servicioFound.idMicroempresa.toString()
+        );
+        if (activeCount >= 1) {
+            return [null, "El cliente ya tiene una reserva activa en esta microempresa"];
+        }
+
         // Convertir fecha y hora a Date
-        const fechaReserva = stringToDateOnly(fecha); // Convertir DD-MM-YYYY a Date
-        const horaInicioDate = stringToDate(hora_inicio, fecha); // Convertir HH:MM con fecha a Date
+        const fechaReserva = stringToDateOnly(fecha); // Convierte DD-MM-YYYY a Date
+        const horaInicioDate = stringToDate(hora_inicio, fecha); // Convierte HH:MM con fecha a Date
         const horaFin = new Date(horaInicioDate);
         horaFin.setMinutes(horaFin.getMinutes() + duracion);
 
         // Verificar disponibilidad por bloques de horario
-        const diaSemana = diasSemana[fechaReserva.getDay()]; // Obtener el día de la semana (ej.: 'miércoles')
+        const diaSemana = diasSemana[fechaReserva.getDay()]; // Ej.: 'miércoles'
         const horario = await Horario.findOne({ trabajador, dia: diaSemana });
 
         if (!horario || horario.bloques.length === 0) {
             return [null, "El trabajador no tiene bloques disponibles para este día"];
         }
 
-        // Verificar si el bloque cubre completamente la duración del servicio
+        // Verificar si algún bloque cubre la duración del servicio
         let bloqueDisponible = horario.bloques.some(bloque => {
             const bloqueInicio = new Date(`${fechaReserva.toDateString()} ${bloque.hora_inicio}`);
             const bloqueFin = new Date(`${fechaReserva.toDateString()} ${bloque.hora_fin}`);
-
             return horaInicioDate >= bloqueInicio && horaFin <= bloqueFin;
         });
 
@@ -506,6 +589,32 @@ async function getReservasPorFechaMicroempresa(serviceId, date) {
 }
 
 
+
+
+async function getActiveReservationCount(clientId, microempresaId) {
+    try {
+      // Buscar reservas activas del cliente y popular el campo 'servicio'
+      // pero solo con el campo 'idMicroempresa'
+      const reservas = await Reserva.find({
+        cliente: clientId,
+        estado: 'Activa'
+      }).populate({ path: 'servicio', select: 'idMicroempresa' });
+  
+      // Filtrar aquellas reservas cuyo servicio tenga el id de microempresa especificado
+      const count = reservas.filter(reserva => {
+        if (reserva.servicio && reserva.servicio.idMicroempresa) {
+          return reserva.servicio.idMicroempresa.toString() === microempresaId;
+        }
+        return false;
+      }).length;
+  
+      return [count, null];
+    } catch (error) {
+      handleError(error, "reserva.service -> getActiveReservationCountByClientAndMicroempresa");
+      return [null, error.message];
+    }
+  }
+
 //Exporta las funciones definidas
 export default {
       getReservas,
@@ -514,11 +623,14 @@ export default {
       deleteReserva, 
       updateReserva, 
       cancelReserva, 
+      cancelReservaCliente,
       getReservasByCliente, 
       finalizarReserva,
       getReservasPorFechaTrabajador,
       getReservasPorFechaMicroempresa,
       createReservaHorario,
+      getActiveReservationCount
+
     };
 
 

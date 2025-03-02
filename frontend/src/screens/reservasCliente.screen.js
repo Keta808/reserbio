@@ -24,9 +24,11 @@ const ReservaClienteScreen = () => {
   const [filtro, setFiltro] = useState('Activas');
   const animacion = new Animated.Value(filtro === 'Activas' ? 0 : 1);
 
-  // Estado para el modal de confirmación al cancelar
+  // Estados para el modal de confirmación
   const [modalVisible, setModalVisible] = useState(false);
   const [reservaSeleccionada, setReservaSeleccionada] = useState(null);
+  const [modalAction, setModalAction] = useState(null); // 'cancel' o 'delete'
+  const [confirming, setConfirming] = useState(false); // Evita múltiples pulsaciones
 
   useFocusEffect(
     useCallback(() => {
@@ -66,16 +68,14 @@ const ReservaClienteScreen = () => {
 
   // Función para formatear la fecha y horas de la reserva
   const formatReserva = (reserva) => {
-    // Se toma la hora de inicio y se le suma la duración (en minutos) para obtener la hora de término.
     const inicioDate = new Date(reserva.hora_inicio);
     const finDate = new Date(inicioDate.getTime() + reserva.duracion * 60000);
-    // Formateo: "nombre del día, DD de MMMM de YYYY"
     const formattedDate = inicioDate.toLocaleDateString('es-ES', { 
       weekday: 'long', day: '2-digit', month: 'long', year: 'numeric' 
     });
     const formattedInicio = inicioDate.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
     const formattedFin = finDate.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
-    return `${formattedDate}\n${formattedInicio} -  ${formattedFin}`;
+    return `${formattedDate}\n${formattedInicio} - ${formattedFin}`;
   };
 
   const reservasFiltradas = reservas
@@ -85,7 +85,7 @@ const ReservaClienteScreen = () => {
     })
     .sort((a, b) => {
       if (filtro === 'Finalizadas') {
-        return new Date(b.fecha) - new Date(a.fecha); // Orden descendente
+        return new Date(b.fecha) - new Date(a.fecha);
       }
       return 0;
     });
@@ -101,23 +101,52 @@ const ReservaClienteScreen = () => {
     }).start();
   };
 
-  // Mostrar modal de confirmación antes de cancelar una reserva
+  // Mostrar modal de confirmación para cancelar
   const confirmarCancelacion = (id) => {
     setReservaSeleccionada(id);
     setModalVisible(true);
+    setModalAction('cancel');
+  };
+
+  // Mostrar modal de confirmación para eliminar
+  const confirmarEliminacion = (id) => {
+    setReservaSeleccionada(id);
+    setModalVisible(true);
+    setModalAction('delete');
   };
 
   // Ejecutar la cancelación de la reserva
   const cancelarReserva = async () => {
-    if (reservaSeleccionada) {
+    if (reservaSeleccionada && !confirming) {
+      setConfirming(true);
       try {
-        await reservaService.cancelReserva(reservaSeleccionada);
+        await reservaService.cancelReservaCliente(reservaSeleccionada);
         fetchReservas(clienteId);
       } catch (error) {
         console.error('Error al cancelar la reserva:', error);
       } finally {
         setModalVisible(false);
         setReservaSeleccionada(null);
+        setModalAction(null);
+        setConfirming(false);
+      }
+    }
+  };
+
+  // Ejecutar la eliminación definitiva de la reserva
+  const eliminarReserva = async () => {
+    if (reservaSeleccionada && !confirming) {
+      setConfirming(true);
+      try {
+        await reservaService.deleteReserva(reservaSeleccionada);
+        fetchReservas(clienteId);
+      } catch (error) {
+        console.error('Error al eliminar la reserva:', error);
+      } finally {
+        setModalVisible(false);
+        setReservaSeleccionada(null);
+        setModalAction(null);
+        setConfirming(false);
       }
     }
   };
@@ -186,13 +215,26 @@ const ReservaClienteScreen = () => {
                   <AntDesign name="closecircle" size={24} color="red" />
                 </TouchableOpacity>
               )}
-              {item.estado === 'Finalizada' && !item.tieneValoracion && (
-                <TouchableOpacity
-                  style={styles.valoracionButton}
-                  onPress={() => navigation.navigate('Valoracion', { reserva: item, clienteId })}
-                >
-                  <Text style={styles.valoracionButtonText}>Valorar Servicio</Text>
-                </TouchableOpacity>
+
+              {item.estado === 'Finalizada' && (
+                <View style={styles.actionButtonsContainer}>
+                  {!item.tieneValoracion && (
+                    <TouchableOpacity
+                      style={styles.valoracionButton}
+                      onPress={() =>
+                        navigation.navigate('Valoracion', { reserva: item, clienteId })
+                      }
+                    >
+                      <Text style={styles.valoracionButtonText}>Valorar Servicio</Text>
+                    </TouchableOpacity>
+                  )}
+                  <TouchableOpacity
+                    onPress={() => confirmarEliminacion(item._id)}
+                    style={styles.cancelButton}
+                  >
+                    <AntDesign name="closecircle" size={24} color="red" />
+                  </TouchableOpacity>
+                </View>
               )}
             </View>
           )}
@@ -203,24 +245,52 @@ const ReservaClienteScreen = () => {
         </Text>
       )}
 
-      {/* Modal de confirmación para cancelar reserva */}
+      {/* Modal de confirmación para cancelar o eliminar reserva */}
       <Modal visible={modalVisible} transparent animationType="fade">
         <View style={styles.modalContainer}>
           <View style={styles.modalContent}>
-            <Text style={styles.modalText}>¿Seguro que deseas cancelar esta reserva?</Text>
+            <Text style={styles.modalText}>
+              {modalAction === 'cancel'
+                ? '¿Seguro que deseas cancelar esta reserva?'
+                : '¿Seguro que deseas eliminar definitivamente esta reserva?'}
+            </Text>
             <View style={styles.modalButtons}>
-             
               <TouchableOpacity
-                onPress={() => setModalVisible(false)}
+                onPress={() => {
+                  setModalVisible(false);
+                  setReservaSeleccionada(null);
+                  setModalAction(null);
+                }}
                 style={[styles.modalButton, styles.modalCloseButton]}
               >
                 <Text style={styles.modalButtonText}>Cerrar</Text>
               </TouchableOpacity>
               <TouchableOpacity
-                onPress={cancelarReserva}
-                style={[styles.modalButton, styles.modalCancelButton]}
+                onPress={() => {
+                  if (modalAction === 'cancel') {
+                    cancelarReserva();
+                  } else if (modalAction === 'delete') {
+                    eliminarReserva();
+                  }
+                }}
+                style={[
+                  styles.modalButton,
+                  modalAction === 'cancel'
+                    ? styles.modalCancelButton
+                    : styles.modalDeleteButton,
+                  confirming && { opacity: 0.5 },
+                ]}
+                disabled={confirming}
               >
-                <Text style={styles.modalButtonText}>Cancelar Reserva</Text>
+                <Text style={styles.modalButtonText}>
+                  {confirming
+                    ? modalAction === 'cancel'
+                      ? 'Confirmando'
+                      : 'Eliminando'
+                    : modalAction === 'cancel'
+                    ? 'Cancelar Reserva'
+                    : 'Eliminar Reserva'}
+                </Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -315,16 +385,22 @@ const styles = StyleSheet.create({
   },
   cancelButton: {
     position: 'absolute',
+    alignContent: 'flex-end', 
     right: 10,
     top: 10,
+  },
+  actionButtonsContainer: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    alignItems: 'center',
+    marginTop: 8,
   },
   valoracionButton: {
     backgroundColor: '#28a745',
     paddingVertical: 8,
     paddingHorizontal: 12,
     borderRadius: 6,
-    alignSelf: 'flex-start',
-    marginTop: 8,
+    marginRight: 10,
   },
   valoracionButtonText: {
     color: '#fff',
@@ -370,6 +446,9 @@ const styles = StyleSheet.create({
   modalCancelButton: {
     backgroundColor: 'red',
   },
+  modalDeleteButton: {
+    backgroundColor: 'red',
+  },
   modalCloseButton: {
     backgroundColor: '#ccc',
   },
@@ -377,7 +456,6 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontWeight: 'bold',
   },
-
 });
 
 export default ReservaClienteScreen;

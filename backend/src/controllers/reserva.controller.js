@@ -109,10 +109,10 @@ async function updateReserva(req, res) {
 
 async function deleteReserva(req, res) {
     try {
-        const { error } = reservaIdSchema.validate(req.params);
-        if (error) return respondError(req, res, 400, error.message);
+       const id = req.params.id;
+       console.log("controller delete",id);
 
-        const [reserva, errorReserva] = await ReservaService.deleteReserva(req.params.id);
+        const [reserva, errorReserva] = await ReservaService.deleteReserva(id);
         if (errorReserva) return respondError(req, res, 400, errorReserva);
 
         respondSuccess(req, res, 200, reserva);
@@ -151,6 +151,32 @@ async function cancelReserva(req, res) {
         respondError(req, res, 500, `Error interno del servidor: ${error.message}`);
     }
 }
+
+async function cancelReservaCliente(req, res) {
+  try {
+      // Valida el ID con el esquema de validación
+      const { error } = reservaIdSchema.validate(req.params);
+      if (error) {
+          return respondError(req, res, 400, `Error de validación: ${error.message}`);
+      }
+
+      // Llama al servicio para cancelar la reserva
+      const [reserva, errorReserva] = await ReservaService.cancelReservaCliente(req.params.id);
+
+      // Si hay un error al cancelar la reserva, responde con un mensaje de error
+      if (errorReserva) {
+          return respondError(req, res, 400, `Error al cancelar la reserva: ${errorReserva}`);
+      }
+
+      // Si todo es exitoso, responde con la reserva cancelada
+      respondSuccess(req, res, 200, reserva);
+  } catch (error) {
+      // Manejo de errores generales
+      handleError(error, 'reserva.controller -> cancelReserva');
+      respondError(req, res, 500, `Error interno del servidor: ${error.message}`);
+  }
+}
+
 
 //get reservas cliente
 
@@ -271,6 +297,21 @@ const getReservasPorFechaTrabajador = async (req, res) => {
     }
 }
 
+
+async function getActiveReservationCount(req, res) {
+  try {
+    const { clientId, microempresaId } = req.params;
+    const [count, error] = await ReservaService.getActiveReservationCount(clientId, microempresaId);
+    if (error) return respondError(req, res, 400, error);
+
+    respondSuccess(req, res, 200, { count });
+  } catch (error) {
+    handleError(error, "reserva.controller -> getActiveReservationCount");
+    respondError(req, res, 400, error.message);
+  }
+}
+
+
 export default { 
     getReservas,
     getReservasByTrabajador, 
@@ -278,11 +319,14 @@ export default {
     deleteReserva ,
     updateReserva,
     cancelReserva,
+    cancelReservaCliente,
+    
     getReservasByCliente,
     finalizarReserva,
     getReservasPorFechaTrabajador,
     getReservasPorFechaMicroempresa,
   
     createReservaHorario,
+    getActiveReservationCount,
   };
 

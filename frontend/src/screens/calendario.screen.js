@@ -27,6 +27,7 @@ const AgendaScreen = () => {
   const [selectedEvent, setSelectedEvent] = useState(null);
   const [errorModal, setErrorModal] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
+  const [confirming, setConfirming] = useState(false); // Estado para evitar pulsaciones múltiples
 
   // Ref para mantener la fecha seleccionada actualizada en el PanResponder
   const selectedDateRef = useRef(selectedDate);
@@ -93,7 +94,8 @@ const AgendaScreen = () => {
   };
 
   const confirmCancel = async () => {
-    if (selectedEvent) {
+    if (selectedEvent && !confirming) {
+      setConfirming(true); // Deshabilitar el botón al pulsarlo
       try {
         await reservaService.cancelReserva(selectedEvent.id);
         const updatedItems = { ...items };
@@ -107,6 +109,7 @@ const AgendaScreen = () => {
       } finally {
         setModalVisible(false);
         setSelectedEvent(null);
+        setConfirming(false); // Reactivar el botón una vez recibida la respuesta
       }
     }
   };
@@ -194,24 +197,29 @@ const AgendaScreen = () => {
               refreshControl={
                 <RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); fetchData(); }} />
               }
-              renderItem={({ item }) => (
-                <View style={styles.eventItem}>
-                  <View style={styles.eventInfo}>
-                    <Text style={styles.serviceName}>
-                      Servicio: {item.servicioNombre}
-                    </Text>
-                    <Text style={styles.clientName}>
-                      Cliente: {item.clienteNombre}
-                    </Text>
-                    <Text style={styles.eventTime}>
-                      Hora de servicio: {moment.parseZone(item.start).format('HH:mm')} - {moment.parseZone(item.end).format('HH:mm')}
-                    </Text>
+              renderItem={({ item }) => {
+                const isCancelable = moment(item.start).isSameOrAfter(moment(), 'day');
+                return (
+                  <View style={styles.eventItem}>
+                    <View style={styles.eventInfo}>
+                      <Text style={styles.serviceName}>
+                        Servicio: {item.servicioNombre}
+                      </Text>
+                      <Text style={styles.clientName}>
+                        Cliente: {item.clienteNombre}
+                      </Text>
+                      <Text style={styles.eventTime}>
+                        Hora de servicio: {moment.parseZone(item.start).format('HH:mm')} - {moment.parseZone(item.end).format('HH:mm')}
+                      </Text>
+                    </View>
+                    {isCancelable && (
+                      <TouchableOpacity style={styles.cancelButton} onPress={() => openCancelModal(item)}>
+                        <Text style={styles.cancelButtonText}>X</Text>
+                      </TouchableOpacity>
+                    )}
                   </View>
-                  <TouchableOpacity style={styles.cancelButton} onPress={() => openCancelModal(item)}>
-                    <Text style={styles.cancelButtonText}>X</Text>
-                  </TouchableOpacity>
-                </View>
-              )}
+                );
+              }}
             />
           )}
         </View>
@@ -233,8 +241,14 @@ const AgendaScreen = () => {
                 <TouchableOpacity style={styles.modalButton} onPress={cancelModal}>
                   <Text style={styles.modalButtonText}>Cancelar</Text>
                 </TouchableOpacity>
-                <TouchableOpacity style={[styles.modalButton, styles.modalButtonConfirm]} onPress={confirmCancel}>
-                  <Text style={[styles.modalButtonText, styles.modalButtonTextConfirm]}>Confirmar</Text>
+                <TouchableOpacity 
+                  style={[styles.modalButton, styles.modalButtonConfirm, confirming && { opacity: 0.5 }]} 
+                  onPress={confirmCancel}
+                  disabled={confirming}
+                >
+                  <Text style={[styles.modalButtonText, styles.modalButtonTextConfirm]}>
+                    {confirming ? 'Confirmando...' : 'Confirmar'}
+                  </Text>
                 </TouchableOpacity>
               </View>
             </View>
@@ -248,7 +262,6 @@ const AgendaScreen = () => {
           visible={errorModal}
           onRequestClose={() => setErrorModal(false)}
         >
-
           <TouchableOpacity style={styles.errorModalOverlay} onPress={() => setErrorModal(false)}>
             <View style={styles.errorModalContainer}>
               <Text style={styles.errorModalTitle}></Text>
