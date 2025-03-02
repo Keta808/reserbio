@@ -55,25 +55,25 @@ async function createUser(req, res) {
  * @param {Object} res Objeto de respuesta
  */
 async function changePassword(req, res) {
-  try {
-    const { error } = userIdSchema.validate(req.params);
-    if (error) return respondError(req, res, 400, error.message);
 
-    const { error: errorBody } = userBodySchema.validate(req.body);
-    if (errorBody) return respondError(req, res, 400, errorBody.message);
+  const { id, oldPassword, newPassword } = req.body;
 
-    const [user, errorUser] = await UserService.changePassword(
-      req.params.id,
-      req.body.oldPassword,
-      req.body.newPassword,
-    );
-    if (errorUser) return respondError(req, res, 404, errorUser);
-
-    respondSuccess(req, res, 200, user);
-  } catch (error) {
-    handleError(error, "user.controller -> changePassword");
-    respondError(req, res, 400, error.message);
+  if (!id) {
+    return res.status(400).json({ message: "Se requiere el ID del usuario para cambiar la contraseña" });
   }
+
+
+  if (!oldPassword || !newPassword) {
+    return res.status(400).json({ message: "Se requieren la contraseña actual y la nueva contraseña" });
+  }
+
+  const [message, error] = await UserService.changePassword(id, oldPassword, newPassword);
+
+  if (error) {
+    return res.status(400).json({ message: error });
+  }
+
+  return res.status(200).json({ message });
 }
 
 /**

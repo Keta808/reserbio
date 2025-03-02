@@ -53,4 +53,17 @@ async function updateCliente(id, data) {
     throw error;
   }
 }
-export { getTrabajadorById, updateTrabajador, registrarCliente, getClienteById };
+
+
+async function changePassword(data) {
+  try {
+    const response = await instance.post(`/users/changepassword`, data);
+    console.log("✅ Contraseña cambiada con éxito:", response.data);
+    return response.data;
+  } catch (error) {
+    console.error("❌ Error al cambiar la contraseña:", error.response?.data || error.message);
+    throw error;
+  }
+}
+
+export { getTrabajadorById, updateTrabajador, registrarCliente, getClienteById, updateCliente, changePassword };
