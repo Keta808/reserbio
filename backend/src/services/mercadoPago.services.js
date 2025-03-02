@@ -191,14 +191,17 @@ async function refreshToken(idMicroempresa){
 
 async function crearPreferenciaServicio(idServicio){
     try {
-        const servicio = await servicioService.getServicioById(idServicio);
+        const [servicio, servicioError] = await servicioService.getServicioById(idServicio);
+        if (servicioError) return [null, servicioError]; 
 
         if (!servicio) return [null, "El servicio no existe."];
         if (!servicio.precio) return [null, "El servicio no tiene precio."];
-        if (!servicio.porcentajeAbono) return [null, "Debes configurar el porcentaje de abono antes de realizar esta acción."];
+        if (servicio.porcentajeAbono === null || servicio.porcentajeAbono === 0 || servicio.porcentajeAbono === undefined ) return [null, "Debes configurar el porcentaje de abono antes de realizar esta acción."];
         
-        const [montoAbono, error] = servicioService.calcularMontoAbono(idServicio, servicio.precio, servicio.porcentajeAbono); 
+        const [montoAbono, error] = await servicioService.calcularMontoAbono(servicio.id, servicio.precio, servicio.porcentajeAbono); 
         if (error) return [null, error];
+        console.log("MONTO ABONO: ", montoAbono);
+
         // Refrescar los tokens antes de continuar
         console.log("verificando...");
         const [microempresaMP, tokenError] = await verificarExpiracion(servicio.idMicroempresa);
@@ -206,6 +209,8 @@ async function crearPreferenciaServicio(idServicio){
             console.log("Error al refrescar el token:", tokenError);
             return [null, "No se pudo actualizar el token de acceso."];
         }
+        console.log("microempresaMP: ", microempresaMP);
+        console.log("accestoken: ", microempresaMP.accessToken);
 
         if (!microempresaMP || !microempresaMP.accessToken) {
             return [null, "No se pudo obtener el token de acceso después de refrescar."];
@@ -216,7 +221,6 @@ async function crearPreferenciaServicio(idServicio){
         const notificationURL = MP_WEBHOOK_URL;
         console.log("Microempresa: ", microempresaMP); 
         console.log("ACCESS TOKEN: ", accessToken);
-        console.log("MONTO ABONO: ", montoAbono);
         console.log("NOTIFICATION URL: ", notificationURL);
         // Crear preferencia de pago 
         const response = await axios.post(
@@ -233,8 +237,7 @@ async function crearPreferenciaServicio(idServicio){
                 ],
                 payment_methods: {
                     excluded_payment_types: [
-                        {},
-                    
+                        {},    
                     ],
                     installments: 1,    
                 },
@@ -242,7 +245,7 @@ async function crearPreferenciaServicio(idServicio){
                     success: "https://www.mercadopago.com",
                 },
                 auto_return: "approved",
-                external_reference: servicio.idMicroempresa,
+                external_reference: idServicio,
                 notification_url: notificationURL,
             },
             {
@@ -263,7 +266,7 @@ async function crearPreferenciaServicio(idServicio){
         handleError(error, "mercadoPago.service -> crearPreferenciaServicio");
         return [null, error];
     }
-} 
+}  
 async function verificarExpiracion(idMicroempresa){
     try {
         const mercadoPagoAcc = await MercadoPagoAcc.findOne({ idMicroempresa });

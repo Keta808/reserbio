@@ -1,9 +1,9 @@
 import { mongoose } from "mongoose";
 
 const paymentSchema = new mongoose.Schema({
-    idMicroempresa: {
+    idServicio: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: "Microempresa",
+        ref: "Servicio",
         required: true,
     }, 
     paymentId: {

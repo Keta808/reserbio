@@ -6,7 +6,7 @@ async function generarUrlOnBoarding(idMicroempresa) {
         });
         return [response.data, null];
     } catch (error) {
-        console.error(
+        console.log(
             "Error al generar la URL de onboarding:",
             error.response?.data || error.message
         );
@@ -41,7 +41,7 @@ async function crearPreferenciaServicio(idServicio) {
         return [response.data, null];
 
     } catch(error){
-        console.error("Error al crear la preferencia de pago:", error.response?.data || error.message);
+        console.log("Error al crear la preferencia de pago:", error.response?.data || error.message);
         return [null, error.response?.data || error.message];
     }
 }

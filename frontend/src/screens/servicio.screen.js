@@ -193,11 +193,13 @@ const ServicioScreen = ({ route }) => {
    
     const handleGenerarPago = async (idServicio) => {
         try {
+            console.log("ID servicio para generar pago:", idServicio);
             const [urlPago, error] = await mercadopagoServices.crearPreferenciaServicio(idServicio);
             if (error) {
                 Alert.alert("Error", error);
                 return;
             }
+            console.log("URL de pago generada:", urlPago);
             // Actualizar el servicio con la nueva URL de pago en el estado
             setServicios(servicios.map(servicio => 
                 servicio._id === idServicio ? { ...servicio, urlPago } : servicio
@@ -218,14 +220,14 @@ const ServicioScreen = ({ route }) => {
             <Text style={styles.servicioDetail}>📖 {item.descripcion}</Text>
             {item.porcentajeAbono !== undefined && (
                 <Text style={styles.servicioDetail}>💳 Abono: {item.porcentajeAbono}%</Text>
-            )} 
+            )}
+            {item.urlPago && <Text style={styles.pagoGeneradoText}>✅ Abono Generado</Text>} 
             {/* Solo mostrar el botón si la microempresa está vinculada */}
-        {vinculadoMP && !item.urlPago && (
+        {vinculadoMP && item.porcentajeAbono !== 0 && (
             <TouchableOpacity onPress={() => handleGenerarPago(item._id)} style={styles.generarPagoButton}>
-                <Text style={styles.buttonText}>Generar Pago</Text>
-            </TouchableOpacity>
+                <Text style={styles.buttonText}>Generar link de Pago</Text>
+        </TouchableOpacity>
         )} 
-        {item.urlPago && <Text style={styles.pagoGeneradoText}>✅ Pago Generado</Text>}
             <View style={styles.buttonContainer}>
                 <TouchableOpacity onPress={() => handleEditarServicio(item)} style={styles.editButton}>
                     <Text style={styles.buttonText}>Editar</Text>

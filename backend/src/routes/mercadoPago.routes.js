@@ -16,6 +16,6 @@ router.get("/callback", mercadoPagoController.onBoarding);
 router.post("/refreshtoken/:id", mercadoPagoController.refreshToken); 
 router.get("/redirect", mercadoPagoController.obtenerRedirect);
 
-router.post("/servicio/:id", mercadoPagoController.crearPreferenciaServicio);
+router.post("/servicio/:idServicio", mercadoPagoController.crearPreferenciaServicio);
 
 export default router; 

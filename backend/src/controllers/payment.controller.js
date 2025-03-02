@@ -87,15 +87,15 @@ async function webhook(req, res) {
         }
 
         const paymentId = id;
-        const idMicroempresa = req.body.external_reference; // Extraer `idMicroempresa` desde `external_reference`
+        const idServicio = req.body.external_reference; // Extraer `idServicio` desde `external_reference`
         console.log("controller: WEBHOOK PAYMENT ID:", paymentId);
-        console.log("controller: WEBHOOK MICROEMPRESA ID:", idMicroempresa);
-        if (!idMicroempresa) {
-            return respondError(req, res, 400, "No se encontró el ID de la microempresa en la transacción.");
+        console.log("controller: WEBHOOK MICROEMPRESA ID:", idServicio);
+        if (!idServicio) {
+            return respondError(req, res, 400, "No se encontró el ID del servicio en la transacción.");
         }
 
         //  Enviar `idMicroempresa` para obtener su `accessToken` correcto
-        const [payment, error] = await PaymentServices.procesarNotificacionPago(paymentId, idMicroempresa);
+        const [payment, error] = await PaymentServices.procesarNotificacionPago(paymentId, idServicio);
 
         if (error) {
             return respondError(req, res, 400, error);
@@ -106,7 +106,7 @@ async function webhook(req, res) {
         handleError(error, "payment.controller -> webhook");
         return respondError(req, res, 500, "Error interno al procesar la notificación.");
     }
-} 
+}  
 async function refundPayment(req, res) {
     try {
         const { paymentId } = req.params; 

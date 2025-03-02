@@ -7,16 +7,16 @@ import Payment from "../models/payment.model.js";
 import { handleError } from "../utils/errorHandler.js";
 // importar mercado pago acc 
 import MercadoPagoAcc from "../models/mercadoPago.model.js";
+import Servicio from "../models/servicio.model.js";
 
 async function createPayment(paymentData) {
     try {
-        const { idMicroempresa, paymentId, monto, state, fecha } = paymentData;
+        const { idServicio, paymentId, monto, state, fecha } = paymentData;
         const paymentFound = await Payment.findOne({ paymentId }); 
         if (paymentFound) return [null, "El pago ya existe"]; 
         const newPayment = new Payment(
             {
-                idMicroempresa,
-             
+                idServicio,
                 paymentId,
                 monto,
                 state,
@@ -74,11 +74,16 @@ async function updatePayment(paymentId, paymentData) {
         return [null, error];
     }
 }
+
 // Service de Webhook 
-async function procesarNotificacionPago(paymentId, idMicroempresa) {
+async function procesarNotificacionPago(paymentId, idServicio) {
     try { 
         if (!paymentId) return [null, "Falta el id del pago"];
-        if (!idMicroempresa) return [null, "Falta el id de la microempresa"]; 
+        if (!idServicio) return [null, "Falta el id del servicio"]; 
+        // Obtener el idMicroempresa del servicio
+        const servicio = await Servicio.findOne(idServicio);
+        if (!servicio) return [null, "El servicio no existe"];
+        const idMicroempresa = servicio.idMicroempresa;
 
         // 1️⃣ Obtener el `accessToken` de la microempresa
         const mercadoPagoAcc = await MercadoPagoAcc.findOne({ idMicroempresa });
@@ -92,7 +97,6 @@ async function procesarNotificacionPago(paymentId, idMicroempresa) {
             },
         
         }); 
-        console.log(response.data);
         const paymentData = response.data;
         if (!paymentData) return [null, "No se pudo obtener la información del pago"];
         console.log("PAYMENT DATA", paymentData);
@@ -100,7 +104,7 @@ async function procesarNotificacionPago(paymentId, idMicroempresa) {
         if (paymentFound) return [null, "El pago ya existe"];  
         const newPayment = new Payment(
             {
-                idMicroempresa,
+                idServicio,
                 paymentId: paymentData.id,
                 monto: paymentData.transaction_amount,
                 state: paymentData.status,
@@ -121,9 +125,13 @@ async function refundPayment(paymentId) {
         if (!paymentId) return [null, "Falta el id del pago"]; 
         const payment = await Payment.findOne({ paymentId }); 
         if (!payment) return [null, "El pago no existe"]; 
-        if (payment.state !== "refunded") return [null, "El pago no está aprobado"]; 
-
-        const mercadoPagoAcc = await MercadoPagoAcc.findOne({ idMicroempresa: payment.idMicroempresa });
+        if (payment.state === "refunded") return [null, "El pago ya ha sido reembolsado"];
+        
+        const servicio = await Servicio.findOne(payment.idServicio);
+        if (!servicio) return [null, "El servicio no existe"]; 
+        const idMicroempresa = servicio.idMicroempresa;
+        
+        const mercadoPagoAcc = await MercadoPagoAcc.findOne({ idMicroempresa }); 
         if (!mercadoPagoAcc || !mercadoPagoAcc.accessToken) {
             return [null, "No hay cuenta de MercadoPago vinculada a esta microempresa"];
         } 
@@ -149,26 +157,16 @@ async function refundPayment(paymentId) {
         return [null, error];
     }
 } 
-// verificar pago por url
-async function verificarPago(urlPago, idMicroempresa) { 
-    try { 
-        if (!urlPago) return [null, "Falta la url de pago"]; 
-        const paymentId = urlPago.split("/").pop(); 
-        const mercadoPagoAcc = await MercadoPagoAcc.findOne({ idMicroempresa });
-        if (!mercadoPagoAcc || !mercadoPagoAcc.accessToken) {
-            return [null, "No hay cuenta de MercadoPago vinculada a esta microempresa"];
-        } 
-        const accessToken = mercadoPagoAcc.accessToken;
-        const response = await axios.get(`https://api.mercadopago.com/v1/payments/${paymentId}`, {
-            headers: { Authorization: `Bearer ${accessToken}` },
-        });
+// verificar pago 
+async function verificarPago(idServicio) {
+    try {
+        const pago = await Payment.findOne({ idServicio }).sort({ fecha: -1 }); // Último pago
+        if (!pago) return [null, "No hay pagos registrados para este servicio"];
         
-        if (!response.data) return [null, "No se pudo verificar el pago."];
-        
-        return [response.data, null];
+        return [{ estado: pago.state, pago }, null]; 
     } catch (error) {
         handleError(error, "payment.service -> verificarPago");
-        return [null, error]; 
+        return [null, error];
     }
 }
 

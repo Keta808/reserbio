@@ -4,23 +4,17 @@ import { WebView } from 'react-native-webview';
 import mercadoPagoServices from '../services/mercadopago.service'; 
 
 
+
 export default function MercadoPagoScreen({ route, navigation }) {
 
     const { idMicroempresa } = route.params; 
     const [authUrl, setauthUrl] = useState(null);
     const [loading, setLoading] = useState(true);
-    const [vinculacion, setVinculacion] = useState(null); 
-    const [mpRedirectUri, setMpRedirectUri] = useState(null); 
+    const [errorVinculacion, setErrorVinculacion] = useState(null); 
+    const [hasNavigated, setHasNavigated] = useState(false);
+    
 
-    if (!idMicroempresa){ 
-        Alert.alert("Error", "No se proporcionó el ID de la microempresa.");
-        navigation.goBack();
-        return null;
-    } 
-    if (vinculacion) {
-        Alert.alert("Cuenta de MercadoPago vinculada", "Tu cuenta de MercadoPago ya esta vinculada."); 
-        navigation.goBack();
-    } 
+    
 
     useEffect(() => {
         const obtenerUrlVinculacion = async () => {
@@ -28,25 +22,19 @@ export default function MercadoPagoScreen({ route, navigation }) {
             try { 
                 console.log("ID de microempresa:", idMicroempresa);
                 // Obtener la URL de redirección de MercadoPago
-                const [redirectData, redirectError] = await mercadoPagoServices.obtenerRedirect();
-                if (redirectError) {
-                    throw new Error("No se pudo obtener la URL de redirección de MercadoPago.");
-                }
-                console.log("MP_REDIRECT_URI obtenida:", redirectData.data.MP_REDIRECT_URI);
-                setMpRedirectUri(redirectData.data.MP_REDIRECT_URI); 
-
+                
                 const [url, error] = await mercadoPagoServices.generarUrlOnBoarding(idMicroempresa);
                 if (error) {
-                    Alert.alert("Error al obtener la URL de vinculación con MercadoPago:", error);
-                    navigation.goBack();
+                    console.log("Error al obtener la URL de vinculación con MercadoPago:", error);  
+                    setErrorVinculacion(error)
                     return;
                 }
                 console.log("URL de vinculación con MercadoPago generada:", url.data);
                 setauthUrl(url.data);
             } catch (error) {
-                console.error("Error al generar la URL de vinculación con MercadoPago:", error);
-                Alert.alert("Error al generar la URL de onBoarding MercadoPago:", error.message);
-                navigation.goBack();
+                console.log("Error al generar la URL de vinculación con MercadoPago.");
+                
+                setErrorVinculacion(error);
             } finally {
                 setLoading(false);
             }
@@ -55,6 +43,18 @@ export default function MercadoPagoScreen({ route, navigation }) {
 
     }, [idMicroempresa]);
 
+    useEffect(() => {
+        if (errorVinculacion && !hasNavigated) {
+            setHasNavigated(true); // Evita múltiples ejecuciones de navegación
+            Alert.alert("Error", "Error al vincular la cuenta de MercadoPago", [
+                {
+                    text: "OK",
+                    onPress: () => navigation.goBack(),
+                }
+            ]);        
+        }
+    }, [errorVinculacion, hasNavigated]);
+
     if (loading) {
         return (
             <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
@@ -62,18 +62,16 @@ export default function MercadoPagoScreen({ route, navigation }) {
             </View>
         );
     } 
-
-    if(!authUrl){
-        console.error("No se pudo generar la URL de Mercado Pago.");
-        Alert.alert("Error", "No se pudo generar la URL de Mercado Pago.")
-        navigation.goBack();
-        return null;
-    } 
+    if(!authUrl) {
+        return null; 
+    }
+   
     const handleNavigationChange = async (navState) => {
         const { url } = navState;
-        if(!mpRedirectUri) return;
-
-        if(url.includes(mpRedirectUri)){
+        console.log("URL actual:", url);
+        
+        
+        if(url.includes("code=") && url.includes("state=")){
             const urlParams = new URLSearchParams(url.split('?')[1]);
             const code = urlParams.get('code'); 
             const idMicroempresa = urlParams.get('state');
@@ -83,16 +81,16 @@ export default function MercadoPagoScreen({ route, navigation }) {
                 try {
                     const [response, error] = await mercadoPagoServices.onBoarding(code, idMicroempresa);
                     if (error) {
-                        Alert.alert("Error al vincular la cuenta de MercadoPago:", error);
+                        console.log("Error en OnBoarding:", error);
+                        setErrorVinculacion(error);
                        
-                    }else {
+                    } else {
                         Alert.alert("Vinculación exitosa", "Tu cuenta de MercadoPago ha sido vinculada exitosamente.");
-                        console.log("Cuenta de MercadoPago vinculada:", response);
-                        setVinculacion(response);  
+                        console.log("Cuenta de MercadoPago vinculada:", response); 
                     }
                 } catch (error){
-                    Alert.alert("Error al vincular la cuenta de MercadoPago:", error);
-                    console.error("Error en OnBoarding:", error);
+                    console.log("Error en OnBoarding:", error);
+                    setErrorVinculacion("Error al vincular la cuenta de MercadoPago");
                 } finally {
                     navigation.goBack();
                 }

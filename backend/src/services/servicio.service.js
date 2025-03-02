@@ -114,6 +114,7 @@ async function calcularMontoAbono(id, precio, porcentajeAbono) {
         return [montoAbono, null];
     } catch (error) {
         handleError(error, "servicio.service -> calcularMontoAbono");
+        return [null, error.message];
     }
 }
 

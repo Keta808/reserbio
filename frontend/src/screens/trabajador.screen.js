@@ -5,7 +5,7 @@ import { AuthContext } from '../context/auth.context';
 // Llamar services de usuario para actualizar datos y botones
 import { getTrabajadorById, updateTrabajador } from '../services/user.service'; 
 import MicroempresaServices from '../services/microempresa.service.js';
-
+import Icon from 'react-native-vector-icons/Ionicons';
 
 export default function TrabajadorScreen() {
     const { user } = useContext(AuthContext);
@@ -13,6 +13,7 @@ export default function TrabajadorScreen() {
     const [dataTrabajador, setDataTrabajador] = useState(null);
     const [loading, setLoading] = useState(true); 
     const [modalVisible, setModalVisible] = useState(false);
+    const [infoVisible, setInfoVisible] = useState(false);
 
     // Estados para los campos del formulario
     const [EditinguserId, setEditingUserId] = useState(null);
@@ -123,10 +124,21 @@ export default function TrabajadorScreen() {
           console.error("Error updating profile:", error.message || error);
           Alert.alert('Error', 'No se pudo actualizar el perfil.');
       }
+  }; 
+
+  const handleShowInformation = () => {
+    setInfoVisible(true);
   };
 
       return (
         <View style={styles.container}>
+          <View style={styles.headerContainer}>
+   
+    <TouchableOpacity onPress={handleShowInformation} style={styles.infoIcon}>
+        <Icon name="information-circle-outline" size={25} color="#007BFF" />
+    </TouchableOpacity>
+      </View>
+          
           <Text style={styles.title}>Perfil del Trabajador</Text>
           <View style={styles.infoContainer}>
             <View style={styles.infoRow}>
@@ -215,6 +227,26 @@ export default function TrabajadorScreen() {
                         </View>
                     </View>
                 </View>
+          </Modal>
+           {/* Modal de Información */}
+           <Modal
+                animationType="fade"
+                transparent={true}
+                visible={infoVisible}
+                onRequestClose={() => setInfoVisible(false)}
+            >
+                <View style={styles.modalContainer}>
+                    <View style={styles.modalContent}>
+                        <Text style={styles.modalTitle}>Para Reservas con Abono</Text>
+                        <Text style={styles.modalText}>
+                            Para habilitar la opción de abono en reservas, debes vincular tu cuenta con Mercado Pago,
+                            configurar el porcentaje de abono de un servicio y realizar generar su link de pago.
+                        </Text>
+                        <TouchableOpacity style={styles.modalCloseButton} onPress={() => setInfoVisible(false)}>
+                            <Text style={styles.closedButtonText}>Cerrar</Text>
+                        </TouchableOpacity>
+                    </View>
+                </View>
             </Modal>
 
         </View>
@@ -228,6 +260,19 @@ const styles = StyleSheet.create({
     padding: 20,
     backgroundColor: '#fff',
   }, 
+  headerContainer: {
+    width: '100%',
+    alignItems: 'flex-end',  // 📌 Esto empuja el icono a la derecha
+    marginBottom: 10,
+    position: 'absolute',  
+    top: 10,              
+    zIndex: 10, 
+    right: 10,           
+},
+iconInfo: {
+  padding: 10,      // 📍 Asegura clickeabilidad
+  alignSelf: 'flex-end',  // 📍 Espaciado para mejor clickeabilidad
+},
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
@@ -278,8 +323,9 @@ modalContent: {
     backgroundColor: 'white',
     padding: 20,
     borderRadius: 8,
-    width: '80%',
+    width: '90%',
     alignItems: 'center',
+    alignSelf: "center",
 },
 modalTitle: {
     fontSize: 20,
@@ -309,5 +355,22 @@ input: {
   borderBottomColor: 'gray',
   marginBottom: 15,
   padding: 5,
+},
+closedButtonText: {
+  color: '#fff',
+  fontWeight: '700',
+},
+modalCloseButton: {
+  backgroundColor: '#6c757d',
+  paddingVertical: 10,
+  paddingHorizontal: 20,
+  borderRadius: 8,
+},
+modalText: {
+  fontSize: 16,
+  color: '#333',
+  textAlign: 'center',
+  marginBottom: 20,
+  paddingHorizontal: 10,  
 },
 });
