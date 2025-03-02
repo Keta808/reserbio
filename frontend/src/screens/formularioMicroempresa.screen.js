@@ -3,8 +3,22 @@ import { View, Text, TextInput, Button, StyleSheet, Alert, TouchableOpacity } fr
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import ActionSheet from "react-native-actions-sheet";
 import MicroempresaService from "../services/microempresa.service.js";
+import { useMicroempresa } from "../context/microempresa.context";
+import { useAuth } from "../context/auth.context"; // Importa el hook de autenticación
 
-const CATEGORIAS = ["Barberia", "Peluqueria", "Estetica", "Masajes", "Manicure", "Pedicure", "Depilacion", "Tatuajes", "Piercing", "Clases particulares", "Consultoria"];
+const CATEGORIAS = [
+  "Barberia",
+  "Peluqueria",
+  "Estetica",
+  "Masajes",
+  "Manicure",
+  "Pedicure",
+  "Depilacion",
+  "Tatuajes",
+  "Piercing",
+  "Clases particulares",
+  "Consultoria",
+];
 
 const FormularioMicroempresaScreen = ({ navigation }) => {
   const [nombre, setNombre] = useState("");
@@ -15,7 +29,9 @@ const FormularioMicroempresaScreen = ({ navigation }) => {
   const [categoria, setCategoria] = useState("");
   const [errors, setErrors] = useState({});
 
-  // 📌 Creamos una referencia para ActionSheet
+  const { fetchMicroempresa } = useMicroempresa();
+  const { logout } = useAuth(); // Obtenemos la función logout
+
   const actionSheetRef = useRef(null);
 
   const getUserId = async () => {
@@ -88,40 +104,77 @@ const FormularioMicroempresaScreen = ({ navigation }) => {
       };
 
       const response = await MicroempresaService.createMicroempresa(nuevaMicroempresa);
-      const id = response.data._id || response.data.id; // Soporta ambas opciones
-
       console.log("📦 Respuesta del backend al crear microempresa:", response.data);
-      console.log("🚀 Navegando a SubirFotoPerfil con ID:", id);
 
-      navigation.navigate("SubirFotoPerfil", { id, modo: "crear" });
+      // Actualizamos el contexto para reflejar la nueva microempresa
+      await fetchMicroempresa();
 
+      // Redirigimos al flujo normal de trabajador (por ejemplo, al Home)
+      navigation.replace("HomeNavigator");
     } catch (error) {
       Alert.alert("Error", "No se pudo crear la microempresa.");
       console.error("❌ Error al crear la microempresa:", error.message);
     }
   };
 
+  // Función para manejar la cancelación
+  const handleCancel = async () => {
+    // Opcionalmente puedes pedir confirmación o realizar logout
+    await logout(); // Limpia los datos y cierra sesión
+    navigation.replace("Login");
+  };
+
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Crear Microempresa</Text>
 
-      <TextInput style={styles.input} placeholder="Nombre" value={nombre} onChangeText={setNombre} />
+      <TextInput
+        style={styles.input}
+        placeholder="Nombre"
+        value={nombre}
+        onChangeText={setNombre}
+      />
       {errors.nombre && <Text style={styles.error}>{errors.nombre}</Text>}
 
-      <TextInput style={styles.input} placeholder="Descripción" value={descripcion} onChangeText={setDescripcion} />
+      <TextInput
+        style={styles.input}
+        placeholder="Descripción"
+        value={descripcion}
+        onChangeText={setDescripcion}
+      />
       {errors.descripcion && <Text style={styles.error}>{errors.descripcion}</Text>}
 
-      <TextInput style={styles.input} placeholder="Teléfono" value={telefono} onChangeText={setTelefono} keyboardType="phone-pad" />
+      <TextInput
+        style={styles.input}
+        placeholder="Teléfono"
+        value={telefono}
+        onChangeText={setTelefono}
+        keyboardType="phone-pad"
+      />
       {errors.telefono && <Text style={styles.error}>{errors.telefono}</Text>}
 
-      <TextInput style={styles.input} placeholder="Dirección" value={direccion} onChangeText={setDireccion} />
+      <TextInput
+        style={styles.input}
+        placeholder="Dirección"
+        value={direccion}
+        onChangeText={setDireccion}
+      />
       {errors.direccion && <Text style={styles.error}>{errors.direccion}</Text>}
 
-      <TextInput style={styles.input} placeholder="Email" value={email} onChangeText={setEmail} keyboardType="email-address" />
+      <TextInput
+        style={styles.input}
+        placeholder="Email"
+        value={email}
+        onChangeText={setEmail}
+        keyboardType="email-address"
+      />
       {errors.email && <Text style={styles.error}>{errors.email}</Text>}
 
-      {/* 📌 Selector de categoría con ActionSheet */}
-      <TouchableOpacity style={styles.pickerButton} onPress={() => actionSheetRef.current?.show()}>
+      {/* Selector de categoría */}
+      <TouchableOpacity
+        style={styles.pickerButton}
+        onPress={() => actionSheetRef.current?.show()}
+      >
         <Text>{categoria || "Selecciona una categoría..."}</Text>
       </TouchableOpacity>
       {errors.categoria && <Text style={styles.error}>{errors.categoria}</Text>}
@@ -142,6 +195,8 @@ const FormularioMicroempresaScreen = ({ navigation }) => {
       </ActionSheet>
 
       <Button title="Crear Microempresa" onPress={handleSubmit} />
+      {/* Botón Cancelar */}
+      <Button title="Cancelar" onPress={handleCancel} color="red" />
     </View>
   );
 };
@@ -172,7 +227,6 @@ const styles = StyleSheet.create({
     borderRadius: 5,
     textAlign: "center",
     backgroundColor: "#f9f9f9",
-    // marginBottom: 15,
   },
   option: {
     padding: 15,

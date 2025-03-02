@@ -12,11 +12,14 @@ export const useMicroempresa = () => useContext(MicroempresaContext);
 export const MicroempresaProvider = ({ children }) => {
     const { user, isAuthenticated } = useAuth(); // Obtenemos el usuario autenticado
     const [microempresa, setMicroempresa] = useState(null);
+    const [loading, setLoading] = useState(false);
 
     // Función para obtener la microempresa del usuario
     const fetchMicroempresa = async () => {
+        setLoading(true);
         if (!user || !isAuthenticated) {
             setMicroempresa(null); // Si no hay usuario, limpiar estado
+            setLoading(false);
             return;
         }
 
@@ -38,6 +41,7 @@ export const MicroempresaProvider = ({ children }) => {
             console.error("❌ Error al obtener la microempresa:", error);
             setMicroempresa(null);
         }
+        setLoading(false);
     };
 
     // Ejecutar automáticamente cada vez que cambia el usuario autenticado
@@ -46,7 +50,7 @@ export const MicroempresaProvider = ({ children }) => {
     }, [user, isAuthenticated]);
 
     return (
-        <MicroempresaContext.Provider value={{ microempresa, fetchMicroempresa }}>
+        <MicroempresaContext.Provider value={{ microempresa, loading, fetchMicroempresa }}>
             {children}
         </MicroempresaContext.Provider>
     );
