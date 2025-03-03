@@ -586,6 +586,21 @@ async function getUserSubscription(idUser){
         return [null, error.response?.data || error.message];
     }
 
+} 
+
+async function getSuscripcionByUserId(idUser) {
+    try {
+        if (!idUser) return [null, "ID de usuario no proporcionado."];
+
+        const suscripcion = await Suscripcion.findOne({ idUser }).exec();
+        if (!suscripcion) return [null, "No se encontró una suscripción para este usuario."];
+
+        return [suscripcion, null];
+    } catch (error) {
+        console.error(`Error al obtener la suscripción:`, error.response?.data || error.message);
+        handleError(error, "suscripcion.service -> getSuscripcionByUserId");
+        return [null, error.response?.data || error.message];
+    }
 }
 
 
@@ -594,5 +609,5 @@ export default { crearSuscripcion, cancelarSuscripcion, getSuscripciones, getSus
 deleteSuscripcion, updateSuscripcion, sincronizarEstados, 
 getIssuers, getIdentificationTypes, cardForm, obtenerSuscripcion, 
 searchSuscripcionMP, getSuscripcionById, updateSuscripcionMP, getSuscripcionBypreapprovalId, updateSuscripcionCard, updateCardTokenByUserId,
-getUserSubscription, userChange,
+getUserSubscription, userChange, getSuscripcionByUserId,
 }; 

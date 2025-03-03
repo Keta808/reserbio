@@ -5,7 +5,7 @@ import ActionSheet from "react-native-actions-sheet";
 import MicroempresaService from "../services/microempresa.service.js";
 import { useMicroempresa } from "../context/microempresa.context";
 import { useAuth } from "../context/auth.context"; // Importa el hook de autenticación
-
+import { getSuscripcionByUserId } from "../services/suscripcion.service.js";
 const CATEGORIAS = [
   "Barberia",
   "Peluqueria",
@@ -91,7 +91,15 @@ const FormularioMicroempresaScreen = ({ navigation }) => {
 
     try {
       const userId = await getUserId();
-      if (!userId) return;
+      if (!userId) return; 
+      const responseSuscripcion = await getSuscripcionByUserId(userId);
+      if (responseSuscripcion === "Error") {
+        Alert.alert("Error", "No tienes Suscripcion.");
+        console.error("Error al obtener la suscripción, No tienes suscripcion:", errorSuscripcion.message);
+        return;
+      } 
+      const idSuscripcion = responseSuscripcion.id;
+      console.log("ID de suscripción:", idSuscripcion);
 
       const nuevaMicroempresa = {
         nombre,
@@ -101,8 +109,9 @@ const FormularioMicroempresaScreen = ({ navigation }) => {
         email,
         categoria,
         idTrabajador: userId,
+        idSuscripcion,
       };
-
+      console.log(" Nueva microempresa:", nuevaMicroempresa);
       const response = await MicroempresaService.createMicroempresa(nuevaMicroempresa);
       console.log("📦 Respuesta del backend al crear microempresa:", response.data);
 
