@@ -228,63 +228,6 @@ const AppNavigator = () => {
   if (isLoading) {
     return <LoadingScreen />;
   }
-
-  const ClienteStack = () => (
-    <Stack.Navigator screenOptions={{ headerShown: false }}>
-      <Stack.Screen name="HomeNavigator" component={HomeClienteNavigator} />
-      <Stack.Screen name="ListaMicroempresas" component={ListaMicroempresasScreen} />  
-      <Stack.Screen name="MicroempresaCliente" component={MicroempresaClienteScreen} />
-      <Stack.Screen name="SeleccionServicio" component={SeleccionServicioScreen} />
-      <Stack.Screen name="Valoracion" component={ValoracionServicioScreen} />
-      <Stack.Screen name="AceptarInvitacion" component={AceptarInvitacionScreen} />   
-      <Stack.Screen name="Pago" component={PaymentScreen} /> 
-      <Stack.Screen name="Login" component={LoginScreen} />
-      <Stack.Screen name= "ConfirmacionReservaSlotScreen" component={ConfirmacionReservaSlotScreen} />
-      <Stack.Screen name="ServicioPaymentScreen" component={ServicioPaymentScreen} />
-      
-    </Stack.Navigator>
-  );
-
-  const TrabajadorStack = () => {
-    const { microempresa, loading } = useMicroempresa();
-  
-    if (loading) {
-      return (
-        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-          <ActivityIndicator size="large" color="#0000ff" />
-          <Text>Cargando información...</Text>
-        </View>
-      );
-    }
-  
-    return (
-      <Stack.Navigator
-        screenOptions={{ headerShown: false }}
-        initialRouteName={microempresa ? "HomeNavigator" : "FormularioMicroempresa"}
-      >
-        {/* Siempre definimos ambas screens */}
-        <Stack.Screen name="FormularioMicroempresa" component={FormularioMicroempresa} />
-        <Stack.Screen name="HomeNavigator" component={HomeTrabajadorNavigator} />
-        <Stack.Screen name="SeleccionMicroempresa" component={SeleccionMicroempresaScreen} /> 
-        <Stack.Screen name="GestorSuscripcion" component={gestorSuscripcionScreen} /> 
-        <Stack.Screen name="CardScreen" component={CardScreen} />
-        <Stack.Screen name="Microempresa" component={MicroempresaInicioScreeen} />
-        <Stack.Screen name="InvitarTrabajador" component={InvitarTrabajadorScreen} />
-        <Stack.Screen name="EditarMicroempresa" component={FormularioEdicionMicroempresa} />
-        <Stack.Screen name="SubirFotoPerfil" component={SubirFotoPerfilScreen} />
-        <Stack.Screen name="SubirImagenes" component={SubirImagenesScreen} />
-        <Stack.Screen name="ListaMicroempresas" component={ListaMicroempresasScreen} />
-        <Stack.Screen name="Trabajador" component={PerfilTrabajadorScreen} /> 
-        <Stack.Screen name="Perfil" component={TrabajadorScreen} /> 
-        <Stack.Screen name="Servicio" component={ServicioScreen} />
-        <Stack.Screen name="Login" component={LoginScreen} />
-        <Stack.Screen name="VincularMercadoPago" component={MercadoPagoScreen} />
-        <Stack.Screen name="Horario" component={Horario} />
-        <Stack.Screen name="EditarHorario" component={EditarHorarioScreen} /> 
-      </Stack.Navigator>
-    );
-  };
-  
   
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
