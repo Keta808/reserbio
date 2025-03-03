@@ -17,12 +17,13 @@ import { useNavigation, useRoute } from '@react-navigation/native';
 import servicioService from '../services/servicio.service.js';
 import Icon from 'react-native-vector-icons/Ionicons';
 import reservaService from '../services/reserva.service.js';
-
+import { useTheme } from '../context/theme.context';
 
 const SeleccionServicioScreen = () => {
   const navigation = useNavigation();
   const route = useRoute();
   const { microempresaId, trabajadores } = route.params;
+  const { theme } = useTheme();
 
   const [servicios, setServicios] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -37,7 +38,6 @@ const SeleccionServicioScreen = () => {
 
   // Estado para controlar el modal de límite excedido
   const [showLimitModal, setShowLimitModal] = useState(false);
-
 
   useEffect(() => {
     const fetchServicios = async () => {
@@ -101,17 +101,17 @@ const SeleccionServicioScreen = () => {
 
   if (loading) {
     return (
-      <View style={styles.loaderContainer}>
-        <ActivityIndicator size="large" color="#000" />
-        <Text>Cargando servicios...</Text>
+      <View style={[styles.loaderContainer, { backgroundColor: theme.background }]}>
+        <ActivityIndicator size="large" color={theme.text} />
+        <Text style={{ color: theme.text }}>Cargando servicios...</Text>
       </View>
     );
   }
 
   if (error) {
     return (
-      <View style={styles.errorContainer}>
-        <Text style={styles.errorText}>{error}</Text>
+      <View style={[styles.errorContainer, { backgroundColor: theme.background }]}>
+        <Text style={[styles.errorText, { color: theme.text }]}>{error}</Text>
       </View>
     );
   }
@@ -135,15 +135,15 @@ const SeleccionServicioScreen = () => {
   };
 
   return (
-    <SafeAreaView style={styles.safeArea}>
-      <View style={styles.container}>
+    <SafeAreaView style={[styles.safeArea, { backgroundColor: theme.background }]}>
+      <View style={[styles.container, { backgroundColor: theme.background }]}>
        
-      <Text style={styles.header}>Selecciona una fecha</Text>
+        <Text style={[styles.header, { color: theme.text }]}>Selecciona una fecha</Text>
         <TouchableOpacity
-          style={styles.datePickerButton}
+          style={[styles.datePickerButton, { borderColor: theme.background === "#FFFFFF" ? "#ccc" : "#777", backgroundColor: theme.background === "#FFFFFF" ? "#fff" : "#333" }]}
           onPress={() => setDatePickerVisibility(true)}
         >
-          <Text style={styles.datePickerText}>
+          <Text style={[styles.datePickerText, { color: theme.text }]}>
             {selectedDate ? formatDate(selectedDate) : 'Selecciona una fecha'}
           </Text>
         </TouchableOpacity>
@@ -162,8 +162,7 @@ const SeleccionServicioScreen = () => {
           locale="es-ES"
         />
        
-
-        <Text style={styles.subHeader}>Selecciona un servicio</Text> 
+        <Text style={[styles.subHeader, { color: theme.text }]}>Selecciona un servicio</Text> 
         {/* Lista de Servicios */}
         <FlatList
           data={servicios}
@@ -175,13 +174,18 @@ const SeleccionServicioScreen = () => {
             <TouchableOpacity
               style={[
                 styles.card,
-                selectedServicio?._id === item._id && styles.selectedCard,
+                // Si está en modo oscuro, se aplica un fondo diferente
+                theme.background !== "#FFFFFF" && { backgroundColor: "#333" },
+                // Si la card está seleccionada y está en modo oscuro
+                theme.background !== "#FFFFFF" && selectedServicio?._id === item._id && { backgroundColor: "#555", borderWidth: 1, borderColor: "#1e90ff" },
+                // Si el modo oscuro no está activado, se usa el estilo original para la card seleccionada
+                theme.background === "#FFFFFF" && selectedServicio?._id === item._id && styles.selectedCard,
               ]}
               onPress={() => setSelectedServicio(item)}
             >
               <View style={styles.cardTextContainer}>
-                <Text style={styles.cardTitle}>{item.nombre}</Text>
-                <Text style={styles.cardSubtitle}>{item.duracion} min</Text>
+                <Text style={[styles.cardTitle, { color: theme.text }]}>{item.nombre}</Text>
+                <Text style={[styles.cardSubtitle, { color: theme.text }]}>{item.duracion} min</Text>
               </View>
               <TouchableOpacity
                 style={styles.infoButton}
@@ -196,7 +200,7 @@ const SeleccionServicioScreen = () => {
           columnWrapperStyle={styles.cardRow}
         />
   
-        <Text style={styles.subHeader}>Selecciona un trabajador</Text>
+        <Text style={[styles.subHeader, { color: theme.text }]}>Selecciona un trabajador</Text>
         <FlatList
           data={[
             ...trabajadores.map((t) => ({ id: t._id, nombre: t.nombre })),
@@ -210,18 +214,22 @@ const SeleccionServicioScreen = () => {
             <TouchableOpacity
               style={[
                 styles.workerCard,
-                selectedTrabajadorId === item.id && styles.selectedWorkerCard,
+                // Aplica fondo oscuro si el theme no es claro
+                theme.background !== "#FFFFFF" && { backgroundColor: "#333" },
+                // Si la card del trabajador está seleccionada en modo oscuro
+                theme.background !== "#FFFFFF" && selectedTrabajadorId === item.id && { backgroundColor: "#555", borderWidth: 1, borderColor: "#1e90ff" },
+                // Si no está en modo oscuro, se usa el estilo original para la selección
+                theme.background === "#FFFFFF" && selectedTrabajadorId === item.id && styles.selectedWorkerCard,
               ]}
               onPress={() => handleTrabajadorSelect(item.id)}
             >
-              <Text style={styles.workerName}>{item.nombre}</Text>
+              <Text style={[styles.workerName, { color: theme.text }]}>{item.nombre}</Text>
             </TouchableOpacity>
           )}
           numColumns={2}
           ListFooterComponent={trabajadoresFooter}
           columnWrapperStyle={styles.workerRow}
         />
-  
   
         <View style={styles.buttonContainer}>
           <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
@@ -249,16 +257,16 @@ const SeleccionServicioScreen = () => {
         onRequestClose={() => setDescModalVisible(false)}
       >
         <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Descripción del Servicio</Text>
-            <Text style={styles.modalMessage}>{serviceDescription}</Text>
+          <View style={[styles.modalContent, { backgroundColor: theme.background === "#FFFFFF" ? "#fff" : "#444" }]}>
+            <Text style={[styles.modalTitle, { color: theme.text }]}>Descripción del Servicio</Text>
+            <Text style={[styles.modalMessage, { color: theme.text }]}>{serviceDescription}</Text>
             <TouchableOpacity style={styles.modalCloseButton} onPress={() => setDescModalVisible(false)}>
               <Text style={styles.modalCloseButtonText}>Cerrar</Text>
             </TouchableOpacity>
           </View>
         </View>
       </Modal>
-
+  
       {/* Modal para límite de reservas excedido */}
       <Modal
         visible={showLimitModal}
@@ -267,9 +275,9 @@ const SeleccionServicioScreen = () => {
         onRequestClose={() => setShowLimitModal(false)}
       >
         <View style={styles.modalOverlay}>
-          <View style={styles.limitModalContainer}>
-            <Text style={styles.limitModalTitle}>Límite Excedido</Text>
-            <Text style={styles.limitModalMessage}>
+          <View style={[styles.limitModalContainer, { backgroundColor: theme.background === "#FFFFFF" ? "#fff" : "#444" }]}>
+            <Text style={[styles.limitModalTitle, { color: theme.text }]}>Límite Excedido</Text>
+            <Text style={[styles.limitModalMessage, { color: theme.text }]}>
               Ya has excedido el límite de reservas activas por cliente con esta microempresa.
             </Text>
             <TouchableOpacity
@@ -281,12 +289,11 @@ const SeleccionServicioScreen = () => {
             >
               <Text style={styles.limitModalButtonText}>Ir a Mis Reservas</Text>
             </TouchableOpacity>
-
+  
           </View>
         </View>
       </Modal>
     </SafeAreaView>
-
   );
 };
 
@@ -643,7 +650,6 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     fontSize: 16,
   },
-  
 });
 
 export default SeleccionServicioScreen;

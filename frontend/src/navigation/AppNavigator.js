@@ -1,5 +1,5 @@
 import React, { useContext, useEffect, useState } from 'react';
-import { View, Text, ActivityIndicator, StyleSheet } from 'react-native';
+import { View, Text, ActivityIndicator, StyleSheet, TouchableOpacity } from 'react-native';
 import { createStackNavigator } from '@react-navigation/stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -14,7 +14,6 @@ import SubirImagenesScreen from '../screens/subidaImagenes.screen.js';
 import FormularioEdicionMicroempresa from '../screens/formularioEdicionMicroempresa.screen.js';
 import ListaMicroempresasScreen from '../screens/listaMicroempresas.screen.js';
 import PerfilTrabajadorScreen from '../screens/perfilTrabajador.screen.js';
-import SeleccionMicroempresaScreen from '../screens/seleccionMicroempresa.screen.js';
 import SuscripcionScreen from '../screens/suscripcion.screen.js';
 import PaymentScreen from '../screens/pago.screen.js';
 import LoginScreen from '../screens/login.screen.js';
@@ -37,10 +36,7 @@ import ServicioScreen from '../screens/servicio.screen.js';
 import MercadoPagoScreen from '../screens/mercadopago.screen.js';
 import ServicioPaymentScreen from '../screens/servicioPayment.screen.js'; 
 
-
-
 // Pantalla test
-
 import Horario from '../screens/horario.screen.js';
 import EditarHorarioScreen from '../screens/editarHorarioScreen.js';
 import ConfirmacionReservaSlotScreen from '../screens/confirmacionReservaSlot.screen.js';
@@ -48,9 +44,10 @@ import InvitarTrabajadorScreen from '../screens/invitarTrabajadores.screen.js';
 // Nueva pantalla para trabajadores no admin sin microempresa
 import NoMicroempresaScreen from '../screens/noMicroempresa.screen.js';
 
-// Contexto de autenticación
+// Contexto de autenticación y tema
 import { AuthContext } from '../context/auth.context';
 import { Ionicons } from '@expo/vector-icons';
+import { useTheme } from '../context/theme.context';
 
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -62,65 +59,100 @@ const LoadingScreen = () => (
   </View>
 );
 
-const HomeClienteNavigator = () => (
- <Tab.Navigator screenOptions={({ route }) => ({
-  tabBarIcon: ({ color }) => {
-    let iconName;
+// Se actualiza headerOptions para incluir un botón en el header que muestre sol o luna según el tema
+const headerOptions = (theme, toggleTheme) => ({
+  headerStyle: { backgroundColor: theme.background },
+  headerTintColor: theme.text,
+  headerTitleStyle: { fontWeight: 'bold' },
+  headerRight: () => (
+    <TouchableOpacity
+      onPress={() => {
+        console.log("Toggle theme pressed. Modo actual:", theme.mode);
+        toggleTheme();
+      }}
+      style={{ marginRight: 10 }}
+    >
+      <Ionicons 
+        name={theme.mode === 'dark' ? 'sunny' : 'moon'} 
+        size={24} 
+        color={theme.text} 
+      />
+    </TouchableOpacity>
+  )
+});
 
-    if (route.name === "HomeCliente") {
-      iconName = "home"; 
-    } else if (route.name === "ListaMicroempresas") {
-      iconName = "list"; 
-    } else if (route.name === "Reservas") {
-      iconName = "calendar"; 
-    } else if (route.name === "Perfil") {
-      iconName = "person"; 
-    } else if (route.name === "Suscripcion") {
-      iconName = "card"; 
-    }
-
-    return <Ionicons name={iconName} size={28} color={color} />;
-  },
-  tabBarShowLabel: false, // Oculta los nombres de las pestañas
-  tabBarStyle: styles.tabBarStyle, //  Aplica los estilos globales
-  tabBarItemStyle: styles.tabBarItemStyle, 
-  safeAreaInsets: { bottom: 0 }, 
-})}> 
-    <Tab.Screen name="ListaMicroempresas" component={ListaMicroempresasScreen} />
-    <Tab.Screen name="HomeCliente" component={HomeClienteScreen} />
-    <Tab.Screen name="Reservas" component={ReservaClienteScreen} /> 
-    <Tab.Screen name="Perfil" component={PerfilClienteScreen} />
-    <Tab.Screen name="Suscripcion" component={SuscripcionScreen} />
-  </Tab.Navigator>
-);
+const HomeClienteNavigator = () => {
+  const { theme, toggleTheme } = useTheme();
+  return (
+    <Tab.Navigator
+      screenOptions={({ route }) => ({
+        headerShown: true,
+        ...headerOptions(theme, toggleTheme),
+        tabBarIcon: ({ color }) => {
+          let iconName;
+          if (route.name === "HomeCliente") {
+            iconName = "home"; 
+          } else if (route.name === "ListaMicroempresas") {
+            iconName = "list"; 
+          } else if (route.name === "Reservas") {
+            iconName = "calendar"; 
+          } else if (route.name === "Perfil") {
+            iconName = "person"; 
+          } else if (route.name === "Suscripcion") {
+            iconName = "card"; 
+          }
+          return <Ionicons name={iconName} size={28} color={color} />;
+        },
+        tabBarShowLabel: false,
+        tabBarStyle: { 
+          ...styles.tabBarStyle, 
+          backgroundColor: theme.background 
+        },
+        tabBarItemStyle: styles.tabBarItemStyle,
+        safeAreaInsets: { bottom: 0 },
+      })}
+    > 
+      <Tab.Screen name="ListaMicroempresas" component={ListaMicroempresasScreen} />
+      <Tab.Screen name="HomeCliente" component={HomeClienteScreen} />
+      <Tab.Screen name="Reservas" component={ReservaClienteScreen} /> 
+      <Tab.Screen name="Perfil" component={PerfilClienteScreen} />
+      <Tab.Screen name="Suscripcion" component={SuscripcionScreen} />
+    </Tab.Navigator>
+  );
+};
 
 const HomeTrabajadorNavigator = () => {
   const { microempresa } = useMicroempresa();
- 
+  const { theme, toggleTheme } = useTheme();
   return (
-    <Tab.Navigator  screenOptions={({ route }) => ({
-      tabBarIcon: ({ color }) => {
-        let iconName;
-
-        if (route.name === "HomeTrabajador") {
-          iconName = "home"; 
-        } else if (route.name === "Calendario") {
-          iconName = "calendar"; 
-        } else if (route.name === "Microempresa") {
-          iconName = "briefcase"; 
-        } else if (route.name === "Perfil") {
-          iconName = "person";
-        } else if (route.name === "Horario") {
-          iconName = "time"; 
-        }
-
-        return <Ionicons name={iconName} size={28} color={color} />;
-      },
-      tabBarShowLabel: false, //  Oculta los nombres de las pestañas
-      tabBarStyle: styles.tabBarStyle, //  Aplica los estilos globales
-      tabBarItemStyle: styles.tabBarItemStyle, //  Ajusta el espaciado
-      safeAreaInsets: { bottom: 0 },
-    })}>
+    <Tab.Navigator
+      screenOptions={({ route }) => ({
+        headerShown: true,
+        ...headerOptions(theme, toggleTheme),
+        tabBarIcon: ({ color }) => {
+          let iconName;
+          if (route.name === "HomeTrabajador") {
+            iconName = "home"; 
+          } else if (route.name === "Calendario") {
+            iconName = "calendar"; 
+          } else if (route.name === "Microempresa") {
+            iconName = "briefcase"; 
+          } else if (route.name === "Perfil") {
+            iconName = "person";
+          } else if (route.name === "Horario") {
+            iconName = "time"; 
+          }
+          return <Ionicons name={iconName} size={28} color={color} />;
+        },
+        tabBarShowLabel: false,
+        tabBarStyle: { 
+          ...styles.tabBarStyle, 
+          backgroundColor: theme.background 
+        },
+        tabBarItemStyle: styles.tabBarItemStyle,
+        safeAreaInsets: { bottom: 0 },
+      })}
+    >
       <Tab.Screen name="HomeTrabajador" component={HomeTrabajadorScreen} />  
       <Tab.Screen name="Calendario" component={CalendarScreen} />
       <Tab.Screen 
@@ -134,7 +166,6 @@ const HomeTrabajadorNavigator = () => {
   );
 };
 
-// TrabajadorStack: aquí definimos el flujo para usuarios Trabajador
 const TrabajadorStack = () => {
   const { microempresa, isAdmin, loading } = useMicroempresa();
 
@@ -147,26 +178,23 @@ const TrabajadorStack = () => {
     );
   }
 
-  // Definir la ruta inicial según el rol y la existencia de microempresa
   let initialRoute;
   if (isAdmin) {
-    // Trabajador admin: si tiene microempresa, Home; si no, Formulario para crearla
     initialRoute = microempresa ? "HomeNavigator" : "FormularioMicroempresa";
   } else {
-    // Trabajador no admin: si tiene microempresa, Home; si no, pantalla informativa
     initialRoute = microempresa ? "HomeNavigator" : "NoMicroempresaScreen";
   }
 
   return (
     <Stack.Navigator
-      screenOptions={{ headerShown: false }}
+      screenOptions={({ navigation, route }) => ({
+        headerShown: false,
+      })}
       initialRouteName={initialRoute}
     >
       <Stack.Screen name="FormularioMicroempresa" component={FormularioMicroempresa} />
       <Stack.Screen name="HomeNavigator" component={HomeTrabajadorNavigator} />
       <Stack.Screen name="NoMicroempresaScreen" component={NoMicroempresaScreen} />
-      {/* Otras pantallas del flujo */}
-      <Stack.Screen name="SeleccionMicroempresa" component={SeleccionMicroempresaScreen} /> 
       <Stack.Screen name="GestorSuscripcion" component={gestorSuscripcionScreen} /> 
       <Stack.Screen name="CardScreen" component={CardScreen} />
       <Stack.Screen name="Microempresa" component={MicroempresaInicioScreeen} />
@@ -250,6 +278,7 @@ const AppNavigator = () => {
     </Stack.Navigator>
   );
 };
+
 // Estilos Globales
 const styles = StyleSheet.create({
   loadingContainer: {
@@ -258,13 +287,13 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   tabBarStyle: {
-    height: 60, //  Ajusta la altura del Tab Navigator
+    height: 60,
     backgroundColor: "#FFFFFF",
     borderTopWidth: 0,
     bottom: 0,
     left: 0,
     right: 0,
-    elevation: 10, //  Sombra en Android
+    elevation: 10,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: -3 },
     shadowOpacity: 0.1,
@@ -279,4 +308,3 @@ const styles = StyleSheet.create({
 });
 
 export default AppNavigator;
-

@@ -15,10 +15,13 @@ import reservaService from '../services/reserva.service';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import valoracionService from '../services/valoracion.service';
 import { AntDesign } from '@expo/vector-icons';
-import paymentService from '../services/payment.services.js'; 
+import paymentService from '../services/payment.services.js';
+import { useTheme } from '../context/theme.context';
 
 const ReservaClienteScreen = () => {
   const navigation = useNavigation();
+  const { theme } = useTheme();
+
   const [clienteId, setClienteId] = useState(null);
   const [reservas, setReservas] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -194,20 +197,23 @@ const ReservaClienteScreen = () => {
 
   if (loading) {
     return (
-      <View style={styles.loaderContainer}>
-        <ActivityIndicator size="large" color="#000" />
-        <Text>Cargando reservas...</Text>
+      <View style={[styles.loaderContainer, { backgroundColor: theme.background }]}>
+        <ActivityIndicator size="large" color={theme.text} />
+        <Text style={{ color: theme.text }}>Cargando reservas...</Text>
       </View>
     );
   }
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.header}>Mis Reservas</Text>
+    <View style={[styles.container, { backgroundColor: theme.background }]}>
+      <Text style={[styles.header, { color: theme.text }]}>Mis Reservas</Text>
 
       {/* Switch de filtro personalizado */}
       <View style={styles.switchContainer}>
-        <TouchableOpacity onPress={cambiarFiltro} style={styles.switch}>
+        <TouchableOpacity
+          onPress={cambiarFiltro}
+          style={[styles.switch, { backgroundColor: theme.background === "#FFFFFF" ? "#f2f2f2" : "#444", }]}
+        >
           <Animated.View
             style={[
               styles.switchIndicator,
@@ -219,10 +225,10 @@ const ReservaClienteScreen = () => {
               },
             ]}
           />
-          <Text style={[styles.switchText, filtro === 'Activas' && styles.activeText]}>
+          <Text style={[styles.switchText, { color: theme.text }, filtro === 'Activas' && styles.activeText]}>
             Activas
           </Text>
-          <Text style={[styles.switchText, filtro === 'Finalizadas' && styles.activeText]}>
+          <Text style={[styles.switchText, { color: theme.text }, filtro === 'Finalizadas' && styles.activeText]}>
             Finalizadas
           </Text>
         </TouchableOpacity>
@@ -233,45 +239,45 @@ const ReservaClienteScreen = () => {
           data={reservasFiltradas}
           keyExtractor={(item) => item._id}
           renderItem={({ item }) => (
-            // Se agrega estilo condicional para reservas finalizadas con padding extra en la parte inferior
-            <View style={[styles.reservaItem, item.estado === 'Finalizada' && styles.reservaItemFinalizada]}>
-              <Text style={styles.reservaText}>{formatReserva(item)}</Text>
-              <Text style={styles.reservaSubText}>Servicio: {item.servicio.nombre}</Text>
-              <Text style={styles.reservaSubText}>
+            <View
+              style={[
+                styles.reservaItem,
+                { backgroundColor: theme.background === "#FFFFFF" ? "#f2f2f2" : "#444", },
+                item.estado === 'Finalizada' && styles.reservaItemFinalizada,
+              ]}
+            >
+              <Text style={[styles.reservaText, { color: theme.text }]}>{formatReserva(item)}</Text>
+              <Text style={[styles.reservaSubText, { color: theme.text }]}>
+                Servicio: {item.servicio.nombre}
+              </Text>
+              <Text style={[styles.reservaSubText, { color: theme.text }]}>
                 Trabajador: {item.trabajador.nombre} {item.trabajador.apellido}
               </Text>
               <Text
                 style={[
                   styles.estado,
                   item.estado === 'Activa' ? styles.estadoActiva : styles.estadoFinalizada,
+                  { color: theme.text },
                 ]}
               >
                 {item.estado}
               </Text>
 
               {item.estado === 'Activa' && (
-                <TouchableOpacity
-                  onPress={() => confirmarCancelacion(item._id)}
-                  style={styles.cancelButton}
-                >
+                <TouchableOpacity onPress={() => confirmarCancelacion(item._id)} style={styles.cancelButton}>
                   <AntDesign name="closecircle" size={24} color="red" />
                 </TouchableOpacity>
               )}
 
               {item.estado === 'Finalizada' && (
                 <>
-                  <TouchableOpacity
-                    onPress={() => confirmarEliminacion(item._id)}
-                    style={styles.cancelButton}
-                  >
+                  <TouchableOpacity onPress={() => confirmarEliminacion(item._id)} style={styles.cancelButton}>
                     <AntDesign name="closecircle" size={24} color="red" />
                   </TouchableOpacity>
                   {!item.tieneValoracion && (
                     <TouchableOpacity
                       style={styles.valoracionButton}
-                      onPress={() =>
-                        navigation.navigate('Valoracion', { reserva: item, clienteId })
-                      }
+                      onPress={() => navigation.navigate('Valoracion', { reserva: item, clienteId })}
                     >
                       <Text style={styles.valoracionButtonText}>Valorar Servicio</Text>
                     </TouchableOpacity>
@@ -282,7 +288,7 @@ const ReservaClienteScreen = () => {
           )}
         />
       ) : (
-        <Text style={styles.noReservas}>
+        <Text style={[styles.noReservas, { color: theme.text }]}>
           No tienes reservas {filtro.toLowerCase()}.
         </Text>
       )}
@@ -290,8 +296,8 @@ const ReservaClienteScreen = () => {
       {/* Modal de confirmación para cancelar o eliminar reserva */}
       <Modal visible={modalVisible} transparent animationType="fade">
         <View style={styles.modalContainer}>
-          <View style={styles.modalContent}>
-            <Text style={styles.modalText}>
+          <View style={[styles.modalContent, { backgroundColor: theme.background === "#FFFFFF" ? "#f2f2f2" : "#444", }]}>
+            <Text style={[styles.modalText, { color: theme.text }]}>
               {modalAction === 'cancel'
                 ? '¿Seguro que deseas cancelar esta reserva?'
                 : '¿Seguro que deseas eliminar definitivamente esta reserva?'}
@@ -345,7 +351,7 @@ const ReservaClienteScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f9f9f9',
+    backgroundColor: '#f9f9f9', // se sobreescribe con el theme
     padding: 16,
   },
   header: {
@@ -390,14 +396,13 @@ const styles = StyleSheet.create({
     color: '#fff',
   },
   reservaItem: {
-    position: 'relative', // Permite posicionar botones absolutamente respecto a la card
+    position: 'relative',
     backgroundColor: '#fff',
     padding: 12,
     borderRadius: 8,
     marginVertical: 8,
     elevation: 2,
   },
-  // Estilo condicional para reservas finalizadas (espacio extra abajo para evitar que el botón tape el texto)
   reservaItemFinalizada: {
     paddingBottom: 50,
   },

@@ -1,11 +1,23 @@
 import React, { useState, useEffect, useContext } from 'react';
-import { View, Text, StyleSheet, ActivityIndicator, Alert, Modal, TextInput, TouchableOpacity } from 'react-native'; 
+import { 
+  View, 
+  Text, 
+  StyleSheet, 
+  ActivityIndicator, 
+  Alert, 
+  Modal, 
+  TextInput, 
+  TouchableOpacity 
+} from 'react-native'; 
 import Icon from 'react-native-vector-icons/FontAwesome';
 import { AuthContext } from '../context/auth.context';
 import { getClienteById, changePassword } from '../services/user.service';
+import { useTheme } from '../context/theme.context';
 
 export default function PerfilClienteScreen () {
   const { user } = useContext(AuthContext);
+  const { theme } = useTheme();
+
   const [dataCliente, setDataCliente] = useState(null);
   const [loading, setLoading] = useState(true);   
   const [modalVisible, setModalVisible] = useState(false);
@@ -32,16 +44,18 @@ export default function PerfilClienteScreen () {
 
   if (loading) {
     return (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#007BFF" />
+      <View style={[styles.loadingContainer, { backgroundColor: theme.background }]}>
+        <ActivityIndicator size="large" color={theme.text} />
       </View>
     );
   }
 
   if (!dataCliente) {
     return (
-      <View style={styles.container}>
-        <Text style={styles.error}>No se pudo cargar la información del cliente.</Text>
+      <View style={[styles.container, { backgroundColor: theme.background }]}>
+        <Text style={[styles.error, { color: theme.text }]}>
+          No se pudo cargar la información del cliente.
+        </Text>
       </View>
     );
   } 
@@ -75,28 +89,28 @@ export default function PerfilClienteScreen () {
   };
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Perfil del Cliente</Text>
-      <View style={styles.infoContainer}>
+    <View style={[styles.container, { backgroundColor: theme.background }]}>
+      <Text style={[styles.title, { color: theme.text }]}>Perfil del Cliente</Text>
+      <View style={[styles.infoContainer, { backgroundColor: theme.background === "#FFFFFF" ? "#f2f2f2" : "#444", }]}>
         <View style={styles.infoRow}>
           <Icon name="user" size={20} color="#007BFF" style={styles.infoIcon} />
-          <Text style={styles.label}>Nombre: </Text>
-          <Text style={styles.value}>{dataCliente.data.nombre || 'Sin nombre'}</Text>
+          <Text style={[styles.label, { color: theme.text }]}>Nombre: </Text>
+          <Text style={[styles.value, { color: theme.text }]}>{dataCliente.data.nombre || 'Sin nombre'}</Text>
         </View>
         <View style={styles.infoRow}>
           <Icon name="user" size={20} color="#007BFF" style={styles.infoIcon} />
-          <Text style={styles.label}>Apellido: </Text>
-          <Text style={styles.value}>{dataCliente.data.apellido || 'Sin apellido'}</Text>
+          <Text style={[styles.label, { color: theme.text }]}>Apellido: </Text>
+          <Text style={[styles.value, { color: theme.text }]}>{dataCliente.data.apellido || 'Sin apellido'}</Text>
         </View>
         <View style={styles.infoRow}>
           <Icon name="phone" size={20} color="#007BFF" style={styles.infoIcon} />
-          <Text style={styles.label}>Teléfono: </Text>
-          <Text style={styles.value}>{dataCliente.data.telefono || 'Sin teléfono'}</Text>
+          <Text style={[styles.label, { color: theme.text }]}>Teléfono: </Text>
+          <Text style={[styles.value, { color: theme.text }]}>{dataCliente.data.telefono || 'Sin teléfono'}</Text>
         </View>
         <View style={styles.infoRow}>
           <Icon name="envelope" size={20} color="#007BFF" style={styles.infoIcon} />
-          <Text style={styles.label}>Email: </Text>
-          <Text style={styles.value}>{dataCliente.data.email || 'Sin email'}</Text>
+          <Text style={[styles.label, { color: theme.text }]}>Email: </Text>
+          <Text style={[styles.value, { color: theme.text }]}>{dataCliente.data.email || 'Sin email'}</Text>
         </View>
       </View>
 
@@ -112,28 +126,28 @@ export default function PerfilClienteScreen () {
         onRequestClose={handleCloseModal}
       >
         <View style={styles.modalContainer}>
-          <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Cambiar Contraseña</Text>
+          <View style={[styles.modalContent, { backgroundColor: theme.background === "#F8F9FA" ? "#fff" : "#444" }]}>
+            <Text style={[styles.modalTitle, { color: theme.text }]}>Cambiar Contraseña</Text>
             <TextInput
-                style={styles.input}
-                placeholder="Contraseña Actual"
-                secureTextEntry={true}
-                value={passwordActual}
-                onChangeText={setPasswordActual}
-                autoCapitalize="none"
-                autoCorrect={false}
-                placeholderTextColor="#999"
-              />
-              <TextInput
-                style={styles.input}
-                placeholder="Nueva Contraseña"
-                secureTextEntry={true}
-                value={passwordNuevo}
-                onChangeText={setPasswordNuevo}
-                autoCapitalize="none"
-                autoCorrect={false}
-                placeholderTextColor="#999"
-              />
+              style={[styles.input, { color: theme.text, borderBottomColor: theme.background === "#F8F9FA" ? "#CED4DA" : "#777" }]}
+              placeholder="Contraseña Actual"
+              secureTextEntry={true}
+              value={passwordActual}
+              onChangeText={setPasswordActual}
+              autoCapitalize="none"
+              autoCorrect={false}
+              placeholderTextColor={theme.text}
+            />
+            <TextInput
+              style={[styles.input, { color: theme.text, borderBottomColor: theme.background === "#F8F9FA" ? "#CED4DA" : "#777" }]}
+              placeholder="Nueva Contraseña"
+              secureTextEntry={true}
+              value={passwordNuevo}
+              onChangeText={setPasswordNuevo}
+              autoCapitalize="none"
+              autoCorrect={false}
+              placeholderTextColor={theme.text}
+            />
 
             <View style={styles.buttonRow}>
               <TouchableOpacity style={[styles.modalButton, styles.cancelButton]} onPress={handleCloseModal}>
@@ -155,7 +169,7 @@ export default function PerfilClienteScreen () {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F8F9FA',
+    backgroundColor: '#F8F9FA', // se sobreescribe con el theme
     padding: 20,
   }, 
   loadingContainer: {
@@ -171,7 +185,7 @@ const styles = StyleSheet.create({
     color: '#343A40',
   },
   infoContainer: {
-    backgroundColor: '#fff',
+    backgroundColor: '#fff', // se sobreescribe con el theme
     padding: 20,
     borderRadius: 10,
     marginBottom: 30,
@@ -223,7 +237,7 @@ const styles = StyleSheet.create({
     padding: 20,
   },
   modalContent: {
-    backgroundColor: '#fff',
+    backgroundColor: '#fff', // se sobreescribe con el theme
     borderRadius: 10,
     padding: 25,
     alignItems: 'center',
