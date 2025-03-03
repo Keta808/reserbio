@@ -122,7 +122,8 @@ const ReservaClienteScreen = () => {
     if (reservaSeleccionada && !confirming) {
       setConfirming(true);
       try {
-        if (reservaSeleccionada.servicio.urlPago) {
+        console.log(" reserv a_ :",reservaSeleccionada);
+        if (reservaSeleccionada.urlPago && reservaSeleccionada.urlPago !== 'null' && reservaSeleccionada.urlPago !== 'undefined') {
           const [pagos, errorPagos] = await paymentService.getPaymentByClientId(clienteId);
           if (errorPagos) {
             Alert.alert("Error", "No se pudieron obtener los pagos.");
