@@ -15,10 +15,13 @@ import moment from 'moment';
 import 'moment/locale/es';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import reservaService from '../services/reserva.service';
+import { useTheme } from '../context/theme.context';
+import Ionicons from 'react-native-vector-icons/Ionicons';
 
 moment.locale('es');
 
 const AgendaScreen = () => {
+  const { theme, toggleTheme } = useTheme();
   const [items, setItems] = useState({}); // { "YYYY-MM-DD": [eventos] }
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [loading, setLoading] = useState(true);
@@ -27,9 +30,9 @@ const AgendaScreen = () => {
   const [selectedEvent, setSelectedEvent] = useState(null);
   const [errorModal, setErrorModal] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
-  const [confirming, setConfirming] = useState(false); // Estado para evitar pulsaciones múltiples
+  const [confirming, setConfirming] = useState(false); // Para evitar pulsaciones múltiples
 
-  // Ref para mantener la fecha seleccionada actualizada en el PanResponder
+  // Ref para mantener la fecha seleccionada en el PanResponder
   const selectedDateRef = useRef(selectedDate);
   useEffect(() => {
     selectedDateRef.current = selectedDate;
@@ -49,7 +52,6 @@ const AgendaScreen = () => {
       const user = JSON.parse(userData);
       const workerId = user.id;
       const agendaData = await reservaService.getReservasByTrabajadorId(workerId);
-      // Si agendaData es nulo, se asigna objeto vacío
       setItems(agendaData || {});
     } catch (error) {
       setErrorMessage("Actualmente no hay reservas asociadas a tu cuenta.");
@@ -84,7 +86,7 @@ const AgendaScreen = () => {
 
   const selectedKey = moment(selectedDate).format('YYYY-MM-DD');
   const eventsForSelectedDay = items[selectedKey] || [];
-  // Ordenar los eventos por hora de inicio (de menor a mayor)
+  // Ordenar eventos por hora de inicio
   const sortedEventsForSelectedDay = [...eventsForSelectedDay].sort((a, b) => a.start - b.start);
 
   // Modal de cancelación de reserva
@@ -95,7 +97,7 @@ const AgendaScreen = () => {
 
   const confirmCancel = async () => {
     if (selectedEvent && !confirming) {
-      setConfirming(true); // Deshabilitar el botón al pulsarlo
+      setConfirming(true);
       try {
         await reservaService.cancelReserva(selectedEvent.id);
         const updatedItems = { ...items };
@@ -109,7 +111,7 @@ const AgendaScreen = () => {
       } finally {
         setModalVisible(false);
         setSelectedEvent(null);
-        setConfirming(false); // Reactivar el botón una vez recibida la respuesta
+        setConfirming(false);
       }
     }
   };
@@ -119,19 +121,15 @@ const AgendaScreen = () => {
     setSelectedEvent(null);
   };
 
-  // PanResponder para detectar swipe horizontal en la agenda y cambiar el día acumulativamente
+  // PanResponder para detectar swipe horizontal y cambiar el día
   const panResponder = useRef(
     PanResponder.create({
-      onMoveShouldSetPanResponder: (evt, gestureState) => {
-        return Math.abs(gestureState.dx) > 20;
-      },
+      onMoveShouldSetPanResponder: (evt, gestureState) => Math.abs(gestureState.dx) > 20,
       onPanResponderRelease: (evt, gestureState) => {
         if (gestureState.dx < -30) {
-          // Swipe a la izquierda: sumar un día a partir de la fecha seleccionada actual
           const newDate = moment(selectedDateRef.current).add(1, 'days').toDate();
           setSelectedDate(newDate);
         } else if (gestureState.dx > 30) {
-          // Swipe a la derecha: restar un día a partir de la fecha seleccionada actual
           const newDate = moment(selectedDateRef.current).subtract(1, 'days').toDate();
           setSelectedDate(newDate);
         }
@@ -141,19 +139,24 @@ const AgendaScreen = () => {
 
   if (loading && !refreshing) {
     return (
-      <SafeAreaView style={styles.safeArea}>
+      <SafeAreaView style={[styles.safeArea, { backgroundColor: theme.background }]}>
         <View style={styles.loadingContainer}>
-          <Text style={styles.loadingText}>Cargando reservas...</Text>
+          <Text style={[styles.loadingText, { color: theme.text }]}>Cargando reservas...</Text>
         </View>
       </SafeAreaView>
     );
   }
 
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <SafeAreaView style={[styles.safeArea, { backgroundColor: theme.background }]}>
       <View style={styles.container}>
+        
+
         {/* Calendar Strip */}
-        <View style={styles.stripContainer}>
+        <View style={[styles.stripContainer, { 
+          backgroundColor: theme.background === "#FFFFFF" ? "#f2f2f2" : "#333",
+          borderBottomColor: theme.background === "#FFFFFF" ? "#e0e0e0" : "#333" 
+        }]}>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.stripContent}>
             {days.map((day, index) => {
               const dateKey = day.format('YYYY-MM-DD');
@@ -170,10 +173,10 @@ const AgendaScreen = () => {
                     !isSelected && isToday && styles.todayContainer,
                   ]}
                 >
-                  <Text style={[styles.dayName, isSelected && styles.selectedDayName]}>
+                  <Text style={[styles.dayName, { color: theme.text }, isSelected && styles.selectedDayName]}>
                     {day.format('ddd').toUpperCase()}
                   </Text>
-                  <Text style={[styles.dayNumber, isSelected && styles.selectedDayNumber]}>
+                  <Text style={[styles.dayNumber, { color: theme.text }, isSelected && styles.selectedDayNumber]}>
                     {day.format('D')}
                   </Text>
                   {hasEvent && <View style={styles.dot} />}
@@ -184,12 +187,12 @@ const AgendaScreen = () => {
         </View>
 
         {/* Agenda de eventos con swipe */}
-        <View style={styles.agendaContainer} {...panResponder.panHandlers}>
-          <Text style={styles.agendaTitle}>
+        <View style={[styles.agendaContainer, { backgroundColor: theme.background === "#FFFFFF" ? "#fff" : "#444" }]} {...panResponder.panHandlers}>
+          <Text style={[styles.agendaTitle, { color: theme.text }]}>
             Reservas para {moment(selectedDate).format('dddd, D [de] MMMM [de] YYYY')}
           </Text>
           {sortedEventsForSelectedDay.length === 0 ? (
-            <Text style={styles.noEventsText}>No hay reservas para este día.</Text>
+            <Text style={[styles.noEventsText, { color: theme.text }]}>No hay reservas para este día.</Text>
           ) : (
             <FlatList
               data={sortedEventsForSelectedDay}
@@ -200,15 +203,15 @@ const AgendaScreen = () => {
               renderItem={({ item }) => {
                 const isCancelable = moment(item.start).isSameOrAfter(moment(), 'day');
                 return (
-                  <View style={styles.eventItem}>
+                  <View style={[styles.eventItem, { backgroundColor: theme.background === "#FFFFFF" ? "#f2f2f2" : "#333" }]}>
                     <View style={styles.eventInfo}>
-                      <Text style={styles.serviceName}>
+                      <Text style={[styles.serviceName, { color: theme.text }]}>
                         Servicio: {item.servicioNombre}
                       </Text>
-                      <Text style={styles.clientName}>
+                      <Text style={[styles.clientName, { color: theme.text }]}>
                         Cliente: {item.clienteNombre}
                       </Text>
-                      <Text style={styles.eventTime}>
+                      <Text style={[styles.eventTime, { color: theme.text }]}>
                         Hora de servicio: {moment.parseZone(item.start).format('HH:mm')} - {moment.parseZone(item.end).format('HH:mm')}
                       </Text>
                     </View>
@@ -232,9 +235,9 @@ const AgendaScreen = () => {
           onRequestClose={cancelModal}
         >
           <View style={styles.modalOverlay}>
-            <View style={styles.modalContainer}>
-              <Text style={styles.modalTitle}>Confirmar cancelación</Text>
-              <Text style={styles.modalMessage}>
+            <View style={[styles.modalContainer, { backgroundColor: theme.background === "#FFFFFF" ? "#fff" : "#444" }]}>
+              <Text style={[styles.modalTitle, { color: theme.text }]}>Confirmar cancelación</Text>
+              <Text style={[styles.modalMessage, { color: theme.text }]}>
                 ¿Desea cancelar la reserva "{selectedEvent ? selectedEvent.name : ''}"?
               </Text>
               <View style={styles.modalButtons}>
@@ -263,9 +266,8 @@ const AgendaScreen = () => {
           onRequestClose={() => setErrorModal(false)}
         >
           <TouchableOpacity style={styles.errorModalOverlay} onPress={() => setErrorModal(false)}>
-            <View style={styles.errorModalContainer}>
-              <Text style={styles.errorModalTitle}></Text>
-              <Text style={styles.errorModalMessage}>{errorMessage}</Text>
+            <View style={[styles.errorModalContainer, { backgroundColor: theme.background === "#FFFFFF" ? "#fff" : "#444" }]}>
+              <Text style={[styles.errorModalMessage, { color: theme.text }]}>{errorMessage}</Text>
               <TouchableOpacity style={styles.errorModalCloseButton} onPress={() => setErrorModal(false)}>
                 <Text style={styles.errorModalCloseButtonText}>Cerrar</Text>
               </TouchableOpacity>
@@ -280,10 +282,16 @@ const AgendaScreen = () => {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#F5F5F5',
   },
   container: {
     flex: 1,
+  },
+  toggleIcon: {
+    position: 'absolute',
+    top: 10,
+    right: 10,
+    padding: 10,
+    zIndex: 10,
   },
   loadingContainer: {
     flex: 1,
@@ -292,15 +300,11 @@ const styles = StyleSheet.create({
   },
   loadingText: {
     fontSize: 18,
-    color: '#333',
   },
   stripContainer: {
     height: 80,
     marginTop: 20,
-    backgroundColor: '#fff',
     borderBottomWidth: 1,
-    borderBottomColor: '#e0e0e0',
-    justifyContent: 'center',
   },
   stripContent: {
     alignItems: 'center',
@@ -323,12 +327,10 @@ const styles = StyleSheet.create({
   },
   dayName: {
     fontSize: 16,
-    color: '#333',
   },
   dayNumber: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#333',
   },
   selectedDayName: {
     color: '#fff',
@@ -346,7 +348,6 @@ const styles = StyleSheet.create({
   agendaContainer: {
     flex: 1,
     padding: 15,
-    backgroundColor: '#fff',
     margin: 15,
     borderRadius: 10,
     shadowColor: '#000',
@@ -359,18 +360,15 @@ const styles = StyleSheet.create({
     fontSize: 22,
     fontWeight: 'bold',
     marginBottom: 15,
-    color: '#333',
     textAlign: 'center',
   },
   noEventsText: {
     fontSize: 18,
-    color: '#666',
     textAlign: 'center',
     marginTop: 20,
   },
   eventItem: {
     flexDirection: 'row',
-    backgroundColor: '#f9f9f9',
     padding: 15,
     borderRadius: 8,
     marginBottom: 12,
@@ -388,17 +386,14 @@ const styles = StyleSheet.create({
   serviceName: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#4CAF50',
     marginBottom: 4,
   },
   clientName: {
     fontSize: 18,
-    color: '#333',
     marginBottom: 4,
   },
   eventTime: {
     fontSize: 18,
-    color: '#666',
     fontWeight: '600',
   },
   cancelButton: {
@@ -421,7 +416,6 @@ const styles = StyleSheet.create({
   },
   modalContainer: {
     width: '80%',
-    backgroundColor: '#fff',
     borderRadius: 8,
     padding: 20,
     alignItems: 'center',
@@ -430,13 +424,11 @@ const styles = StyleSheet.create({
     fontSize: 22,
     fontWeight: 'bold',
     marginBottom: 10,
-    color: '#333',
   },
   modalMessage: {
     fontSize: 18,
     textAlign: 'center',
     marginBottom: 20,
-    color: '#333',
   },
   modalButtons: {
     flexDirection: 'row',
@@ -470,22 +462,14 @@ const styles = StyleSheet.create({
   },
   errorModalContainer: {
     width: '80%',
-    backgroundColor: '#fff',
     borderRadius: 8,
     padding: 20,
     alignItems: 'center',
-  },
-  errorModalTitle: {
-    fontSize: 22,
-    fontWeight: 'bold',
-    marginBottom: 10,
-    color: '#D32F2F',
   },
   errorModalMessage: {
     fontSize: 18,
     textAlign: 'center',
     marginBottom: 20,
-    color: '#333',
   },
   errorModalCloseButton: {
     backgroundColor: '#D32F2F',
@@ -501,3 +485,4 @@ const styles = StyleSheet.create({
 });
 
 export default AgendaScreen;
+

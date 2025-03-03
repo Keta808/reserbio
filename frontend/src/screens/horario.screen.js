@@ -12,6 +12,7 @@ import {
 import Icon from 'react-native-vector-icons/Ionicons';
 import horarioService from '../services/horario.service';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useTheme } from '../context/theme.context';
 
 // Función para obtener el ID del usuario
 const getUserId = async () => {
@@ -31,16 +32,15 @@ const getUserId = async () => {
 };
 
 const HorarioScreen = ({ navigation }) => {
+  const { theme } = useTheme();
   const [horarios, setHorarios] = useState([]);
   const [loading, setLoading] = useState(true);
   const [modalVisible, setModalVisible] = useState(false);
   const [modalMessage, setModalMessage] = useState('');
   const [deleteId, setDeleteId] = useState(null);
   const [modalTitle, setModalTitle] = useState('');
-  // Estado para mostrar la ayuda
   const [helpVisible, setHelpVisible] = useState(false);
 
-  // Función para obtener horarios según el trabajador
   const fetchHorarios = async () => {
     setLoading(true);
     try {
@@ -79,7 +79,6 @@ const HorarioScreen = ({ navigation }) => {
     });
   };
 
-  // Navegar para crear un nuevo horario
   const handleCreate = async () => {
     const userId = await getUserId();
     navigation.navigate('EditarHorario', {
@@ -127,34 +126,32 @@ const HorarioScreen = ({ navigation }) => {
     domingo: 7,
   };
 
-  // Ordena los horarios según el día (lunes primero, etc.)
   const sortedHorarios = [...horarios].sort((a, b) => {
     const dayA = a.dia.toLowerCase();
     const dayB = b.dia.toLowerCase();
     return (dayOrder[dayA] || 0) - (dayOrder[dayB] || 0);
   });
 
-  // Componente para mostrar si no hay horarios
   const renderEmptyComponent = () => {
     return (
       <View style={styles.emptyContainer}>
-        <Text style={styles.emptyText}>Crea tu primer horario</Text>
+        <Text style={[styles.emptyText, { color: theme.text }]}>Crea tu primer horario</Text>
       </View>
     );
   };
 
   return (
-    <View style={styles.container}>
-      {/* Header con título y botón de ayuda */}
+    <View style={[styles.container, { backgroundColor: theme.background }]}>
+      {/* Header */}
       <View style={styles.headerContainer}>
-        <Text style={styles.headerTitle}>Mis Horarios</Text>
+        <Text style={[styles.headerTitle, { color: theme.text }]}>Mis Horarios</Text>
         <TouchableOpacity onPress={() => setHelpVisible(true)} style={styles.helpButton}>
-          <Icon name="help-circle-outline" size={28} color="#007bff" />
+          <Icon name="help-circle-outline" size={28} color={theme.text} />
         </TouchableOpacity>
       </View>
       
       {loading ? (
-        <ActivityIndicator size="large" color="#000" style={styles.loader} />
+        <ActivityIndicator size="large" color={theme.text} style={styles.loader} />
       ) : (
         <FlatList
           data={sortedHorarios}
@@ -162,14 +159,14 @@ const HorarioScreen = ({ navigation }) => {
           contentContainerStyle={styles.listContent}
           ListEmptyComponent={renderEmptyComponent}
           renderItem={({ item }) => (
-            <View style={styles.card}>
+            <View style={[styles.card, { backgroundColor: theme.background === "#FFFFFF" ? "#f2f2f2" : "#333" }]}>
               <View style={styles.cardContent}>
-                <Text style={styles.dayText}>
+                <Text style={[styles.dayText, { color: theme.text }]}>
                   {item.dia.charAt(0).toUpperCase() + item.dia.slice(1)}
                 </Text>
                 {item.bloques && item.bloques.length > 0 ? (
                   item.bloques.map((bloque, index) => (
-                    <Text key={index} style={styles.blockText}>
+                    <Text key={index} style={[styles.blockText, { color: theme.text }]}>
                       {bloque.hora_inicio} - {bloque.hora_fin}
                     </Text>
                   ))
@@ -201,15 +198,11 @@ const HorarioScreen = ({ navigation }) => {
         onRequestClose={() => setHelpVisible(false)}
       >
         <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>¿Cómo crear tus horarios?</Text>
-            <Text style={styles.modalMessage}>
+          <View style={[styles.modalContent, { backgroundColor: theme.background === "#FFFFFF" ? "#fff" : "#444" }]}>
+            <Text style={[styles.modalTitle, { color: theme.text }]}>¿Cómo crear tus horarios?</Text>
+            <Text style={[styles.modalMessage, { color: theme.text }]}>
               Para crear tus horarios, presiona el botón "Añadir Nuevo Horario". En la pantalla de edición, podrás seleccionar el día y definir los bloques de tiempo.
-              {"\n"}
-              Si desea editar un horario existente, presione el botón de lápiz. Para eliminar un horario, presione el botón de basura.
-              {"\n"}
-              {"\n"}
-              
+              {"\n"}Si deseas editar un horario existente, presiona el botón de lápiz. Para eliminar un horario, presiona el botón de basura.
             </Text>
             <TouchableOpacity style={styles.modalCloseButton} onPress={() => setHelpVisible(false)}>
               <Text style={styles.modalCloseButtonText}>Entendido</Text>
@@ -226,9 +219,9 @@ const HorarioScreen = ({ navigation }) => {
         onRequestClose={() => setModalVisible(false)}
       >
         <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>{modalTitle}</Text>
-            <Text style={styles.modalMessage}>{modalMessage}</Text>
+          <View style={[styles.modalContent, { backgroundColor: theme.background === "#FFFFFF" ? "#fff" : "#444" }]}>
+            <Text style={[styles.modalTitle, { color: theme.text }]}>{modalTitle}</Text>
+            <Text style={[styles.modalMessage, { color: theme.text }]}>{modalMessage}</Text>
             <View style={styles.modalActions}>
               <TouchableOpacity style={styles.deleteButton} onPress={handleDelete}>
                 <Text style={styles.deleteButtonText}>Eliminar</Text>
@@ -247,7 +240,6 @@ const HorarioScreen = ({ navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f0f2f5',
     paddingHorizontal: 20,
     paddingTop: 20,
   },
@@ -260,7 +252,6 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 24,
     fontWeight: '700',
-    color: '#333',
   },
   helpButton: {
     padding: 5,
@@ -270,7 +261,6 @@ const styles = StyleSheet.create({
   },
   card: {
     flexDirection: 'row',
-    backgroundColor: '#fff',
     padding: 20,
     borderRadius: 16,
     marginBottom: 15,
@@ -286,12 +276,10 @@ const styles = StyleSheet.create({
   dayText: {
     fontSize: 22,
     fontWeight: '700',
-    color: '#333',
     marginBottom: 10,
   },
   blockText: {
     fontSize: 16,
-    color: '#555',
     marginLeft: 10,
     marginTop: 5,
   },
@@ -331,7 +319,6 @@ const styles = StyleSheet.create({
   },
   emptyText: {
     fontSize: 18,
-    color: '#555',
     fontStyle: 'italic',
   },
   modalOverlay: {
@@ -341,7 +328,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   modalContent: {
-    backgroundColor: '#fff',
     width: '85%',
     padding: 25,
     borderRadius: 20,
@@ -351,12 +337,10 @@ const styles = StyleSheet.create({
   modalTitle: {
     fontSize: 22,
     fontWeight: '700',
-    color: '#333',
     marginBottom: 15,
   },
   modalMessage: {
     fontSize: 18,
-    color: '#555',
     textAlign: 'center',
     marginBottom: 20,
   },
@@ -389,13 +373,11 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontWeight: '700',
   },
-  // Estilos para pantalla completa sin días disponibles
   emptyDiasContainerFull: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
     paddingHorizontal: 20,
-    backgroundColor: '#f0f2f5',
   },
   emptyDiasTextFull: {
     fontSize: 22,

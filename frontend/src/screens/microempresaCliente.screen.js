@@ -18,8 +18,10 @@ import ImageViewing from "react-native-image-viewing";
 import MicroempresaService from "../services/microempresa.service";
 import ServiciosService from "../services/servicio.service";
 import { useFocusEffect } from "@react-navigation/native";
+import { useTheme } from "../context/theme.context";
 
 export default function MicroempresaClienteScreen({ route, navigation }) {
+  const { theme } = useTheme();
   const { id } = route.params || {};
   const [microempresa, setMicroempresa] = useState(null);
   const [fotoPerfilUrl, setFotoPerfilUrl] = useState(null);
@@ -27,10 +29,10 @@ export default function MicroempresaClienteScreen({ route, navigation }) {
   const [servicios, setServicios] = useState([]);
   const [montoAbono, setMontoAbono] = useState({});
 
-  // Estado para el modal de detalles del servicio
+  // Estado para modal de detalles del servicio
   const [serviceModalVisible, setServiceModalVisible] = useState(false);
   const [selectedService, setSelectedService] = useState(null);
-  // Estado para el visor de imagen (ImageViewing)
+  // Estado para visor de imagen
   const [imageModalVisible, setImageModalVisible] = useState(false);
   const [selectedImageUrl, setSelectedImageUrl] = useState(null);
 
@@ -103,7 +105,7 @@ export default function MicroempresaClienteScreen({ route, navigation }) {
     }, [id])
   );
 
-  // Abre el modal con detalles del servicio
+  // Modal de detalles del servicio
   const openServiceModal = (service) => {
     setSelectedService(service);
     setServiceModalVisible(true);
@@ -114,7 +116,7 @@ export default function MicroempresaClienteScreen({ route, navigation }) {
     setServiceModalVisible(false);
   };
 
-  // Abre el visor de imagen usando react-native-image-viewing
+  // Visor de imagen
   const openImageModal = (url) => {
     setSelectedImageUrl(url);
     setImageModalVisible(true);
@@ -128,8 +130,8 @@ export default function MicroempresaClienteScreen({ route, navigation }) {
   if (loading) {
     return (
       <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#0000ff" />
-        <Text style={styles.loadingText}>Cargando datos de la microempresa...</Text>
+        <ActivityIndicator size="large" color={theme.text} />
+        <Text style={[styles.loadingText, { color: theme.text }]}>Cargando datos de la microempresa...</Text>
       </View>
     );
   }
@@ -137,13 +139,13 @@ export default function MicroempresaClienteScreen({ route, navigation }) {
   if (!microempresa) {
     return (
       <View style={styles.errorContainer}>
-        <Text style={styles.error}>No se pudieron cargar los datos de la microempresa.</Text>
+        <Text style={[styles.error, { color: theme.text }]}>No se pudieron cargar los datos de la microempresa.</Text>
       </View>
     );
   }
 
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <SafeAreaView style={[styles.safeArea, { backgroundColor: theme.background }]}>
       <FlatList
         data={[]}
         keyExtractor={() => "flatlist_microempresa_cliente"}
@@ -164,32 +166,28 @@ export default function MicroempresaClienteScreen({ route, navigation }) {
                   />
                 </TouchableOpacity>
               ) : (
-                <Text style={styles.placeholderText}>Imagen no disponible</Text>
+                <Text style={[styles.placeholderText, { color: theme.text }]}>Imagen no disponible</Text>
               )}
             </View>
 
             {/* Datos de la microempresa */}
             <View style={styles.sectionContainer}>
-              <Text style={styles.title}>{microempresa.nombre || "Sin nombre"}</Text>
-              <Text style={styles.description}>
+              <Text style={[styles.title, { color: theme.text }]}>{microempresa.nombre || "Sin nombre"}</Text>
+              <Text style={[styles.description, { color: theme.text }]}>
                 {microempresa.descripcion || "Sin descripción"}
               </Text>
               <View style={styles.infoContainer}>
-                <Text style={styles.infoText}>
-                  📞 <Text style={styles.infoLabel}>Teléfono:</Text>{" "}
-                  {microempresa.telefono || "Sin teléfono"}
+                <Text style={[styles.infoText, { color: theme.text }]}>
+                  📞 <Text style={styles.infoLabel}>Teléfono:</Text> {microempresa.telefono || "Sin teléfono"}
                 </Text>
-                <Text style={styles.infoText}>
-                  📍 <Text style={styles.infoLabel}>Dirección:</Text>{" "}
-                  {microempresa.direccion || "Sin dirección"}
+                <Text style={[styles.infoText, { color: theme.text }]}>
+                  📍 <Text style={styles.infoLabel}>Dirección:</Text> {microempresa.direccion || "Sin dirección"}
                 </Text>
-                <Text style={styles.infoText}>
-                  ✉️ <Text style={styles.infoLabel}>Correo:</Text>{" "}
-                  {microempresa.email || "Sin email"}
+                <Text style={[styles.infoText, { color: theme.text }]}>
+                  ✉️ <Text style={styles.infoLabel}>Correo:</Text> {microempresa.email || "Sin email"}
                 </Text>
-                <Text style={styles.infoText}>
-                  🏷️ <Text style={styles.infoLabel}>Categoría:</Text>{" "}
-                  {microempresa.categoria || "Sin categoría"}
+                <Text style={[styles.infoText, { color: theme.text }]}>
+                  🏷️ <Text style={styles.infoLabel}>Categoría:</Text> {microempresa.categoria || "Sin categoría"}
                 </Text>
               </View>
             </View>
@@ -197,12 +195,21 @@ export default function MicroempresaClienteScreen({ route, navigation }) {
             {/* Servicios Ofrecidos */}
             {servicios.length > 0 && (
               <View style={styles.sectionContainer}>
-                <Text style={styles.sectionTitle}>Servicios Ofrecidos</Text>
+                <Text style={[styles.sectionTitle, { color: theme.text }]}>Servicios Ofrecidos</Text>
                 {servicios.map((servicio) => (
-                  <View key={servicio._id} style={styles.servicioItem}>
+                  <View
+                    key={servicio._id}
+                    style={[
+                      styles.servicioItem,
+                      {
+                        backgroundColor: theme.background === "#FFFFFF" ? "#fff" : "#333",
+                        borderColor: theme.background === "#FFFFFF" ? "#ddd" : "#444"
+                      }
+                    ]}
+                  >
                     <View style={styles.servicioInfo}>
-                      <Text style={styles.servicioName}>{servicio.nombre}</Text>
-                      <Text style={styles.servicioPrice}>
+                      <Text style={[styles.servicioName, { color: theme.text }]}>{servicio.nombre}</Text>
+                      <Text style={[styles.servicioPrice, { color: theme.text }]}>
                         ${Number(servicio.precio || 0).toLocaleString("es-ES")}
                       </Text>
                     </View>
@@ -220,8 +227,8 @@ export default function MicroempresaClienteScreen({ route, navigation }) {
         }
         ListFooterComponent={
           <View style={styles.footerContainer}>
-            {/* Trabajadores */}
-            <View style={styles.sectionContainer}>
+             {/* Trabajadores */}
+             <View style={styles.sectionContainer}>
               <Text style={styles.sectionTitle}>Trabajadores</Text>
               {microempresa.trabajadores.length > 0 ? (
                 <FlatList
@@ -229,14 +236,18 @@ export default function MicroempresaClienteScreen({ route, navigation }) {
                   key={"flatlist_trabajadores_cliente"}
                   renderItem={({ item }) => (
                     <TouchableOpacity
-                      style={styles.card}
-                      onPress={() =>
-                        navigation.navigate("Trabajador", { trabajador: item })
-                      }
-                    >
-                      <Text style={styles.cardTitle}>{item.nombre}</Text>
-                      <Text style={styles.cardDetail}>{item.telefono}</Text>
-                    </TouchableOpacity>
+  style={[
+    styles.card,
+    { backgroundColor: theme.background === "#FFFFFF" ? "#fff" : "#333" }
+  ]}
+  onPress={() =>
+    navigation.navigate("Trabajador", { trabajador: item })
+  }
+>
+  <Text style={[styles.cardTitle, { color: theme.text }]}>{item.nombre}</Text>
+  <Text style={[styles.cardDetail, { color: theme.text }]}>{item.telefono}</Text>
+</TouchableOpacity>
+
                   )}
                   keyExtractor={(item) => item._id}
                   numColumns={2}
@@ -248,7 +259,7 @@ export default function MicroempresaClienteScreen({ route, navigation }) {
 
             {/* Galería */}
             <View style={styles.sectionContainer}>
-              <Text style={styles.sectionTitle}>Galería</Text>
+              <Text style={[styles.sectionTitle, { color: theme.text }]}>Galería</Text>
               <View style={styles.galleryContainer}>
                 {microempresa.imagenes.length > 0 ? (
                   <FlatList
@@ -269,14 +280,13 @@ export default function MicroempresaClienteScreen({ route, navigation }) {
                     )}
                   />
                 ) : (
-                  <Text style={styles.noImagesText}>No hay imágenes disponibles</Text>
+                  <Text style={[styles.noImagesText, { color: theme.text }]}>No hay imágenes disponibles</Text>
                 )}
               </View>
             </View>
 
             {/* Botones de acción */}
             <View style={styles.buttonContainer}>
-             
               <TouchableOpacity
                 style={[styles.actionButton, { backgroundColor: "#007BFF" }]}
                 onPress={() => navigation.navigate("HomeNavigator")}
@@ -295,7 +305,6 @@ export default function MicroempresaClienteScreen({ route, navigation }) {
               >
                 <Text style={styles.actionButtonText}>Reservar</Text>
               </TouchableOpacity>
-              
             </View>
           </View>
         }
@@ -310,32 +319,25 @@ export default function MicroempresaClienteScreen({ route, navigation }) {
         onRequestClose={closeServiceModal}
       >
         <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
+          <View style={[styles.modalContent, { backgroundColor: theme.background === "#FFFFFF" ? "#fff" : "#444" }]}>
             {selectedService && (
               <>
-                <Text style={styles.modalTitle}>
-                  {selectedService.nombre || ""}
+                <Text style={[styles.modalTitle, { color: theme.text }]}>{selectedService.nombre || ""}</Text>
+                <Text style={[styles.modalText, { color: theme.text }]}>
+                  Precio: ${Number(selectedService.precio || 0).toLocaleString("es-ES")}
                 </Text>
-                <Text style={styles.modalText}>
-                  Precio: $
-                  {Number(selectedService.precio || 0).toLocaleString("es-ES")}
-                </Text>
-                <Text style={styles.modalText}>
+                <Text style={[styles.modalText, { color: theme.text }]}>
                   Duración: {selectedService.duracion || "No especificada"}
                 </Text>
-                <Text style={styles.modalText}>
-                  Descripción:{" "}
-                  {selectedService.descripcion || "Sin descripción"}
+                <Text style={[styles.modalText, { color: theme.text }]}>
+                  Descripción: {selectedService.descripcion || "Sin descripción"}
                 </Text>
                 {selectedService.porcentajeAbono ? (
-                  <Text style={styles.modalText}>
+                  <Text style={[styles.modalText, { color: theme.text }]}>
                     Abono: {selectedService.porcentajeAbono}%
                   </Text>
                 ) : null}
-                <TouchableOpacity
-                  style={styles.closeButton}
-                  onPress={closeServiceModal}
-                >
+                <TouchableOpacity style={styles.closeButton} onPress={closeServiceModal}>
                   <Text style={styles.closeButtonText}>Cerrar</Text>
                 </TouchableOpacity>
               </>
@@ -344,7 +346,7 @@ export default function MicroempresaClienteScreen({ route, navigation }) {
         </View>
       </Modal>
 
-      {/* Visor de imagen usando react-native-image-viewing */}
+      {/* Visor de imagen */}
       <ImageViewing
         images={selectedImageUrl ? [{ uri: selectedImageUrl }] : []}
         imageIndex={0}
@@ -393,7 +395,6 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     marginBottom: 10,
     textAlign: "center",
-    color: "#343A40",
   },
   description: {
     fontSize: 16,
@@ -406,14 +407,12 @@ const styles = StyleSheet.create({
   },
   infoText: {
     fontSize: 14,
-    color: "#333",
     marginBottom: 5,
   },
   infoLabel: {
     fontWeight: "bold",
   },
   servicioItem: {
-    backgroundColor: "#fff",
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
@@ -436,11 +435,9 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "bold",
     marginBottom: 5,
-    color: "#343A40",
   },
   servicioPrice: {
     fontSize: 14,
-    color: "#007BFF",
   },
   infoButton: {
     padding: 5,
@@ -450,8 +447,8 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     marginTop: 10,
     marginBottom: 10,
-    color: "#343A40",
   },
+  // Actualizamos la card de trabajadores para que sea idéntica a la de servicios:
   card: {
     backgroundColor: "#fff",
     borderRadius: 8,
@@ -573,13 +570,9 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "bold",
   },
-  imageModalContainer: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  enlargedImage: {
-    width: "90%",
-    height: "70%",
-  },
 });
+
+
+
+
+
