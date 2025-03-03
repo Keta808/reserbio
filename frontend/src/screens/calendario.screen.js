@@ -15,6 +15,7 @@ import moment from 'moment';
 import 'moment/locale/es';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import reservaService from '../services/reserva.service';
+import paymentService from '../services/payment.services';
 
 moment.locale('es');
 
@@ -96,7 +97,40 @@ const AgendaScreen = () => {
   const confirmCancel = async () => {
     if (selectedEvent && !confirming) {
       setConfirming(true); // Deshabilitar el botón al pulsarlo
-      try {
+      
+      try { 
+        // Obtener el servicio por Id reserva
+                const [servicio, errorServicio] = await reservaService.getUrlPagoByReservaId(selectedEvent.id);
+                if (errorServicio) {
+                    console.log("Error obteniendo Servicio:", errorServicio);
+                }
+                const idCliente = selectedEvent.idCliente;
+                if (servicio.urlPago && servicio.urlPago !== 'null' && servicio.urlPago !== 'undefined') { 
+                    const [pagos, errorPagos] = await paymentService.getPaymentByClientId(idCliente);
+                    if (errorPagos) {
+                        Alert.alert("Error", "No se pudieron obtener los pagos.");
+                        return;
+                    }
+        
+                    if (!pagos?.data?.length) {
+                        Alert.alert("Error", "No se encontraron pagos asociados a este servicio.");
+                        return;
+                    }
+                    const pagoAsociado = pagos.data.find(pago => pago.idServicio === servicio._id);
+                    if (pagoAsociado) {
+                        const [reembolso, errorRembolso] = await paymentService.refundPayment(pagoAsociado.paymentId);
+                        if (errorRembolso) {
+                            console.error('Error al reembolsar el pago:', errorRembolso);
+                            Alert.alert('Error', 'No se pudo procesar el reembolso.');
+                            return;
+                        }
+        
+                        console.log('Pago reembolsado:', reembolso);
+                        Alert.alert('Pago reembolsado', 'Se ha reembolsado el pago de la reserva.');
+                    } else {
+                        Alert.alert("Error", "No se encontró un pago asociado a esta reserva.");
+                    }
+                } 
         await reservaService.cancelReserva(selectedEvent.id);
         const updatedItems = { ...items };
         if (updatedItems[selectedKey]) {

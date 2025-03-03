@@ -36,6 +36,7 @@ async function getReservasByTrabajadorId(trabajadorId) {
           end: endDate,
           servicioNombre: reserva.servicio.nombre,
           clienteNombre: reserva.cliente.nombre,
+          idCliente: reserva.cliente._id,
         });
       });
   
@@ -45,7 +46,7 @@ async function getReservasByTrabajadorId(trabajadorId) {
       console.error(
         "Error al obtener las reservas del trabajador:",
         error.response?.data || error.message
-      );
+    );
       throw error;
     }
   }
@@ -177,6 +178,18 @@ async function getActiveReservationCount(clientId, microempresaId) {
     }
 }
 
+async function getUrlPagoByReservaId(idReserva) {
+    try {
+        const response = await instance.get(`/reservas/servicio-url/${idReserva}`);
+        return response.data;
+    } catch (error) {
+        console.log(
+            "Error al obtener la URL de pago de la reserva:",
+            error.response?.data || error.message
+        );
+        throw error;
+    }
+}
 
 
 
@@ -190,4 +203,5 @@ export default {
     getReservasPorFechaMicroempresa,
     createReservaHorario,
     getActiveReservationCount,
+    getUrlPagoByReservaId,
 };

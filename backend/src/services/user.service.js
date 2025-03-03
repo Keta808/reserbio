@@ -120,6 +120,7 @@ async function createTrabajador(trabajador) {
       email,
       password: await User.encryptPassword(password),
       state: myState,
+      isAdmin: false,    
     });
 
     // Guardar el nuevo Trabajador en la base de datos
@@ -307,6 +308,7 @@ async function userChange(id) {
           email: user.email,
           password: user.password,
           state: user.state,
+          isAdmin: user.isAdmin,
       });
 
       await newTrabajador.save();

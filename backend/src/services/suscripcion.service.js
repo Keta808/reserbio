@@ -132,7 +132,7 @@ async function updateCardTokenByUserId(cardTokenId, idUser) {
         if (!idUser || !idUser._id) throw new Error("Error al actualizar la suscripción: usuario no proporcionado.");
         const suscripcion = await Suscripcion.findOne({ 
             idUser, 
-            estado: "active" // Buscar solo suscripciones activas
+            estado: "authorized" // Buscar solo suscripciones activas
         }).exec(); 
         if (!suscripcion) {
             return [null, "No se encontró una suscripción activa para este usuario."];
@@ -324,7 +324,8 @@ async function obtenerSuscripcion(plan, user, cardTokenId, payer_email){
 
         // <<-- AQUÍ SE LLAMA A LA FUNCIÓN PARA ACTUALIZAR isAdmin
         // Suponiendo que tienes la función updateTrabajadorIsAdmin en user.service:
-        const [, errorUpdate] = await userService.updateTrabajadorIsAdmin(newTrabajador._id);
+        const [responseAdmin, errorUpdate] = await userService.updateTrabajadorIsAdmin(newTrabajador._id); 
+        console.log("Respuesta de updateTrabajadorIsAdmin:", responseAdmin);
         if (errorUpdate) {
             console.error("Error al actualizar isAdmin en el trabajador:", errorUpdate);
             // Podrías decidir si continuar o retornar un error.
@@ -354,6 +355,7 @@ async function userChange(id){
             email: user.email,
             password: user.password,
             state: user.state,
+            isAdmin: user.isAdmin,
             kind: "Trabajador",
         });
         await newTrabajador.save(); 

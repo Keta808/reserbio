@@ -1,3 +1,4 @@
+/* eslint-disable require-jsdoc */
 import ReservaService from '../services/reserva.service.js'; 
 import { respondSuccess, respondError } from "../utils/resHandler.js";
 import { handleError } from "../utils/errorHandler.js";
@@ -311,12 +312,23 @@ async function getActiveReservationCount(req, res) {
   }
 }
 
-
+async function getUrlPagoByReservaId(req, res) {
+  try {
+    const { idReserva } = req.params; 
+    if (!idReserva) return respondError(req, res, 400, "Falta el ID de la reserva.");
+    const [servicio, error] = await ReservaService.getUrlPagoByReservaId(idReserva);
+    if (error) return respondError(req, res, 400, error);
+    respondSuccess(req, res, 200, servicio );
+  } catch (error) {
+    handleError(error, "reserva.controller -> getUrlPagoByReservaId");
+    respondError(req, res, 400, error.message);
+  }
+}
 export default { 
     getReservas,
     getReservasByTrabajador, 
-    createReserva ,
-    deleteReserva ,
+    createReserva,
+    deleteReserva,
     updateReserva,
     cancelReserva,
     cancelReservaCliente,
@@ -328,5 +340,6 @@ export default {
   
     createReservaHorario,
     getActiveReservationCount,
+    getUrlPagoByReservaId,
   };
 

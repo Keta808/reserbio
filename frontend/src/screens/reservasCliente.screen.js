@@ -121,33 +121,48 @@ const ReservaClienteScreen = () => {
   const cancelarReserva = async () => {
     if (reservaSeleccionada && !confirming) {
       setConfirming(true);
+      
       try {
-        if (reservaSeleccionada.servicio.urlPago) {
-          const [pagos, errorPagos] = await paymentService.getPaymentByClientId(clienteId);
-          if (errorPagos) {
-            Alert.alert("Error", "No se pudieron obtener los pagos.");
-            return;
-          } 
-          if (!pagos?.data?.length) {
-            Alert.alert("Error", "No se encontraron pagos asociados a este servicio.");
-            return;
-          }
-          const pagoAsociado = pagos.data.find(pago => pago.idServicio === reservaSeleccionada.servicio._id);
-          if (pagoAsociado) {
-            const [reembolso, errorRembolso] = await paymentService.refundPayment(pagoAsociado.paymentId);
-            if (errorRembolso) {
-              console.error('Error al reembolsar el pago:', errorRembolso);
-              Alert.alert('Error', 'No se pudo procesar el reembolso.');
-              return;
-            } 
-            console.log('Pago reembolsado:', reembolso);
-            Alert.alert('Pago reembolsado', 'Se ha reembolsado el pago de la reserva.');
-          } else {
-            Alert.alert("Error", "No se encontró un pago asociado a esta reserva.");
-          }
+        
+        // Obtener el servicio por Id reserva
+        const [servicio, errorServicio] = await reservaService.getUrlPagoByReservaId(reservaSeleccionada);
+
+        if (errorServicio) {
+            console.log("Error obteniendo Servicio:", errorServicio);
+        }
+
+        if (servicio.urlPago && servicio.urlPago !== 'null' && servicio.urlPago !== 'undefined') { 
+            const [pagos, errorPagos] = await paymentService.getPaymentByClientId(clienteId);
+            if (errorPagos) {
+                Alert.alert("Error", "No se pudieron obtener los pagos.");
+                return;
+            }
+
+            if (!pagos?.data?.length) {
+                Alert.alert("Error", "No se encontraron pagos asociados a este servicio.");
+                return;
+            }
+
+            const pagoAsociado = pagos.data.find(pago => pago.idServicio === servicio._id);
+            if (pagoAsociado) {
+                const [reembolso, errorRembolso] = await paymentService.refundPayment(pagoAsociado.paymentId);
+                if (errorRembolso) {
+                    console.error('Error al reembolsar el pago:', errorRembolso);
+                    Alert.alert('Error', 'No se pudo procesar el reembolso.');
+                    return;
+                }
+
+                console.log('Pago reembolsado:', reembolso);
+                Alert.alert('Pago reembolsado', 'Se ha reembolsado el pago de la reserva.');
+            } else {
+                Alert.alert("Error", "No se encontró un pago asociado a esta reserva.");
+            }
         } 
+        
+        // Si no hay pago, simplemente se cancela la reserva
         await reservaService.cancelReservaCliente(reservaSeleccionada);
         fetchReservas(clienteId);
+        
       } catch (error) {
         console.error('Error al cancelar la reserva:', error);
       } finally {

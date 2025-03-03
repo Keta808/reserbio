@@ -164,20 +164,28 @@ export default function TrabajadorScreen() {
               title="Editar Perfil"
               onPress={handleEditProfile}
               color="blue"
-            />
-            <View style={{ marginVertical: 10 }}>
-              <Button
-                title="Gestionar Suscripción"
-                onPress={() => navigation.navigate('GestorSuscripcion')}
-                color="#007BFF"
-              />
-            </View>
-            {/* Mostrar opción solo si el usuario tiene una microempresa */}
-             {microempresa !== null && (
-              <View style={{ marginBottom: 10 }}>
-              <Button title="Vincular Mercado Pago" onPress={() => navigation.navigate('VincularMercadoPago', { idMicroempresa: microempresa._id })} color="#007BFF" />
-            </View>
-            )}
+            /> 
+            
+           { dataTrabajador.data.isAdmin && (
+                    <>
+                        <View style={{ marginVertical: 10 }}>
+                            <Button
+                                title="Gestionar Suscripción"
+                                onPress={() => navigation.navigate('GestorSuscripcion')}
+                                color="#007BFF"
+                            />
+                        </View>
+                        {microempresa && microempresa._id && (
+                            <View style={{ marginBottom: 10 }}>
+                                <Button
+                                    title="Vincular Mercado Pago"
+                                    onPress={() => navigation.navigate('VincularMercadoPago', { idMicroempresa: microempresa._id })}
+                                    color="#007BFF"
+                                />
+                            </View>
+                        )}
+                    </>
+                )}
            
              
           </View>

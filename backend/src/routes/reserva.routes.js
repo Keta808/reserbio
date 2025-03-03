@@ -1,3 +1,5 @@
+/* eslint-disable max-len */
+/* eslint-disable quotes */
 "use strict";
 
 import { Router } from "express";
@@ -32,7 +34,7 @@ router.get("/horas/microempresa/:serviceId/:date", reservaController.getReservas
 router.get('/count/:clientId/:microempresaId', reservaController.getActiveReservationCount); // Obtiene la cantidad de reservas activas de un cliente en una microempresa
 //test para crear reserva con horario
 router.post('/crear-reserva-horario', reservaController.createReservaHorario);
-
+router.get('/servicio-url/:idReserva', reservaController.getUrlPagoByReservaId);
 
 // Exporta el enrutador
 export default router;

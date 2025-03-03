@@ -16,7 +16,7 @@ import reservaService from '../services/reserva.service';
 import servicioService from '../services/servicio.service';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import paymentService from "../services/payment.services.js"; 
+
 
 const ConfirmacionReservaSlotScreen = () => {
   const route = useRoute();
@@ -52,7 +52,7 @@ const ConfirmacionReservaSlotScreen = () => {
     const fetchDuracionServicio = async () => {
       try {
         const response = await servicioService.getServicioById(servicioId);
-        if (response.urlPago && response.urlPago !== null) {
+        if (response.urlPago && response.urlPago !== null && response.urlPago !== "undefined") {
           setUrlPago(response.urlPago);
           console.log("URL PAGO", response.urlPago);
         }

@@ -1,3 +1,4 @@
+/* eslint-disable quotes */
 /* eslint-disable require-jsdoc */
 /* eslint-disable max-len */
 import Reserva from '../models/reserva.model.js'; 
@@ -613,9 +614,21 @@ async function getActiveReservationCount(clientId, microempresaId) {
       handleError(error, "reserva.service -> getActiveReservationCountByClientAndMicroempresa");
       return [null, error.message];
     }
-  }
+} 
+async function getUrlPagoByReservaId(idReserva) {
+    try {
+        if (!idReserva) return [null, "Falta el ID de la reserva"];
+        const reserva = await Reserva.findById(idReserva).populate('servicio'); 
+        if (!reserva) return [null, "Reserva no encontrada"];
+        if (!reserva.servicio ) return [null, "Servicio no encontrado"]; 
+        return [reserva.servicio, null];
+    } catch {
+        handleError(error, "reserva.service -> getUrlPagoByReservaId");
+        return [null, "Error al obtener la reserva"];
+    }
+}
 
-//Exporta las funciones definidas
+// Exporta las funciones definidas
 export default {
       getReservas,
       getReservasByTrabajador, 
@@ -629,10 +642,7 @@ export default {
       getReservasPorFechaTrabajador,
       getReservasPorFechaMicroempresa,
       createReservaHorario,
-      getActiveReservationCount
+      getActiveReservationCount, 
+        getUrlPagoByReservaId,
 
     };
-
-
-
-
