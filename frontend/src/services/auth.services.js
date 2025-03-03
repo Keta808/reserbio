@@ -9,7 +9,6 @@ const decodeToken = (token) => {
 export const login = async (dataUser) => {
   try {
     console.log('Datos recibidos: ', dataUser);
-    // Se incluye el campo `kind` en la petición; si no se provee, se asume "Cliente"
     const response = await axios.post('/auth/login', {
       email: dataUser.email,
       password: dataUser.password,
@@ -22,14 +21,15 @@ export const login = async (dataUser) => {
       if (!accessToken) {
         throw new Error('Token no recibido o inválido');
       }
-
+      
       const decodedToken = decodeToken(accessToken);
 
-      // Fusionar los datos de `user` con los del token
+      // Fusionar los datos de `user` con los del token, incluyendo isAdmin
       const userInfo = {
         id: decodedToken.id,
         email: decodedToken.email,
         kind: decodedToken.kind,
+        isAdmin: decodedToken.isAdmin || false,
         nombre: user.nombre || null,
         apellido: user.apellido || null,
         telefono: user.telefono || null,

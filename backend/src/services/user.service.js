@@ -320,6 +320,21 @@ async function userChange(id) {
   }
 }
 
+async function updateTrabajadorIsAdmin(id, isAdminValue = true) {
+  try {
+    // Actualiza el campo isAdmin del trabajador
+    const updatedTrabajador = await Trabajador.findByIdAndUpdate(
+      id,
+      { isAdmin: isAdminValue },
+      { new: true },
+    ).exec();
+    return [updatedTrabajador, null];
+  } catch (error) {
+    handleError(error, "user.service -> updateTrabajadorIsAdmin");
+    return [null, error.message];
+  }
+}
+
 export default {
   getUsers,
   createUser,
@@ -334,4 +349,5 @@ export default {
   userChange,
   getClienteById,
   updateCliente,
+  updateTrabajadorIsAdmin,
 };

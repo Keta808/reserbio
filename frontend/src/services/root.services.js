@@ -3,6 +3,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
  const API_URL = 'http://10.0.2.2:3000/api/'; 
 //const API_URL = 'http://10.0.2.2:3000/api/'; 
+// const API_URL = 'http://10.0.2.2:3000/api/'; 
 // const API_URL = 'http://192.168.1.10:3000/api/';
 // const API_URL = 'http://localhost:3000/api/'; 
 // const API_URL = 'http://192.168.1.9:3000/api/';

@@ -216,7 +216,8 @@ async function updateEnlaceParcial(id, fieldsToUpdate) {
 /** Obtiene la microempresa a la que pertenece el trabajador*/
 async function obtenerMicroempresasPorTrabajador(userId) {
     try {
-      const enlaces = await Enlace.find({ id_trabajador: userId, estado: true }).populate("id_microempresa");
+        const objectId = new mongoose.Types.ObjectId(userId);
+        const enlaces = await Enlace.find({ id_trabajador: objectId, estado: true }).populate("id_microempresa");
   
       if (!enlaces.length) return [];
   

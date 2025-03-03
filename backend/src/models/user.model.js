@@ -56,7 +56,10 @@ const Trabajador = User.discriminator('Trabajador', new mongoose.Schema({
     type: String,
     required: true,
   },
-
+  isAdmin: {
+    type: Boolean,
+    default: false,
+  },
 }, options));
 
 const Administrador = User.discriminator('Administrador', new mongoose.Schema({

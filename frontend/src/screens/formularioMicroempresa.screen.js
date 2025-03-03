@@ -119,7 +119,7 @@ const FormularioMicroempresaScreen = ({ navigation }) => {
 
   // Función para manejar la cancelación
   const handleCancel = async () => {
-    // Opcionalmente puedes pedir confirmación o realizar logout
+    // Puedes pedir confirmación si lo deseas, aquí se realiza el logout y se redirige al Login
     await logout(); // Limpia los datos y cierra sesión
     navigation.replace("Login");
   };
@@ -195,7 +195,7 @@ const FormularioMicroempresaScreen = ({ navigation }) => {
       </ActionSheet>
 
       <Button title="Crear Microempresa" onPress={handleSubmit} />
-      {/* Botón Cancelar */}
+      {/* Botón Cancelar para cerrar sesión en caso de arrepentimiento */}
       <Button title="Cancelar" onPress={handleCancel} color="red" />
     </View>
   );
@@ -245,3 +245,4 @@ const styles = StyleSheet.create({
 });
 
 export default FormularioMicroempresaScreen;
+

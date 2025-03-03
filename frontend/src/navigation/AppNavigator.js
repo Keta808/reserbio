@@ -45,6 +45,9 @@ import Horario from '../screens/horario.screen.js';
 import EditarHorarioScreen from '../screens/editarHorarioScreen.js';
 import ConfirmacionReservaSlotScreen from '../screens/confirmacionReservaSlot.screen.js';
 import InvitarTrabajadorScreen from '../screens/invitarTrabajadores.screen.js';
+// Nueva pantalla para trabajadores no admin sin microempresa
+import NoMicroempresaScreen from '../screens/noMicroempresa.screen.js';
+
 // Contexto de autenticación
 import { AuthContext } from '../context/auth.context';
 import { Ionicons } from '@expo/vector-icons';
@@ -130,6 +133,72 @@ const HomeTrabajadorNavigator = () => {
     </Tab.Navigator>
   );
 };
+
+// TrabajadorStack: aquí definimos el flujo para usuarios Trabajador
+const TrabajadorStack = () => {
+  const { microempresa, isAdmin, loading } = useMicroempresa();
+
+  if (loading) {
+    return (
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+        <ActivityIndicator size="large" color="#0000ff" />
+        <Text>Cargando información...</Text>
+      </View>
+    );
+  }
+
+  // Definir la ruta inicial según el rol y la existencia de microempresa
+  let initialRoute;
+  if (isAdmin) {
+    // Trabajador admin: si tiene microempresa, Home; si no, Formulario para crearla
+    initialRoute = microempresa ? "HomeNavigator" : "FormularioMicroempresa";
+  } else {
+    // Trabajador no admin: si tiene microempresa, Home; si no, pantalla informativa
+    initialRoute = microempresa ? "HomeNavigator" : "NoMicroempresaScreen";
+  }
+
+  return (
+    <Stack.Navigator
+      screenOptions={{ headerShown: false }}
+      initialRouteName={initialRoute}
+    >
+      <Stack.Screen name="FormularioMicroempresa" component={FormularioMicroempresa} />
+      <Stack.Screen name="HomeNavigator" component={HomeTrabajadorNavigator} />
+      <Stack.Screen name="NoMicroempresaScreen" component={NoMicroempresaScreen} />
+      {/* Otras pantallas del flujo */}
+      <Stack.Screen name="SeleccionMicroempresa" component={SeleccionMicroempresaScreen} /> 
+      <Stack.Screen name="GestorSuscripcion" component={gestorSuscripcionScreen} /> 
+      <Stack.Screen name="CardScreen" component={CardScreen} />
+      <Stack.Screen name="Microempresa" component={MicroempresaInicioScreeen} />
+      <Stack.Screen name="InvitarTrabajador" component={InvitarTrabajadorScreen} />
+      <Stack.Screen name="EditarMicroempresa" component={FormularioEdicionMicroempresa} />
+      <Stack.Screen name="SubirFotoPerfil" component={SubirFotoPerfilScreen} />
+      <Stack.Screen name="SubirImagenes" component={SubirImagenesScreen} />
+      <Stack.Screen name="ListaMicroempresas" component={ListaMicroempresasScreen} />
+      <Stack.Screen name="Trabajador" component={PerfilTrabajadorScreen} /> 
+      <Stack.Screen name="Perfil" component={TrabajadorScreen} /> 
+      <Stack.Screen name="Servicio" component={ServicioScreen} />
+      <Stack.Screen name="Login" component={LoginScreen} />
+      <Stack.Screen name="VincularMercadoPago" component={MercadoPagoScreen} />
+      <Stack.Screen name="Horario" component={Horario} />
+      <Stack.Screen name="EditarHorario" component={EditarHorarioScreen} /> 
+    </Stack.Navigator>
+  );
+};
+
+const ClienteStack = () => (
+  <Stack.Navigator screenOptions={{ headerShown: false }}>
+    <Stack.Screen name="HomeNavigator" component={HomeClienteNavigator} />
+    <Stack.Screen name="ListaMicroempresas" component={ListaMicroempresasScreen} />  
+    <Stack.Screen name="MicroempresaCliente" component={MicroempresaClienteScreen} />
+    <Stack.Screen name="SeleccionServicio" component={SeleccionServicioScreen} />
+    <Stack.Screen name="Valoracion" component={ValoracionServicioScreen} />
+    <Stack.Screen name="AceptarInvitacion" component={AceptarInvitacionScreen} />   
+    <Stack.Screen name="Pago" component={PaymentScreen} /> 
+    <Stack.Screen name="Login" component={LoginScreen} />
+    <Stack.Screen name="ConfirmacionReservaSlotScreen" component={ConfirmacionReservaSlotScreen} />
+  </Stack.Navigator>
+);
 
 const AppNavigator = () => {
   const { setIsAuthenticated, isAuthenticated, user } = useContext(AuthContext);

@@ -14,6 +14,7 @@ import UserModels from '../models/user.model.js';
 const { User } = UserModels;
 import { handleError } from "../utils/errorHandler.js";
 import { ACCESS_TOKEN } from '../config/configEnv.js'; 
+import userService from './user.service.js';
 
 
 async function getSuscripciones() {
@@ -264,7 +265,6 @@ async function obtenerSuscripcion(plan, user, cardTokenId, payer_email){
         // DEPURACION: Mostrar datos de la suscripción
         console.log("SERVICES OBTENER SUS: Datos de suscripción:", { plan, user, cardTokenId, payer_email });
 
-
         const preapprovalData = {
             preapproval_plan_id: plan.mercadoPagoId,
             reason: "Suscripción Plan Reserbio",
@@ -284,8 +284,8 @@ async function obtenerSuscripcion(plan, user, cardTokenId, payer_email){
 
         console.log("SERVICES OBTENER SUS: Datos de preaprobación:", preapprovalData); 
         const cleanData = JSON.parse(JSON.stringify(preapprovalData));
-
         console.log("Datos limpios enviados a Mercado Pago:", cleanData);
+
         // SOLICITUD MERCADO PAGO 
         const response = await axios.post(
             "https://api.mercadopago.com/preapproval",
@@ -303,7 +303,7 @@ async function obtenerSuscripcion(plan, user, cardTokenId, payer_email){
         console.log("SERVICE OBTENER SUS: Respuesta de Mercado Pago:", response.data);
         console.log("SERVICE OBTENER SUS:ID de preaprobación:", response.data.id);
         
-        // Obtener preaproval_id de la respuesta
+        // Obtener preapproval_id de la respuesta
         const preapprovalId = response.data.id;
         // Convertir a trabajador 
         const [newTrabajador, errorChange] = await userChange(user.id);
@@ -322,16 +322,22 @@ async function obtenerSuscripcion(plan, user, cardTokenId, payer_email){
             return [null, "Error al guardar la suscripción en la BD."];
         }
 
+        // <<-- AQUÍ SE LLAMA A LA FUNCIÓN PARA ACTUALIZAR isAdmin
+        // Suponiendo que tienes la función updateTrabajadorIsAdmin en user.service:
+        const [, errorUpdate] = await userService.updateTrabajadorIsAdmin(newTrabajador._id);
+        if (errorUpdate) {
+            console.error("Error al actualizar isAdmin en el trabajador:", errorUpdate);
+            // Podrías decidir si continuar o retornar un error.
+        }
+
         return [suscripcion, null];
-
-
-
     } catch (error){
         console.error(`Error al crear la suscripción:`, error.response?.data || error.message);
         handleError(error, "suscripcion.service -> crearSuscripcion");
         return [null, error.response?.data || error.message];
     }
-} 
+}
+
 async function userChange(id){
     try {
         if (!id) return [null, "ID de usuario no proporcionado."];

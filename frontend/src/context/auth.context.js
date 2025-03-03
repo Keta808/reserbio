@@ -42,6 +42,7 @@ export const AuthProvider = ({ children }) => {
   const login = async (dataUser) => {
     try {
       const userInfo = await loginService(dataUser); // Simula el servicio de login 
+      console.log('Usuario inició sesión correctamente:', userInfo);
       
       if (!userInfo) {
         throw new Error('Error al obtener los datos del usuario');
@@ -49,6 +50,7 @@ export const AuthProvider = ({ children }) => {
       await AsyncStorage.setItem('user', JSON.stringify(userInfo)); // Guarda el usuario en AsyncStorage
       setUser(userInfo);
       setIsAuthenticated(true);
+      console.log('Usuario despues de async storage:', userInfo);
       return userInfo;
     } catch (error) {
       console.error('Error al iniciar sesión:', error);

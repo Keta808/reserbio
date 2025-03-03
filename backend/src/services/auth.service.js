@@ -30,9 +30,9 @@ async function loginUserByKind(user, kind) {
     }
 
     const accessToken = jwt.sign(
-      { email: userFound.email, kind, id: userFound._id },
+      { email: userFound.email, kind, id: userFound._id, isAdmin: userFound.isAdmin },
       ACCESS_JWT_SECRET,
-      { expiresIn: "1d" }
+      { expiresIn: "1d" },
     );
 
     const refreshToken = jwt.sign(

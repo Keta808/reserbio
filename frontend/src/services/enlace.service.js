@@ -51,9 +51,21 @@ async function desvincularTrabajador(enlaceId) {
     }
 }
 
+async function obtenerEnlacesPorTrabajador(userId) {
+    try {
+        const response = await instance.get(`/enlaces/microempresas/${userId}`);
+        console.log('📋 Enlaces obtenidos:', response.data);
+        return response.data;
+    } catch (error) {
+        console.error('❌ Error al obtener enlaces para el trabajador:', error.response?.data || error.message);
+        throw error;
+    }
+}
+
 export default {
     actualizarEstadoEnlace,
     obtenerTrabajadoresMicroempresa,
     desvincularTrabajador,
+    obtenerEnlacesPorTrabajador,
 };
 
