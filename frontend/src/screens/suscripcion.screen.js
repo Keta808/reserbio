@@ -1,8 +1,17 @@
 import React, { useState, useEffect, useContext } from 'react';
-import { View, Text, Button, ScrollView, StyleSheet } from 'react-native';
-import { obtenerPlanes } from '../services/suscripcion.service.js'; // Asegúrate de que el import sea correcto
+import { 
+  View, 
+  Text, 
+  ScrollView, 
+  StyleSheet, 
+  TouchableOpacity, 
+  ActivityIndicator 
+} from 'react-native';
+import { obtenerPlanes } from '../services/suscripcion.service.js';
 import { useNavigation } from '@react-navigation/native';
 import { AuthContext } from '../context/auth.context';
+import { useTheme } from '../context/theme.context';
+
 // Descripciones de los planes
 const planDescriptions = {
   "Plan Gratuito": "Este es el plan gratuito y permite acceder a las funciones básicas del sistema por un plazo de tiempo determinado (3 meses de prueba).",
@@ -15,18 +24,24 @@ const SuscripcionScreen = () => {
   const [loading, setLoading] = useState(true); // Estado para manejar la carga de datos
   const navigation = useNavigation(); // Para navegar a otras pantallas
   const { user } = useContext(AuthContext); // Obtener el usuario autenticado
+  const { theme } = useTheme();
+
+  // Determinar si estamos en modo oscuro.
+  // En este ejemplo, se considera modo claro cuando el background es "#fff" o "#f0f4f7"
+  const isDarkMode = theme.background === "#444" || theme.background === "#333" || theme.background === "#000" || theme.background !== "#fff";
+
   useEffect(() => {
     // Obtener los planes desde el backend
     const fetchPlanes = async () => {
       try {
-        const data = await obtenerPlanes(); // Llamada al backend para obtener los planes
-        if (data.state === 'Success' && Array.isArray(data.data)) {  // Verificar que 'data.data' sea un arreglo
-          setPlanes(data.data); // Almacenar el arreglo en el estado
+        const data = await obtenerPlanes();
+        if (data.state === 'Success' && Array.isArray(data.data)) {
+          setPlanes(data.data);
         }
       } catch (error) {
         console.error('Error al obtener los planes:', error.message);
       } finally {
-        setLoading(false); // Terminar el loading después de la llamada
+        setLoading(false);
       }
     };
     fetchPlanes();
@@ -41,50 +56,58 @@ const SuscripcionScreen = () => {
   }
 
   return (
-    <ScrollView style={styles.container}> 
-    
-      <View style={styles.introContainer}>
-        <Text style={styles.mainTitle}>
+    <ScrollView style={[styles.container, isDarkMode && { backgroundColor: theme.background }]}> 
+      <View style={[styles.introContainer, isDarkMode && { backgroundColor: theme.background === "#FFFFFF" ? "#f2f2f2" : "#444" }]}>
+        <Text style={[styles.mainTitle, isDarkMode && { color: theme.text }]}>
           ¡Suscríbete a un plan para utilizar la aplicacion Reserbio!
         </Text>
-        <Text style={styles.mainDescription}>
+        <Text style={[styles.mainDescription, isDarkMode && { color: theme.text }]}>
           Nuestra aplicación ofrece planes diseñados para adaptarse a tus necesidades. 
           Elige el plan que más te convenga y disfruta de las características que tenemos para ti.
-          !Unetenos y maneja tu agenda con Reserbio¡
+          ¡Únete y maneja tu agenda con Reserbio!
         </Text>
       </View>
 
-    
-      <Text style={styles.title}>Elige tu plan de suscripción.</Text>
+      <Text style={[styles.title, isDarkMode && { color: theme.text }]}>Elige tu plan de suscripción.</Text>
 
       <View style={styles.plansContainer}>
         {Array.isArray(planes) && planes.length > 0 ? (
           planes.map((plan) => {
-            const description = planDescriptions[plan.tipo_plan] || "Descripcion no disponible"; // Obtener la descripción del plan
+            const description = planDescriptions[plan.tipo_plan] || "Descripcion no disponible";
             return (
-              <View key={String(plan._id)} style={styles.planCard}>
-                <Text style={styles.planTitle}>{String(plan.tipo_plan || "Sin nombre")}</Text>
-                <Text style={styles.planDescription}>{String(description)}</Text>  
-                <Text style={styles.planPrice}>${String(plan.precio || "0")}</Text> 
-                <Button style={styles.planButton}
-                  title="Obtener"
-                  onPress={() => navigation.navigate('Pago', {selectedPlan: plan, user })} // Navegar a la pantalla de pago
-                />
+              <View key={String(plan._id)} style={[
+                styles.planCard, 
+                isDarkMode && {
+                  backgroundColor: theme.background === "#FFFFFF" ? "#f2f2f2" : "#444",
+                  // Reducir el efecto de sombra en modo oscuro
+                  shadowOffset: { width: 0, height: 1 },
+                  shadowOpacity: 0.3,
+                  shadowRadius: 2,
+                }
+              ]}>
+                <Text style={[styles.planTitle, isDarkMode && { color: theme.text }]}>{String(plan.tipo_plan || "Sin nombre")}</Text>
+                <Text style={[styles.planDescription, isDarkMode && { color: theme.text }]}>{String(description)}</Text>  
+                <Text style={[styles.planPrice, isDarkMode && { color: theme.text }]}>{`$${String(plan.precio || "0")}`}</Text> 
+                <TouchableOpacity 
+                  style={[styles.planButton, isDarkMode && { backgroundColor: "#0077b6" }]}
+                  onPress={() => navigation.navigate('Pago', { selectedPlan: plan, user })}
+                >
+                  <Text style={[styles.planButtonText, isDarkMode && { color: theme.text }]} >Obtener</Text>
+                </TouchableOpacity>
               </View>
             );
           })
         ) : (
-          <Text>{String("No se encontraron planes disponibles.")}</Text> // Mostrar mensaje si no hay planes
+          <Text>{String("No se encontraron planes disponibles.")}</Text>
         )}
       </View> 
 
-      
-      <View style={styles.disclaimerContainer}>
-      <Text style={styles.disclaimerText}>
-        Nota: La suscripción al plan seleccionado se cobrará de manera mensual una vez obtenido el plan. 
-        Puedes gestionar tu suscripción a través de la aplicación. 
-      </Text>
-    </View>
+      <View style={[styles.disclaimerContainer, isDarkMode && { backgroundColor: theme.background === "#FFFFFF" ? "#f2f2f2" : "#444" }]}>
+        <Text style={[styles.disclaimerText, isDarkMode && { color: theme.text }]}>
+          Nota: La suscripción al plan seleccionado se cobrará de manera mensual una vez obtenido el plan. 
+          Puedes gestionar tu suscripción a través de la aplicación. 
+        </Text>
+      </View>
     </ScrollView>
   );
 };
@@ -155,8 +178,13 @@ const styles = StyleSheet.create({
   planButton: {
     padding: 10,
     backgroundColor: '#0077b6',
-    color: '#fff',
     borderRadius: 8,
+    alignItems: 'center',
+  },
+  planButtonText: {
+    color: '#fff',
+    fontWeight: 'bold',
+    fontSize: 16,
   },
   disclaimerContainer: {
     marginTop: 20,

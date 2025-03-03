@@ -99,6 +99,8 @@ const AgendaScreen = () => {
     if (selectedEvent && !confirming) {
       setConfirming(true);
       try {
+        console.log("Cancelando reserva:", selectedEvent);
+     
         await reservaService.cancelReserva(selectedEvent.id);
         const updatedItems = { ...items };
         if (updatedItems[selectedKey]) {

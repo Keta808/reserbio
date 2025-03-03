@@ -17,11 +17,16 @@ import servicioService from '../services/servicio.service';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import paymentService from "../services/payment.services.js"; 
+import { useTheme } from '../context/theme.context';
 
 const ConfirmacionReservaSlotScreen = () => {
   const route = useRoute();
   const navigation = useNavigation();
   const { microempresaId, trabajadorId, servicioId, fecha, trabajadorNombre } = route.params;
+
+  const { theme } = useTheme();
+  // Suponemos que en modo claro el background es "#f0f4f7" (o "#FFFFFF") y en modo oscuro es distinto
+  const isDarkMode = theme.background !== "#f0f4f7" && theme.background !== "#FFFFFF";
 
   const [horarios, setHorarios] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -194,13 +199,13 @@ const ConfirmacionReservaSlotScreen = () => {
 
   if (error) {
     return (
-      <SafeAreaView style={styles.safeArea}>
+      <SafeAreaView style={[styles.safeArea, isDarkMode && { backgroundColor: theme.background }]}>
         <View style={styles.containerError}>
-          <Text style={styles.errorHeader}>Error</Text>
-          <Text style={styles.errorText}>{error}</Text>
+          <Text style={[styles.errorHeader, isDarkMode && { color: theme.text }]}>Error</Text>
+          <Text style={[styles.errorText, isDarkMode && { color: theme.text }]}>{error}</Text>
           <View style={styles.errorButtonsContainer}>
             <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backNavButton}>
-              <Text style={styles.buttonText}>Volver atrás</Text>
+              <Text style={[styles.buttonText, isDarkMode && { color: theme.text }]}>Volver atrás</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -210,57 +215,65 @@ const ConfirmacionReservaSlotScreen = () => {
 
   if (loading) {
     return (
-      <SafeAreaView style={styles.safeArea}>
+      <SafeAreaView style={[styles.safeArea, isDarkMode && { backgroundColor: theme.background }]}>
         <View style={styles.loaderContainer}>
-          <ActivityIndicator size="large" color="#000" />
-          <Text>Cargando disponibilidad...</Text>
+          <ActivityIndicator size="large" color={isDarkMode ? theme.text : "#000"} />
+          <Text style={isDarkMode && { color: theme.text }}>Cargando disponibilidad...</Text>
         </View>
       </SafeAreaView>
     );
   }
 
   return (
-    <SafeAreaView style={styles.safeArea}>
-      <View style={styles.container}>
-        <Text style={styles.header}>Selecciona un horario</Text>
+    <SafeAreaView style={[styles.safeArea, isDarkMode && { backgroundColor: theme.background }]}>
+      <View style={[styles.container, isDarkMode && { backgroundColor: theme.background }]}>
+        <Text style={[styles.header, isDarkMode && { color: theme.text }]}>Selecciona un horario</Text>
         <FlatList
           data={horarios}
           keyExtractor={(item, index) => index.toString()}
           numColumns={2}
           columnWrapperStyle={styles.row}
-          ListEmptyComponent={<Text style={styles.emptyText}>No hay horarios disponibles</Text>}
+          ListEmptyComponent={<Text style={[styles.emptyText, isDarkMode && { color: theme.text }]}>No hay horarios disponibles</Text>}
           renderItem={({ item, index }) => (
             <TouchableOpacity
-              style={styles.slotButton}
+              style={[
+                styles.slotButton,
+                isDarkMode 
+                  ? { backgroundColor: "#333" } 
+                  : null,
+              ]}
               onPress={() => handleSlotPress(item)}
             >
-              <Text style={styles.slotText}>{`${item.inicio} - ${item.fin}`}</Text>
+              <Text style={[styles.slotText, isDarkMode && { color: theme.text }]}>{`${item.inicio} - ${item.fin}`}</Text>
             </TouchableOpacity>
           )}
         />
 
         {/* Botón de volver atrás posicionado en la parte inferior izquierda */}
         <TouchableOpacity
-          style={styles.backNavigationButton}
+          style={[
+            styles.backNavigationButton,
+            isDarkMode && { backgroundColor: "#444" } // Aseguramos que tenga un fondo visible en modo oscuro
+          ]}
           onPress={() => navigation.goBack()}
         >
-          <Text style={styles.buttonText}>Volver atrás</Text>
+          <Text style={[styles.buttonText, isDarkMode && { color: theme.text }]} >Volver atrás</Text>
         </TouchableOpacity>
 
         <Modal visible={modalVisible} transparent animationType="slide">
           <View style={styles.modalContainer}>
-            <View style={styles.modalContent}>
-              <Text style={styles.modalTitle}>Confirmar Reserva</Text>
+            <View style={[styles.modalContent, isDarkMode && { backgroundColor: "#444" }]}>
+              <Text style={[styles.modalTitle, isDarkMode && { color: theme.text }]}>Confirmar Reserva</Text>
               {selectedSlot && (
                 <>
-                  <Text style={styles.modalInfo}>
+                  <Text style={[styles.modalInfo, isDarkMode && { color: theme.text }]}>
                     Horario: {selectedSlot.inicio} - {selectedSlot.fin}
                   </Text>
-                  <Text style={styles.modalInfo}>
+                  <Text style={[styles.modalInfo, isDarkMode && { color: theme.text }]}>
                     Trabajador asignado: {trabajadorId ? trabajadorNombre : selectedSlot.trabajadorNombre}
                   </Text>
                   {urlPago && (
-                    <Text style={styles.modalWarning}>
+                    <Text style={[styles.modalWarning, isDarkMode && { color: theme.text }]}>
                       Seleccionaste un servicio con abono. Debes abonar para que se confirme la reserva.
                       Una vez pagado, la reserva se confirmará automáticamente.
                     </Text>
@@ -268,12 +281,11 @@ const ConfirmacionReservaSlotScreen = () => {
                 </>
               )}
               <View style={styles.modalButtonsRow}>
-                
                 <TouchableOpacity onPress={() => setModalVisible(false)} style={[styles.modalButton, styles.modalButtonCancel]}>
-                  <Text style={styles.buttonText}>Volver</Text>
+                  <Text style={[styles.buttonText, isDarkMode && { color: theme.text }]}>Volver</Text>
                 </TouchableOpacity>
                 <TouchableOpacity onPress={confirmarReserva} style={[styles.modalButton, styles.modalButtonConfirm]}>
-                  <Text style={styles.buttonText}>Confirmar</Text>
+                  <Text style={[styles.buttonText, isDarkMode && { color: theme.text }]}>Confirmar</Text>
                 </TouchableOpacity>
               </View>
             </View>
@@ -307,13 +319,12 @@ const styles = StyleSheet.create({
   },
   slotButton: {
     width: '48%',
-    height: 70, // Altura fija para uniformidad
+    height: 70,
     backgroundColor: '#fff',
     paddingVertical: 15,
     paddingHorizontal: 10,
     borderRadius: 10,
     marginVertical: 5,
-    // Al usar FlatList con numColumns, el marginHorizontal se aplica automáticamente en la distribución
     alignItems: 'center',
     justifyContent: 'center',
     shadowColor: '#000',
@@ -322,7 +333,6 @@ const styles = StyleSheet.create({
     shadowRadius: 3,
     elevation: 2,
   },
-  // Eliminamos el estilo lastSlotFullWidth para que todos tengan el mismo tamaño
   slotText: {
     fontSize: 16,
     color: '#333',
