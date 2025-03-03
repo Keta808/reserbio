@@ -25,7 +25,6 @@ const ReservaClienteScreen = () => {
   // Filtro para mostrar reservas 'Activas' o 'Finalizadas'
   const [filtro, setFiltro] = useState('Activas');
   const animacion = new Animated.Value(filtro === 'Activas' ? 0 : 1);
-  
 
   // Estados para el modal de confirmación
   const [modalVisible, setModalVisible] = useState(false);
@@ -123,16 +122,16 @@ const ReservaClienteScreen = () => {
     if (reservaSeleccionada && !confirming) {
       setConfirming(true);
       try {
-        if(reservaSeleccionada.servicio.urlPago) {
+        if (reservaSeleccionada.servicio.urlPago) {
           const [pagos, errorPagos] = await paymentService.getPaymentByClientId(clienteId);
           if (errorPagos) {
             Alert.alert("Error", "No se pudieron obtener los pagos.");
             return;
-        } 
-        if (!pagos?.data?.length) {
-          Alert.alert("Error", "No se encontraron pagos asociados a este servicio.");
-          return;
-      }
+          } 
+          if (!pagos?.data?.length) {
+            Alert.alert("Error", "No se encontraron pagos asociados a este servicio.");
+            return;
+          }
           const pagoAsociado = pagos.data.find(pago => pago.idServicio === reservaSeleccionada.servicio._id);
           if (pagoAsociado) {
             const [reembolso, errorRembolso] = await paymentService.refundPayment(pagoAsociado.paymentId);
@@ -145,7 +144,7 @@ const ReservaClienteScreen = () => {
             Alert.alert('Pago reembolsado', 'Se ha reembolsado el pago de la reserva.');
           } else {
             Alert.alert("Error", "No se encontró un pago asociado a esta reserva.");
-        }
+          }
         } 
         await reservaService.cancelReservaCliente(reservaSeleccionada);
         fetchReservas(clienteId);
@@ -219,7 +218,8 @@ const ReservaClienteScreen = () => {
           data={reservasFiltradas}
           keyExtractor={(item) => item._id}
           renderItem={({ item }) => (
-            <View style={styles.reservaItem}>
+            // Se agrega estilo condicional para reservas finalizadas con padding extra en la parte inferior
+            <View style={[styles.reservaItem, item.estado === 'Finalizada' && styles.reservaItemFinalizada]}>
               <Text style={styles.reservaText}>{formatReserva(item)}</Text>
               <Text style={styles.reservaSubText}>Servicio: {item.servicio.nombre}</Text>
               <Text style={styles.reservaSubText}>
@@ -244,7 +244,13 @@ const ReservaClienteScreen = () => {
               )}
 
               {item.estado === 'Finalizada' && (
-                <View style={styles.actionButtonsContainer}>
+                <>
+                  <TouchableOpacity
+                    onPress={() => confirmarEliminacion(item._id)}
+                    style={styles.cancelButton}
+                  >
+                    <AntDesign name="closecircle" size={24} color="red" />
+                  </TouchableOpacity>
                   {!item.tieneValoracion && (
                     <TouchableOpacity
                       style={styles.valoracionButton}
@@ -255,13 +261,7 @@ const ReservaClienteScreen = () => {
                       <Text style={styles.valoracionButtonText}>Valorar Servicio</Text>
                     </TouchableOpacity>
                   )}
-                  <TouchableOpacity
-                    onPress={() => confirmarEliminacion(item._id)}
-                    style={styles.cancelButton}
-                  >
-                    <AntDesign name="closecircle" size={24} color="red" />
-                  </TouchableOpacity>
-                </View>
+                </>
               )}
             </View>
           )}
@@ -375,11 +375,16 @@ const styles = StyleSheet.create({
     color: '#fff',
   },
   reservaItem: {
+    position: 'relative', // Permite posicionar botones absolutamente respecto a la card
     backgroundColor: '#fff',
     padding: 12,
     borderRadius: 8,
     marginVertical: 8,
     elevation: 2,
+  },
+  // Estilo condicional para reservas finalizadas (espacio extra abajo para evitar que el botón tape el texto)
+  reservaItemFinalizada: {
+    paddingBottom: 50,
   },
   reservaText: {
     fontSize: 16,
@@ -412,22 +417,17 @@ const styles = StyleSheet.create({
   },
   cancelButton: {
     position: 'absolute',
-    alignContent: 'flex-end', 
     right: 10,
     top: 10,
   },
-  actionButtonsContainer: {
-    flexDirection: 'row',
-    justifyContent: 'flex-end',
-    alignItems: 'center',
-    marginTop: 8,
-  },
   valoracionButton: {
+    position: 'absolute',
+    right: 10,
+    bottom: 10,
     backgroundColor: '#28a745',
     paddingVertical: 8,
     paddingHorizontal: 12,
     borderRadius: 6,
-    marginRight: 10,
   },
   valoracionButtonText: {
     color: '#fff',
