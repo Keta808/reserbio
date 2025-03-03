@@ -19,6 +19,9 @@ router.post("/createcliente", usuarioController.createCliente); // Permitir regi
 router.post("/createtrabajador", usuarioController.createTrabajador); // Permitir registro sin autenticación
 router.post("/createuser", usuarioController.createUser); // Permitir creación de usuario sin autenticación
 
+// para cambiar la contraseña
+router.post("/changepassword", usuarioController.changePassword);
+
 // 🔒 **Aplicar autenticación a todas las rutas siguientes**
 router.use(authenticationMiddleware);
 

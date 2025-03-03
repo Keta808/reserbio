@@ -1,279 +1,274 @@
 import React, { useState, useEffect, useContext } from 'react';
-import { View, Text, StyleSheet, Button, ActivityIndicator, Alert, Modal, TextInput, TouchableOpacity } from 'react-native'; 
-
+import { View, Text, StyleSheet, ActivityIndicator, Alert, Modal, TextInput, TouchableOpacity } from 'react-native'; 
+import Icon from 'react-native-vector-icons/FontAwesome';
 import { AuthContext } from '../context/auth.context';
-// Llamar services de usuario para actualizar datos y botones
-import { getClienteById, updateCliente } from '../services/user.service'; 
-
+import { getClienteById, changePassword } from '../services/user.service';
 
 export default function PerfilClienteScreen () {
-    const { user } = useContext(AuthContext);
-    
+  const { user } = useContext(AuthContext);
+  const [dataCliente, setDataCliente] = useState(null);
+  const [loading, setLoading] = useState(true);   
+  const [modalVisible, setModalVisible] = useState(false);
+  
+  // Estados para el cambio de contraseña
+  const [passwordActual, setPasswordActual] = useState('');
+  const [passwordNuevo, setPasswordNuevo] = useState('');
 
-    const [dataCliente, setDataCliente] = useState(null);
-    const [loading, setLoading] = useState(true);   
-    const [modalVisible, setModalVisible] = useState(false);
-
-    // Estados para los campos del formulario
-        const [EditinguserId, setEditingUserId] = useState(null);
-        const [nombre, setNombre] = useState('');
-        const [apellido, setApellido] = useState('');
-        const [telefono, setTelefono] = useState('');
-        const [email, setEmail] = useState('');
-
-    useEffect(() =>{
-        const fetchClienteData = async () => {
-            try {
-                if (!user || !user.id) return null; 
-                const clienteData = await getClienteById(user.id);
-                setDataCliente(clienteData);
-            } catch (error) {
-                console.error("Error al cargar datos del cliente:", error);
-                Alert.alert("Error", "No se pudo cargar la información del cliente");
-            }finally{
-                setLoading(false);
-            }
-        }; 
-        fetchClienteData();
-    },[user]);
-
-    if(loading){
-        return (
-            <View style={styles.loadingContainer}>
-                <ActivityIndicator size="large" color="#007BFF" />
-            </View>
-        );
-    }
-    if(!dataCliente){
-        return (
-            <View style={styles.container}>
-                <Text style={styles.error}>No se pudo cargar la información del cliente.</Text>
-            </View>
-        );
-    } 
-    const handleEditProfile = () => {
-        setNombre(dataCliente.nombre || '');
-        setApellido(dataCliente.apellido || '');
-        setTelefono(dataCliente.telefono || '');
-        setEmail(dataCliente.email || '');
-        setEditingUserId(dataCliente._id || null);
-        setModalVisible(true);
-    };
-    const handleCancelEdit = () => {
-        setModalVisible(false);
+  useEffect(() => {
+    const fetchClienteData = async () => {
+      try {
+        if (!user || !user.id) return; 
+        const clienteData = await getClienteById(user.id);
+        setDataCliente(clienteData);
+      } catch (error) {
+        console.error("Error al cargar datos del cliente:", error);
+        Alert.alert("Error", "No se pudo cargar la información del cliente");
+      } finally {
+        setLoading(false);
+      }
     }; 
-    const limpiarFormulario = () => {
-        setNombre('');
-        setApellido('');
-        setTelefono('');
-        setEmail('');
-        setEditingUserId(null);
-        setModalVisible(false);
-    } 
-    const handleSaveProfile = async () => {
-        try {
-            const updatedData = {}; 
-            if (nombre !== dataCliente.data.nombre) updatedData.nombre = nombre;
-            if (apellido !== dataCliente.data.apellido) updatedData.apellido = apellido;
-            if (telefono !== dataCliente.data.telefono) updatedData.telefono = telefono;
-            if (email !== dataCliente.data.email) updatedData.email = email;
-            if (Object.keys(updatedData).length === 0) {
-                Alert.alert("No hay cambios", "No se detectaron cambios en los datos del cliente");
-                return;
-            }
+    fetchClienteData();
+  }, [user]);
 
-            const response = await updateCliente(EditinguserId, { clienteData: updatedData });
-
-            if (response && !response[1]){
-                setDataCliente({ ...dataCliente, data: { ...dataCliente.data, ...updatedData } });
-                limpiarFormulario();
-                Alert.alert("Datos actualizados", "Los datos del cliente se actualizaron correctamente");
-            } else {
-                Alert.alert('Error', 'No se pudo actualizar el perfil.');
-            }
-
-        } catch (error) {
-            console.error("Error al actualizar datos del cliente:", error);
-            Alert.alert("Error", "No se pudo actualizar los datos del cliente");
-        } 
-    };
-
-    return(
-         <View style={styles.container}>
-                  <Text style={styles.title}>Perfil del Cliente</Text>
-                  <View style={styles.infoContainer}>
-                    <View style={styles.infoRow}>
-                      <Text style={styles.label}>Nombre:</Text>
-                      <Text style={styles.value}>{dataCliente.data.nombre || 'Sin nombre'}</Text>
-                    </View>
-                    <View style={styles.infoRow}>
-                      <Text style={styles.label}>Apellido:</Text>
-                      <Text style={styles.value}>{dataCliente.data.apellido || 'Sin apellido'}</Text>
-                    </View>
-                    <View style={styles.infoRow}>
-                      <Text style={styles.label}>Teléfono:</Text>
-                      <Text style={styles.value}>{dataCliente.data.telefono || 'Sin teléfono'}</Text>
-                    </View>
-                    <View style={styles.infoRow}>
-                      <Text style={styles.label}>Email:</Text>
-                      <Text style={styles.value}>{dataCliente.data.email || 'Sin email'}</Text>
-                    </View>
-        </View>
-             <View style={styles.buttonContainer}>
-                    <Button
-                      title="Editar Perfil"
-                      onPress={handleEditProfile}
-                      color="blue"
-                    />
-                    
-                    
-                    
-                     
-                  </View>
-        <Modal 
-                    animationType="slide"
-                    transparent={true}
-                    visible={modalVisible}
-                    onRequestClose={handleCancelEdit}>
-                    <View style={styles.modalContainer}>
-                            <View style={styles.modalContent}>
-                                <Text style={styles.modalTitle}>Editar Perfil</Text>
-        
-                                <TextInput
-                                    style={styles.input}
-                                    placeholder="Nombre"
-                                    value={nombre}
-                                    onChangeText={setNombre}
-                                />
-                                <TextInput
-                                    style={styles.input}
-                                    placeholder="Apellido"
-                                    value={apellido}
-                                    onChangeText={setApellido}
-                                />
-                                <TextInput
-                                    style={styles.input}
-                                    placeholder="Teléfono"
-                                    value={telefono}
-                                    onChangeText={setTelefono}
-                                    keyboardType="phone-pad"
-                                /> 
-                                <TextInput 
-                                    style={styles.input}
-                                    placeholder="Email"
-                                    value={email}
-                                    onChangeText={setEmail}
-                                    keyboardType="email-address" 
-                                />
-                                <View style={styles.buttonRow}>
-                                    <TouchableOpacity style={[styles.modalButton, { backgroundColor: 'red' }]} onPress={handleCancelEdit}>
-                                        <Text style={styles.buttonText}>Cancelar</Text>
-                                    </TouchableOpacity>
-                                    <TouchableOpacity style={[styles.modalButton, { backgroundColor: 'green' }]} onPress={handleSaveProfile}>
-                                        <Text style={styles.buttonText}>Guardar</Text>
-                                    </TouchableOpacity>
-                                    
-                                </View>
-                            </View>
-                        </View>
-                    </Modal>
-        
-                </View>
+  if (loading) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color="#007BFF" />
+      </View>
     );
+  }
 
+  if (!dataCliente) {
+    return (
+      <View style={styles.container}>
+        <Text style={styles.error}>No se pudo cargar la información del cliente.</Text>
+      </View>
+    );
+  } 
 
+  const handleOpenModal = () => {
+    setModalVisible(true);
+  };
 
-} 
+  const handleCloseModal = () => {
+    setModalVisible(false);
+    setPasswordActual('');
+    setPasswordNuevo('');
+  };
+
+  const handleChangePassword = async () => {
+    if (!passwordActual || !passwordNuevo) {
+      Alert.alert("Error", "Por favor completa todos los campos.");
+      return;
+    }
+    try {
+      await changePassword({ 
+        id: user.id, 
+        oldPassword: passwordActual, 
+        newPassword: passwordNuevo 
+      });
+      Alert.alert("Éxito", "Contraseña cambiada correctamente.");
+      handleCloseModal();
+    } catch (error) {
+      Alert.alert("Error", "No se pudo cambiar la contraseña.");
+    }
+  };
+
+  return (
+    <View style={styles.container}>
+      <Text style={styles.title}>Perfil del Cliente</Text>
+      <View style={styles.infoContainer}>
+        <View style={styles.infoRow}>
+          <Icon name="user" size={20} color="#007BFF" style={styles.infoIcon} />
+          <Text style={styles.label}>Nombre: </Text>
+          <Text style={styles.value}>{dataCliente.data.nombre || 'Sin nombre'}</Text>
+        </View>
+        <View style={styles.infoRow}>
+          <Icon name="user" size={20} color="#007BFF" style={styles.infoIcon} />
+          <Text style={styles.label}>Apellido: </Text>
+          <Text style={styles.value}>{dataCliente.data.apellido || 'Sin apellido'}</Text>
+        </View>
+        <View style={styles.infoRow}>
+          <Icon name="phone" size={20} color="#007BFF" style={styles.infoIcon} />
+          <Text style={styles.label}>Teléfono: </Text>
+          <Text style={styles.value}>{dataCliente.data.telefono || 'Sin teléfono'}</Text>
+        </View>
+        <View style={styles.infoRow}>
+          <Icon name="envelope" size={20} color="#007BFF" style={styles.infoIcon} />
+          <Text style={styles.label}>Email: </Text>
+          <Text style={styles.value}>{dataCliente.data.email || 'Sin email'}</Text>
+        </View>
+      </View>
+
+      <TouchableOpacity style={styles.changePasswordButton} onPress={handleOpenModal}>
+        <Icon name="lock" size={20} color="#fff" />
+        <Text style={styles.changePasswordButtonText}> Cambiar Contraseña</Text>
+      </TouchableOpacity>
+
+      <Modal 
+        animationType="slide"
+        transparent={true}
+        visible={modalVisible}
+        onRequestClose={handleCloseModal}
+      >
+        <View style={styles.modalContainer}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Cambiar Contraseña</Text>
+            <TextInput
+                style={styles.input}
+                placeholder="Contraseña Actual"
+                secureTextEntry={true}
+                value={passwordActual}
+                onChangeText={setPasswordActual}
+                autoCapitalize="none"
+                autoCorrect={false}
+                placeholderTextColor="#999"
+              />
+              <TextInput
+                style={styles.input}
+                placeholder="Nueva Contraseña"
+                secureTextEntry={true}
+                value={passwordNuevo}
+                onChangeText={setPasswordNuevo}
+                autoCapitalize="none"
+                autoCorrect={false}
+                placeholderTextColor="#999"
+              />
+
+            <View style={styles.buttonRow}>
+              <TouchableOpacity style={[styles.modalButton, styles.cancelButton]} onPress={handleCloseModal}>
+                <Icon name="times" size={18} color="#fff" />
+                <Text style={styles.buttonText}> Cancelar</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={[styles.modalButton, styles.saveButton]} onPress={handleChangePassword}>
+                <Icon name="check" size={18} color="#fff" />
+                <Text style={styles.buttonText}> Guardar</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+    </View>
+  );
+}
+
 const styles = StyleSheet.create({
-    container: {
-      flex: 1,
-      justifyContent: 'center',
-      padding: 20,
-      backgroundColor: '#fff',
-    }, 
-    loadingContainer: {
-      flex: 1,
-      justifyContent: 'center',
-      alignItems: 'center',
-    },
-    title: {
-      fontSize: 24,
-      fontWeight: 'bold',
-      marginBottom: 20,
-      textAlign: 'center', 
-      color: '#000000',
-    },
-    infoContainer: {
-      marginBottom: 30,
-      padding: 15,
-      backgroundColor: '#f4f4f4',
-      borderRadius: 8,
-    },
-    infoRow: {
-      flexDirection: 'row',
-      marginBottom: 10,
-    },
-    label: {
-      fontWeight: 'bold',
-      fontSize: 16,
-      color: '#333',
-      marginRight: 5,
-    },
-    value: {
-      fontSize: 16,
-      color: '#555',
-    },
-    buttonContainer: {
-      marginTop: 20,
-      
-     
-    },
-    error: {
-      color: 'red',
-      textAlign: 'center',
-      fontSize: 16,
-    }, 
-    modalContainer: {
-      flex: 1,
-      justifyContent: 'center',
-      alignItems: 'center',
-      backgroundColor: 'rgba(0,0,0,0.5)',
+  container: {
+    flex: 1,
+    backgroundColor: '#F8F9FA',
+    padding: 20,
+  }, 
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  title: {
+    fontSize: 28,
+    fontWeight: '700',
+    marginBottom: 20,
+    textAlign: 'center', 
+    color: '#343A40',
+  },
+  infoContainer: {
+    backgroundColor: '#fff',
+    padding: 20,
+    borderRadius: 10,
+    marginBottom: 30,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 5,
+    elevation: 3,
+  },
+  infoRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 15,
+  },
+  infoIcon: {
+    marginRight: 10,
+  },
+  label: {
+    fontWeight: 'bold',
+    fontSize: 16,
+    color: '#495057',
+  },
+  value: {
+    fontSize: 16,
+    color: '#6C757D',
+  },
+  changePasswordButton: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#007BFF',
+    paddingVertical: 15,
+    borderRadius: 10,
+    shadowColor: "#007BFF",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 5,
+    elevation: 3,
+  },
+  changePasswordButtonText: {
+    color: '#fff',
+    fontSize: 18,
+    fontWeight: '600',
+  },
+  modalContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    backgroundColor: 'rgba(0,0,0,0.6)',
+    padding: 20,
   },
   modalContent: {
-      backgroundColor: 'white',
-      padding: 20,
-      borderRadius: 8,
-      width: '80%',
-      alignItems: 'center',
+    backgroundColor: '#fff',
+    borderRadius: 10,
+    padding: 25,
+    alignItems: 'center',
   },
   modalTitle: {
-      fontSize: 20,
-      fontWeight: 'bold',
-      marginBottom: 10,
+    fontSize: 22,
+    fontWeight: '700',
+    marginBottom: 20,
+    color: '#343A40',
+  },
+  input: {
+    width: '100%',
+    borderBottomWidth: 1,
+    borderBottomColor: '#CED4DA',
+    marginBottom: 20,
+    paddingVertical: 8,
+    paddingHorizontal: 10,
+    fontSize: 16,
+    color: '#495057',
   },
   buttonRow: {
     flexDirection: 'row', 
     justifyContent: 'space-between', 
-    width: '100%', 
+    width: '100%',
     marginTop: 10,
-     
   },
   modalButton: {
-    padding: 10,
-    borderRadius: 5,
+    flexDirection: 'row',
     alignItems: 'center',
     flex: 1,
-    marginHorizontal: 5, 
+    paddingVertical: 12,
+    borderRadius: 8,
+    justifyContent: 'center',
+    marginHorizontal: 5,
+  },
+  cancelButton: {
+    backgroundColor: '#DC3545',
+  },
+  saveButton: {
+    backgroundColor: '#28A745',
   },
   buttonText: {
-    color: 'white',
+    color: '#fff',
     fontSize: 16,
-  }, 
-  input: {
-    width: '100%',
-    borderBottomWidth: 1,
-    borderBottomColor: 'gray',
-    marginBottom: 15,
-    padding: 5,
+    fontWeight: '600',
   },
-  });
+});
+

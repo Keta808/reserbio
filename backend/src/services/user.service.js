@@ -7,6 +7,8 @@
 // Importa el objeto por defecto que contiene todos los modelos
 import UserModels from "../models/user.model.js"; 
 
+import bcrypt from "bcrypt";
+
 // Extrae el modelo 'User'
 const { User, Trabajador, Cliente, Administrador } = UserModels;
 
@@ -67,29 +69,30 @@ async function createUser(user) {
  * @param {Object} newPassword Nueva contraseña del usuario
  * @returns {Promise} Promesa con el objeto de usuario actualizado
  */
-async function changePassword(email, oldPassword, newPassword) {
+async function changePassword(userId, oldPassword, newPassword) {
   try {
-    const userFound = await User.findOne({ email: email });
+
+    const userFound = await User.findById(userId);
     if (!userFound) {
-      throw new Error('User not found');
+      return [null, "Usuario no encontrado"];
     }
-    const matchPassword = await User.comparePassword(
-      oldPassword,
-      userFound.password,
-    );
+
+    // Verificar si la contraseña antigua es correcta
+    const matchPassword = await User.comparePassword(oldPassword, userFound.password);
     if (!matchPassword) {
-      return [null, "La contraseña no coincide"];
+      return [null, "La contraseña actual no es correcta"];
     }
-    // Hash the new password and update the user
+
+    // Hash de la nueva contraseña y actualización
     const salt = await bcrypt.genSalt(10);
-    const hashedPassword = await bcrypt.hash(newPassword, salt);
-    userFound.password = hashedPassword;
-
+    userFound.password = await bcrypt.hash(newPassword, salt);
+    
     await userFound.save();
-
-    return [userFound, null];
+    
+    return ["Contraseña actualizada con éxito", null];
   } catch (error) {
     handleError(error, "user.service -> changePassword");
+    return [null, "Error al cambiar la contraseña"];
   }
 }
 
