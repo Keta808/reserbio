@@ -200,8 +200,7 @@ async function crearPreferenciaServicio(idServicio){
         
         const [montoAbono, error] = await servicioService.calcularMontoAbono(servicio.id, servicio.precio, servicio.porcentajeAbono); 
         if (error) return [null, error];
-        console.log("MONTO ABONO: ", montoAbono);
-
+        
         // Refrescar los tokens antes de continuar
         console.log("verificando...");
         const [microempresaMP, tokenError] = await verificarExpiracion(servicio.idMicroempresa);
@@ -209,8 +208,7 @@ async function crearPreferenciaServicio(idServicio){
             console.log("Error al refrescar el token:", tokenError);
             return [null, "No se pudo actualizar el token de acceso."];
         }
-        console.log("microempresaMP: ", microempresaMP);
-        console.log("accestoken: ", microempresaMP.accessToken);
+        
 
         if (!microempresaMP || !microempresaMP.accessToken) {
             return [null, "No se pudo obtener el token de acceso después de refrescar."];

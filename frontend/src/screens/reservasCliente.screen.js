@@ -7,13 +7,15 @@ import {
   FlatList, 
   Animated, 
   TouchableOpacity, 
-  Modal 
+  Modal, 
+  Alert
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import reservaService from '../services/reserva.service';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import valoracionService from '../services/valoracion.service';
 import { AntDesign } from '@expo/vector-icons';
+import paymentService from '../services/payment.services.js'; 
 
 const ReservaClienteScreen = () => {
   const navigation = useNavigation();
@@ -23,6 +25,7 @@ const ReservaClienteScreen = () => {
   // Filtro para mostrar reservas 'Activas' o 'Finalizadas'
   const [filtro, setFiltro] = useState('Activas');
   const animacion = new Animated.Value(filtro === 'Activas' ? 0 : 1);
+  
 
   // Estados para el modal de confirmación
   const [modalVisible, setModalVisible] = useState(false);
@@ -120,6 +123,30 @@ const ReservaClienteScreen = () => {
     if (reservaSeleccionada && !confirming) {
       setConfirming(true);
       try {
+        if(reservaSeleccionada.servicio.urlPago) {
+          const [pagos, errorPagos] = await paymentService.getPaymentByClientId(clienteId);
+          if (errorPagos) {
+            Alert.alert("Error", "No se pudieron obtener los pagos.");
+            return;
+        } 
+        if (!pagos?.data?.length) {
+          Alert.alert("Error", "No se encontraron pagos asociados a este servicio.");
+          return;
+      }
+          const pagoAsociado = pagos.data.find(pago => pago.idServicio === reservaSeleccionada.servicio._id);
+          if (pagoAsociado) {
+            const [reembolso, errorRembolso] = await paymentService.refundPayment(pagoAsociado.paymentId);
+            if (errorRembolso) {
+              console.error('Error al reembolsar el pago:', errorRembolso);
+              Alert.alert('Error', 'No se pudo procesar el reembolso.');
+              return;
+            } 
+            console.log('Pago reembolsado:', reembolso);
+            Alert.alert('Pago reembolsado', 'Se ha reembolsado el pago de la reserva.');
+          } else {
+            Alert.alert("Error", "No se encontró un pago asociado a esta reserva.");
+        }
+        } 
         await reservaService.cancelReservaCliente(reservaSeleccionada);
         fetchReservas(clienteId);
       } catch (error) {

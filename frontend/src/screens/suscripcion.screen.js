@@ -66,7 +66,7 @@ const SuscripcionScreen = () => {
                 <Text style={styles.planTitle}>{String(plan.tipo_plan || "Sin nombre")}</Text>
                 <Text style={styles.planDescription}>{String(description)}</Text>  
                 <Text style={styles.planPrice}>${String(plan.precio || "0")}</Text> 
-                <Button
+                <Button style={styles.planButton}
                   title="Obtener"
                   onPress={() => navigation.navigate('Pago', {selectedPlan: plan, user })} // Navegar a la pantalla de pago
                 />
@@ -151,6 +151,12 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     marginBottom: 10,
     color: '#FF6347',
+  },
+  planButton: {
+    padding: 10,
+    backgroundColor: '#0077b6',
+    color: '#fff',
+    borderRadius: 8,
   },
   disclaimerContainer: {
     marginTop: 20,

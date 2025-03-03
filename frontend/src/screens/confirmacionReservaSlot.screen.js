@@ -16,6 +16,7 @@ import reservaService from '../services/reserva.service';
 import servicioService from '../services/servicio.service';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import paymentService from "../services/payment.services.js"; 
 
 const ConfirmacionReservaSlotScreen = () => {
   const route = useRoute();
@@ -28,7 +29,8 @@ const ConfirmacionReservaSlotScreen = () => {
   const [selectedSlot, setSelectedSlot] = useState(null);
   const [modalVisible, setModalVisible] = useState(false);
   const [error, setError] = useState(null);
-  const [clienteId, setClienteId] = useState(null);
+  const [clienteId, setClienteId] = useState(null); 
+  const [urlPago, setUrlPago] = useState(null);
 
   useEffect(() => {
     const fetchClienteId = async () => {
@@ -50,6 +52,10 @@ const ConfirmacionReservaSlotScreen = () => {
     const fetchDuracionServicio = async () => {
       try {
         const response = await servicioService.getServicioById(servicioId);
+        if (response.urlPago && response.urlPago !== null) {
+          setUrlPago(response.urlPago);
+          console.log("URL PAGO", response.urlPago);
+        }
         setDuracionServicio(response.duracion);
       } catch (error) {
         console.error('Error al obtener la duración del servicio:', error);
@@ -165,17 +171,22 @@ const ConfirmacionReservaSlotScreen = () => {
         cliente: clienteId,
         estado: 'Activa',
       };
-  
-      const response = await reservaService.createReservaHorario(reservaData);
-      console.log('Reserva creada:', response);
+      if (urlPago && urlPago !== null) { 
+        setModalVisible(false);
+        navigation.navigate("ServicioPaymentScreen", { urlPago, idServicio: servicioId, reservaData });
+      } else { 
+        const response = await reservaService.createReservaHorario(reservaData);
+        console.log('Reserva creada:', response);
 
-      if (error) {
-        console.error('Error al confirmar reserva:', error);
-        return;
-      }
+        if (error) {
+          console.error('Error al confirmar reserva:', error);
+          return;
+       }
   
-      setModalVisible(false);
-      navigation.navigate('HomeNavigator', { screen: 'Reservas' });
+        setModalVisible(false);
+        navigation.navigate('HomeNavigator', { screen: 'Reservas' });
+      }
+      
     } catch (error) {
       console.error('Error al confirmar reserva:', error);
     }
@@ -248,6 +259,12 @@ const ConfirmacionReservaSlotScreen = () => {
                   <Text style={styles.modalInfo}>
                     Trabajador asignado: {trabajadorId ? trabajadorNombre : selectedSlot.trabajadorNombre}
                   </Text>
+                  {urlPago && (
+                    <Text style={styles.modalWarning}>
+                      Seleccionaste un servicio con abono. Debes abonar para que se confirme la reserva.
+                      Una vez pagado, la reserva se confirmará automáticamente.
+                    </Text>
+                  )}
                 </>
               )}
               <View style={styles.modalButtonsRow}>
@@ -366,6 +383,13 @@ const styles = StyleSheet.create({
   },
   modalButtonCancel: {
     backgroundColor: '#dc3545',
+  },
+  modalWarning: {
+    fontSize: 16,
+    color: '#d9534f',
+    fontWeight: 'bold',
+    textAlign: 'center',
+    marginVertical: 10,
   },
   buttonText: { 
     color: '#fff', 

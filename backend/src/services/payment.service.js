@@ -1,3 +1,4 @@
+/* eslint-disable camelcase */
 /* eslint-disable quote-props */
 /* eslint-disable no-console */
 /* eslint-disable max-len */
@@ -11,12 +12,15 @@ import Servicio from "../models/servicio.model.js";
 
 async function createPayment(paymentData) {
     try {
-        const { idServicio, paymentId, monto, state, fecha } = paymentData;
+        const { idServicio, idCliente, payer_email, payer_id, paymentId, monto, state, fecha } = paymentData;
         const paymentFound = await Payment.findOne({ paymentId }); 
         if (paymentFound) return [null, "El pago ya existe"]; 
         const newPayment = new Payment(
             {
                 idServicio,
+                idCliente,
+                payer_email, 
+                payer_id,  
                 paymentId,
                 monto,
                 state,
@@ -81,7 +85,7 @@ async function procesarNotificacionPago(paymentId, idServicio) {
         if (!paymentId) return [null, "Falta el id del pago"];
         if (!idServicio) return [null, "Falta el id del servicio"]; 
         // Obtener el idMicroempresa del servicio
-        const servicio = await Servicio.findOne(idServicio);
+        const servicio = await Servicio.findOne({ _id: idServicio });
         if (!servicio) return [null, "El servicio no existe"];
         const idMicroempresa = servicio.idMicroempresa;
 
@@ -105,6 +109,9 @@ async function procesarNotificacionPago(paymentId, idServicio) {
         const newPayment = new Payment(
             {
                 idServicio,
+                idCliente: null,
+                payer_email: paymentData.payer.email,
+                payer_id: paymentData.payer.id,
                 paymentId: paymentData.id,
                 monto: paymentData.transaction_amount,
                 state: paymentData.status,
@@ -158,16 +165,64 @@ async function refundPayment(paymentId) {
     }
 } 
 // verificar pago 
-async function verificarPago(idServicio) {
+async function verificarUltimoPago(idServicio) {
     try {
-        const pago = await Payment.findOne({ idServicio }).sort({ fecha: -1 }); // Último pago
-        if (!pago) return [null, "No hay pagos registrados para este servicio"];
-        
-        return [{ estado: pago.state, pago }, null]; 
+        if (!idServicio) return [null, "Falta el id del servicio"];
+
+        // Buscar el pago más reciente y aprobado para este servicio
+        const pago = await Payment.findOne({
+            idServicio,
+            state: { $in: ["approved", "pending"] }, // Solo pagos aprobados
+        }).sort({ fecha: -1 }); // Ordenamos por fecha descendente (el más reciente primero)
+
+        if (!pago) {
+            return [null, "No se encontró un pago aprobado para este servicio"];
+        }
+
+        return [pago, null];
     } catch (error) {
-        handleError(error, "payment.service -> verificarPago");
+        handleError(error, "payment.service -> verificarUltimoPago");
         return [null, error];
     }
 }
 
-export default { createPayment, getPayments, getPaymentById, deletePayment, updatePayment, procesarNotificacionPago, refundPayment, verificarPago };
+async function actualizarIdClienteEnPago(idServicio, idCliente) {
+    try {
+        if (!idServicio || !idCliente ) return [null, "Falta el id del servicio o cliente."];
+         // Buscar el último pago aprobado o pendiente para este servicio
+         const pago = await Payment.findOne({
+            idServicio,
+            state: { $in: ["approved", "pending"] }, // Solo pagos aprobados o pendientes
+            idCliente: null, // Solo actualizar si aún no tiene cliente asignado
+        }).sort({ fecha: -1 });
+        
+        if (!pago) {
+            return [null, "No se encontró un pago sin cliente asignado para este servicio"];
+        }
+
+        // Actualizar el idCliente en el pago
+        pago.idCliente = idCliente;
+        await pago.save();
+        return [pago, null];
+    } catch (error) {
+        handleError(error, "payment.service -> actualizarIdClienteEnPago");
+        return [null, error];
+    }
+} 
+
+async function getPaymentByClientId(idCliente) {
+    try {
+        if (!idCliente) return [null, "Falta el ID del cliente."];
+
+        // Buscar pagos asociados al cliente
+        const pagos = await Payment.find({ idCliente }).sort({ fecha: -1 });
+
+        if (!pagos.length) return [null, "No se encontraron pagos para este cliente."];
+
+        return [pagos, null];
+    } catch (error) {
+        handleError(error, "payment.service -> getPaymentsByClientId");
+        return [null, error];
+    }
+}
+export default { createPayment, getPayments, getPaymentById, deletePayment, updatePayment, procesarNotificacionPago, refundPayment, verificarUltimoPago, actualizarIdClienteEnPago, getPaymentByClientId };

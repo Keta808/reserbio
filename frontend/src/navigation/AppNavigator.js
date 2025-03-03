@@ -1,5 +1,5 @@
 import React, { useContext, useEffect, useState } from 'react';
-import { View, Text, ActivityIndicator } from 'react-native';
+import { View, Text, ActivityIndicator, StyleSheet } from 'react-native';
 import { createStackNavigator } from '@react-navigation/stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -41,6 +41,8 @@ import TrabajadorScreen from '../screens/trabajador.screen.js';
 import HomeTrabajadorScreen from '../screens/homeTrabajador.screen.js';
 import ServicioScreen from '../screens/servicio.screen.js';
 import MercadoPagoScreen from '../screens/mercadopago.screen.js';
+import ServicioPaymentScreen from '../screens/servicioPayment.screen.js'; 
+
 
 
 // Pantalla test
@@ -52,7 +54,7 @@ import ConfirmacionReservaSlotScreen from '../screens/confirmacionReservaSlot.sc
 import InvitarTrabajadorScreen from '../screens/invitarTrabajadores.screen.js';
 // Contexto de autenticación
 import { AuthContext } from '../context/auth.context';
-
+import { Ionicons } from '@expo/vector-icons';
 
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -67,7 +69,29 @@ const LoadingScreen = () => (
 
 
 const HomeClienteNavigator = () => (
- <Tab.Navigator lazy={true}> 
+ <Tab.Navigator screenOptions={({ route }) => ({
+  tabBarIcon: ({ color }) => {
+    let iconName;
+
+    if (route.name === "HomeCliente") {
+      iconName = "home"; 
+    } else if (route.name === "ListaMicroempresas") {
+      iconName = "list"; 
+    } else if (route.name === "Reservas") {
+      iconName = "calendar"; 
+    } else if (route.name === "Perfil") {
+      iconName = "person"; 
+    } else if (route.name === "Suscripcion") {
+      iconName = "card"; 
+    }
+
+    return <Ionicons name={iconName} size={28} color={color} />;
+  },
+  tabBarShowLabel: false, // Oculta los nombres de las pestañas
+  tabBarStyle: styles.tabBarStyle, //  Aplica los estilos globales
+  tabBarItemStyle: styles.tabBarItemStyle, 
+  safeAreaInsets: { bottom: 0 }, 
+})}> 
     <Tab.Screen name="ListaMicroempresas" component={ListaMicroempresasScreen} />
     <Tab.Screen name="HomeCliente" component={HomeClienteScreen} />
     <Tab.Screen name="Reservas" component={ReservaClienteScreen} /> 
@@ -80,7 +104,29 @@ const HomeTrabajadorNavigator = () => {
   const { microempresa } = useMicroempresa();
  
   return (
-    <Tab.Navigator lazy={true}>
+    <Tab.Navigator  screenOptions={({ route }) => ({
+      tabBarIcon: ({ color }) => {
+        let iconName;
+
+        if (route.name === "HomeTrabajador") {
+          iconName = "home"; 
+        } else if (route.name === "Calendario") {
+          iconName = "calendar"; 
+        } else if (route.name === "Microempresa") {
+          iconName = "briefcase"; 
+        } else if (route.name === "Perfil") {
+          iconName = "person";
+        } else if (route.name === "Horario") {
+          iconName = "time"; 
+        }
+
+        return <Ionicons name={iconName} size={28} color={color} />;
+      },
+      tabBarShowLabel: false, //  Oculta los nombres de las pestañas
+      tabBarStyle: styles.tabBarStyle, //  Aplica los estilos globales
+      tabBarItemStyle: styles.tabBarItemStyle, //  Ajusta el espaciado
+      safeAreaInsets: { bottom: 0 },
+    })}>
       <Tab.Screen name="HomeTrabajador" component={HomeTrabajadorScreen} />  
       <Tab.Screen name="Calendario" component={CalendarScreen} />
       <Tab.Screen 
@@ -138,6 +184,7 @@ const AppNavigator = () => {
       <Stack.Screen name="Pago" component={PaymentScreen} /> 
       <Stack.Screen name="Login" component={LoginScreen} />
       <Stack.Screen name= "ConfirmacionReservaSlotScreen" component={ConfirmacionReservaSlotScreen} />
+      <Stack.Screen name="ServicioPaymentScreen" component={ServicioPaymentScreen} />
       
     </Stack.Navigator>
   );
@@ -187,5 +234,32 @@ const AppNavigator = () => {
     </Stack.Navigator>
   );
 };
+// Estilos Globales
+const styles = StyleSheet.create({
+  loadingContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  tabBarStyle: {
+    height: 60, //  Ajusta la altura del Tab Navigator
+    backgroundColor: "#FFFFFF",
+    borderTopWidth: 0,
+    bottom: 0,
+    left: 0,
+    right: 0,
+    elevation: 10, //  Sombra en Android
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: -3 },
+    shadowOpacity: 0.1,
+    shadowRadius: 6,
+  },
+  tabBarItemStyle: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    marginVertical: 10, 
+  },
+});
 
 export default AppNavigator;

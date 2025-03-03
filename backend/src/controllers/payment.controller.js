@@ -94,7 +94,7 @@ async function webhook(req, res) {
             return respondError(req, res, 400, "No se encontró el ID del servicio en la transacción.");
         }
 
-        //  Enviar `idMicroempresa` para obtener su `accessToken` correcto
+        
         const [payment, error] = await PaymentServices.procesarNotificacionPago(paymentId, idServicio);
 
         if (error) {
@@ -121,6 +121,50 @@ async function refundPayment(req, res) {
         return respondError(req, res, 400, error);
     }
 }
+async function verificarUltimoPagoController(req, res) {
+    try {
+        const { idServicio } = req.body;
+
+        const [pago, error] = await PaymentServices.verificarUltimoPago(idServicio);
+        if (error) {
+            return respondError(req, res, 400, error);
+        }
+
+        return respondSuccess(req, res, 200, pago);
+    } catch (error) {
+        handleError(error, "payment.controller -> verificarUltimoPagoController");
+        return respondError(req, res, 500, "Error interno al verificar el pago.");
+    }
+}
+async function actualizarPagoCliente(req, res) {
+    try {
+        const { idServicio, idCliente } = req.body; 
+        const [pago, error] = await PaymentServices.actualizarIdClienteEnPago(idServicio, idCliente);
+        if (error) {
+            return respondError(req, res, 400, error);
+        } 
+        return respondSuccess(req, res, 200, pago);
+    } catch (error) {
+        handleError(error, "payment.controller -> actualizarPagoCliente");
+        return respondError(req, res, 500, "Error interno al actualizar el pago.");
+    }
+}
+async function getPaymentByClientId(req, res) {
+    try {
+        const { idCliente } = req.params;
+
+        if (!idCliente) return respondError(req, res, 400, "No se ha proporcionado el ID del cliente.");
+
+        const [pagos, error] = await PaymentServices.getPaymentsByClientId(idCliente);
+        if (error) return respondError(req, res, 400, error);
+
+        return respondSuccess(req, res, 200, pagos);
+    } catch (error) {
+        handleError(error, "payment.controller -> getPaymentByClientId");
+        return respondError(req, res, 500, "Error interno al obtener los pagos del cliente.");
+    }
+}
+
 export default { 
     createPayment,
     getPayments,
@@ -129,4 +173,7 @@ export default {
     updatePayment,
     webhook,
     refundPayment,
+    verificarUltimoPagoController,
+    actualizarPagoCliente,
+    getPaymentByClientId,
 }; 

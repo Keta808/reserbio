@@ -1,5 +1,5 @@
 import React, { useContext } from "react";
-import { View, Text, Button, StyleSheet } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { AuthContext } from '../context/auth.context';
 import { useNavigation } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -41,25 +41,19 @@ export default function HomeClienteScreen() {
 
     return (
         <View style={styles.container}>
-            <Text style={styles.title}>Bienvenido Cliente</Text>
+            <Text style={styles.title}>¡Bienvenido Cliente!</Text>
             
-            <Button
-                title="Ver Lista de Microempresas"
-                onPress={handleGoToListaMicroempresas}
-                color="#28A745"
-            />
+            <TouchableOpacity style={[styles.button, styles.greenButton]} onPress={handleGoToListaMicroempresas}>
+                <Text style={styles.buttonText}>Ver Lista de Microempresas</Text>
+            </TouchableOpacity>
 
-            <Button
-                title="Aceptar Invitación"
-                onPress={handleGoToAceptarInvitacion}
-                color="#007BFF" // Azul para diferenciarlo
-            />
+            <TouchableOpacity style={[styles.button, styles.blueButton]} onPress={handleGoToAceptarInvitacion}>
+                <Text style={styles.buttonText}>Aceptar Invitación</Text>
+            </TouchableOpacity>
 
-            <Button
-                title="Cerrar Sesión"
-                onPress={handleLogout}
-                color="#FF0000"
-            />
+            <TouchableOpacity style={[styles.button, styles.redButton]} onPress={handleLogout}>
+                <Text style={styles.buttonText}>Cerrar Sesión</Text>
+            </TouchableOpacity>
         </View>
     );
 }
@@ -69,10 +63,53 @@ const styles = StyleSheet.create({
         flex: 1,
         justifyContent: 'center',
         alignItems: 'center',
+        backgroundColor: "#F9F9F9",
+        padding: 20,
     },
     title: {
-        fontSize: 20,
-        marginBottom: 20,
+        fontSize: 32, //  Más grande para destacar
+        fontWeight: "bold",
+        fontFamily: "Inter",
+        color: "#000000", //  Color oscuro para contraste
+        textAlign: "center",
+        
+        
+        marginBottom: 120, //  Más separación con los botones
+        textShadowColor: "rgba(0, 0, 0, 0.4)", // Contorno suave
+        textShadowOffset: { width: 2, height: 2 }, //  Sombra ligera
+        textShadowRadius: 5, //  Difuminado para un efecto más moderno
+    },
+    button: {
+        width: "80%",
+        paddingVertical: 15,
+        borderRadius: 12, 
+        alignItems: "center",
+        justifyContent: "center",
+        marginBottom: 15, 
+        shadowColor: "#000000",
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.3, 
+        shadowRadius: 5,
+        elevation: 6, //  Sombras en Android
+    },
+    buttonText: {
+        fontSize: 16,
+        fontWeight: "bold",
+        fontFamily: "Inter",
+        color: "#FFF", 
+        
+        textShadowColor: "rgba(0, 0, 0, 0.5)", // Contorno negro sutil
+        textShadowOffset: { width: 1, height: 1 }, // Ligero desplazamiento
+        textShadowRadius: 2, //  Difuminado suave
+    },
+    greenButton: {
+        backgroundColor: "#28A745",
+    },
+    blueButton: {
+        backgroundColor: "#007BFF",
+    },
+    redButton: {
+        backgroundColor: "#FF0000",
     },
 });
 

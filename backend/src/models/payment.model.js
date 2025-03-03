@@ -6,6 +6,19 @@ const paymentSchema = new mongoose.Schema({
         ref: "Servicio",
         required: true,
     }, 
+    idCliente: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User",
+        required: false,
+    },
+    payer_email: {
+        type: String,
+        required: true,
+    },
+    payer_id: {
+        type: String,
+        required: true,
+    },
     paymentId: {
         type: String,
         unique: true,

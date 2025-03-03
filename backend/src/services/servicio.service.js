@@ -131,8 +131,6 @@ async function getMicroempresaIdByServicioId(servicioId) {
 }
 
 
-
-
 // Exportamos las funciones definidas   
 export default {
     getServicios, 
