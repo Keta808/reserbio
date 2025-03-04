@@ -229,7 +229,8 @@ export default function MicroempresaClienteScreen({ route, navigation }) {
           <View style={styles.footerContainer}>
              {/* Trabajadores */}
              <View style={styles.sectionContainer}>
-              <Text style={styles.sectionTitle}>Trabajadores</Text>
+             <Text style={[styles.sectionTitle, { color: theme.text }]}>Trabajadores</Text>
+
               {microempresa.trabajadores.length > 0 ? (
                 <FlatList
                   data={microempresa.trabajadores}
@@ -420,8 +421,8 @@ const styles = StyleSheet.create({
     borderColor: "#ddd",
     borderRadius: 10,
     padding: 10,
-    marginVertical: 5,
-    marginHorizontal: 10,
+    margin: 5,          // Usa un margen uniforme en todos los lados
+    // width: "45%",       // Define el mismo ancho que en 'card'
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.2,
@@ -451,7 +452,7 @@ const styles = StyleSheet.create({
   // Actualizamos la card de trabajadores para que sea idéntica a la de servicios:
   card: {
     backgroundColor: "#fff",
-    borderRadius: 8,
+    borderRadius: 10,  // Alineamos el borderRadius con servicioItem
     padding: 10,
     margin: 5,
     width: "45%",
@@ -459,7 +460,7 @@ const styles = StyleSheet.create({
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.2,
-    shadowRadius: 4,
+    shadowRadius: 3,
     elevation: 3,
   },
   cardTitle: {

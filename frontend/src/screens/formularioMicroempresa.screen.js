@@ -1,10 +1,18 @@
 import React, { useState, useRef } from "react";
-import { View, Text, TextInput, Button, StyleSheet, Alert, TouchableOpacity } from "react-native";
+import { 
+  View, 
+  Text, 
+  TextInput, 
+  StyleSheet, 
+  Alert, 
+  TouchableOpacity 
+} from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import ActionSheet from "react-native-actions-sheet";
 import MicroempresaService from "../services/microempresa.service.js";
 import { useMicroempresa } from "../context/microempresa.context";
-import { useAuth } from "../context/auth.context"; // Importa el hook de autenticación
+import { useAuth } from "../context/auth.context";
+import { useTheme } from "../context/theme.context";
 import { getSuscripcionByUserId } from "../services/suscripcion.service.js";
 const CATEGORIAS = [
   "Barberia",
@@ -21,6 +29,7 @@ const CATEGORIAS = [
 ];
 
 const FormularioMicroempresaScreen = ({ navigation }) => {
+  const { theme } = useTheme();
   const [nombre, setNombre] = useState("");
   const [descripcion, setDescripcion] = useState("");
   const [telefono, setTelefono] = useState("");
@@ -30,7 +39,7 @@ const FormularioMicroempresaScreen = ({ navigation }) => {
   const [errors, setErrors] = useState({});
 
   const { fetchMicroempresa } = useMicroempresa();
-  const { logout } = useAuth(); // Obtenemos la función logout
+  const { logout } = useAuth();
 
   const actionSheetRef = useRef(null);
 
@@ -118,7 +127,7 @@ const FormularioMicroempresaScreen = ({ navigation }) => {
       // Actualizamos el contexto para reflejar la nueva microempresa
       await fetchMicroempresa();
 
-      // Redirigimos al flujo normal de trabajador (por ejemplo, al Home)
+      // Redirigimos al flujo normal de trabajador
       navigation.replace("HomeNavigator");
     } catch (error) {
       Alert.alert("Error", "No se pudo crear la microempresa.");
@@ -126,36 +135,59 @@ const FormularioMicroempresaScreen = ({ navigation }) => {
     }
   };
 
-  // Función para manejar la cancelación
   const handleCancel = async () => {
-    // Puedes pedir confirmación si lo deseas, aquí se realiza el logout y se redirige al Login
-    await logout(); // Limpia los datos y cierra sesión
+    // Se realiza logout y se redirige al Login
+    await logout();
     navigation.replace("Login");
   };
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Crear Microempresa</Text>
+    <View style={[styles.container, { backgroundColor: theme.background }]}>
+      <Text style={[styles.title, { color: theme.text }]}>Crear Microempresa</Text>
 
       <TextInput
-        style={styles.input}
+        style={[
+          styles.input,
+          { 
+            backgroundColor: theme.background === "#FFFFFF" ? "#fff" : "#555",
+            color: theme.text,
+            borderColor: theme.background === "#FFFFFF" ? "#ccc" : "#777"
+          }
+        ]}
         placeholder="Nombre"
+        placeholderTextColor={theme.text}
         value={nombre}
         onChangeText={setNombre}
       />
       {errors.nombre && <Text style={styles.error}>{errors.nombre}</Text>}
 
       <TextInput
-        style={styles.input}
+        style={[
+          styles.input,
+          { 
+            backgroundColor: theme.background === "#FFFFFF" ? "#fff" : "#555",
+            color: theme.text,
+            borderColor: theme.background === "#FFFFFF" ? "#ccc" : "#777"
+          }
+        ]}
         placeholder="Descripción"
+        placeholderTextColor={theme.text}
         value={descripcion}
         onChangeText={setDescripcion}
       />
       {errors.descripcion && <Text style={styles.error}>{errors.descripcion}</Text>}
 
       <TextInput
-        style={styles.input}
+        style={[
+          styles.input,
+          { 
+            backgroundColor: theme.background === "#FFFFFF" ? "#fff" : "#555",
+            color: theme.text,
+            borderColor: theme.background === "#FFFFFF" ? "#ccc" : "#777"
+          }
+        ]}
         placeholder="Teléfono"
+        placeholderTextColor={theme.text}
         value={telefono}
         onChangeText={setTelefono}
         keyboardType="phone-pad"
@@ -163,16 +195,32 @@ const FormularioMicroempresaScreen = ({ navigation }) => {
       {errors.telefono && <Text style={styles.error}>{errors.telefono}</Text>}
 
       <TextInput
-        style={styles.input}
+        style={[
+          styles.input,
+          { 
+            backgroundColor: theme.background === "#FFFFFF" ? "#fff" : "#555",
+            color: theme.text,
+            borderColor: theme.background === "#FFFFFF" ? "#ccc" : "#777"
+          }
+        ]}
         placeholder="Dirección"
+        placeholderTextColor={theme.text}
         value={direccion}
         onChangeText={setDireccion}
       />
       {errors.direccion && <Text style={styles.error}>{errors.direccion}</Text>}
 
       <TextInput
-        style={styles.input}
+        style={[
+          styles.input,
+          { 
+            backgroundColor: theme.background === "#FFFFFF" ? "#fff" : "#555",
+            color: theme.text,
+            borderColor: theme.background === "#FFFFFF" ? "#ccc" : "#777"
+          }
+        ]}
         placeholder="Email"
+        placeholderTextColor={theme.text}
         value={email}
         onChangeText={setEmail}
         keyboardType="email-address"
@@ -181,10 +229,13 @@ const FormularioMicroempresaScreen = ({ navigation }) => {
 
       {/* Selector de categoría */}
       <TouchableOpacity
-        style={styles.pickerButton}
+        style={[
+          styles.pickerButton,
+          { backgroundColor: theme.background === "#FFFFFF" ? "#f9f9f9" : "#333" }
+        ]}
         onPress={() => actionSheetRef.current?.show()}
       >
-        <Text>{categoria || "Selecciona una categoría..."}</Text>
+        <Text style={{ color: theme.text }}>{categoria || "Selecciona una categoría..."}</Text>
       </TouchableOpacity>
       {errors.categoria && <Text style={styles.error}>{errors.categoria}</Text>}
 
@@ -203,9 +254,13 @@ const FormularioMicroempresaScreen = ({ navigation }) => {
         ))}
       </ActionSheet>
 
-      <Button title="Crear Microempresa" onPress={handleSubmit} />
-      {/* Botón Cancelar para cerrar sesión en caso de arrepentimiento */}
-      <Button title="Cancelar" onPress={handleCancel} color="red" />
+      {/* Botones de acción */}
+      <TouchableOpacity style={[styles.button, styles.createButton]} onPress={handleSubmit}>
+        <Text style={styles.buttonText}>Crear Microempresa</Text>
+      </TouchableOpacity>
+      <TouchableOpacity style={[styles.button, styles.cancelButton]} onPress={handleCancel}>
+        <Text style={styles.buttonText}>Cancelar</Text>
+      </TouchableOpacity>
     </View>
   );
 };
@@ -214,7 +269,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     padding: 20,
-    backgroundColor: "#fff",
   },
   title: {
     fontSize: 24,
@@ -224,32 +278,50 @@ const styles = StyleSheet.create({
   },
   input: {
     borderWidth: 1,
-    borderColor: "#ccc",
     borderRadius: 5,
     padding: 10,
     marginBottom: 15,
   },
   pickerButton: {
     borderWidth: 1,
-    borderColor: "#ccc",
-    padding: 12,
     borderRadius: 5,
+    padding: 12,
     textAlign: "center",
     backgroundColor: "#f9f9f9",
+    marginBottom: 15,
   },
   option: {
-    padding: 15,
+    paddingVertical: 10,
+    paddingHorizontal: 10,
     borderBottomWidth: 1,
     borderBottomColor: "#ccc",
+    marginVertical: 5,
   },
   optionText: {
-    fontSize: 16,
+    fontSize: 18,
     textAlign: "center",
   },
   error: {
     color: "red",
     fontSize: 12,
     marginBottom: 10,
+  },
+  button: {
+    paddingVertical: 15,
+    borderRadius: 8,
+    alignItems: "center",
+    marginBottom: 15,
+  },
+  createButton: {
+    backgroundColor: "#007BFF",
+  },
+  cancelButton: {
+    backgroundColor: "red",
+  },
+  buttonText: {
+    color: "#fff",
+    fontSize: 16,
+    fontWeight: "bold",
   },
 });
 
