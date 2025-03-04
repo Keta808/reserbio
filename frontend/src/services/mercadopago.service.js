@@ -53,10 +53,20 @@ async function getMercadoPagoAcc(idMicroempresa){
         return [null, error.response?.data || error.message];
     }
 }
+
+async function deleteMercadoPago(id){
+    try {
+        const response = await instance.delete(`/mercadopago/deleteMercadoPagoAcc/${id}`);
+        return [response.data, null];
+    } catch (error) {
+        return [null, error.response?.data || error.message];
+    }
+}
 export default {
     generarUrlOnBoarding,
     onBoarding,
     obtenerRedirect,
     crearPreferenciaServicio,
     getMercadoPagoAcc,
+    deleteMercadoPago,
 }; 

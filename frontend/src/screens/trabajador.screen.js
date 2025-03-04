@@ -15,6 +15,7 @@ import { getTrabajadorById, changePassword } from '../services/user.service';
 import MicroempresaServices from '../services/microempresa.service.js';
 import Icon from 'react-native-vector-icons/FontAwesome';
 import { useTheme } from '../context/theme.context';
+import mercadoPagoServices from '../services/mercadopago.service';  
 
 export default function TrabajadorScreen() {
   const { user } = useContext(AuthContext);
@@ -105,6 +106,38 @@ export default function TrabajadorScreen() {
   const handleShowInformation = () => {
     setInfoVisible(true);
   };
+  const handleEliminarVinculacion = () => {
+    if (!microempresa || !microempresa._id) {
+      Alert.alert("Error", "No se encontró una microempresa vinculada.");
+      return;
+    }
+
+    Alert.alert(
+      "Confirmación",
+      "¿Estás seguro de que deseas eliminar la vinculación con Mercado Pago? Si quieres volver a vincular deberas hacer todo el proceso denuevo",
+      [
+        { text: "Cancelar", style: "cancel" },
+        {
+          text: "Eliminar",
+          onPress: async () => {
+            try {
+              const [response, error] = await mercadoPagoServices.deleteMercadoPago(microempresa._id);
+              if (error) {
+                Alert.alert("Error", "No se pudo eliminar la vinculación.");
+                return;
+              }
+              Alert.alert("Éxito", "La vinculación con Mercado Pago ha sido eliminada correctamente.");
+              console.log("Vinculación eliminada:", response);  
+            } catch (err) {
+              console.error("Error al eliminar vinculación:", err);
+              Alert.alert("Error", "Ocurrió un problema al eliminar la vinculación.");
+            }
+          },
+          style: "destructive",
+        },
+      ]
+    );
+  }
 
   return (
     <View style={[styles.container, { backgroundColor: theme.background }]}>
@@ -152,10 +185,17 @@ export default function TrabajadorScreen() {
               <Text style={styles.buttonText}>Gestionar Suscripción</Text>
             </TouchableOpacity>
             {microempresa && microempresa._id && (
-              <TouchableOpacity style={styles.button} onPress={() => navigation.navigate('VincularMercadoPago', { idMicroempresa: microempresa._id })}>
-                <Icon name="money" size={20} color="#fff" style={styles.buttonIcon} />
-                <Text style={styles.buttonText}>Vincular Mercado Pago</Text>
-              </TouchableOpacity>
+              <>
+                <TouchableOpacity style={styles.button} onPress={() => navigation.navigate('VincularMercadoPago', { idMicroempresa: microempresa._id })}>
+                  <Icon name="money" size={20} color="#fff" style={styles.buttonIcon} />
+                  <Text style={styles.buttonText}>Vincular Mercado Pago</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity style={[styles.button, styles.deleteButton]} onPress={handleEliminarVinculacion}>
+                  <Icon name="trash" size={20} color="#fff" style={styles.buttonIcon} />
+                  <Text style={styles.buttonText}>Eliminar Vinculación</Text>
+                </TouchableOpacity>
+              </>
             )}
           </>
         )}
@@ -310,6 +350,9 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 18,
     fontWeight: '600',
+  },
+  deleteButton: {
+    backgroundColor: '#DC3545',
   },
   // Modal estilos
   modalContainer: {
