@@ -8,12 +8,12 @@ import {
   Modal, 
   TextInput, 
   TouchableOpacity 
-} from 'react-native'; 
+} from 'react-native';
 import { useNavigation } from '@react-navigation/native'; 
 import { AuthContext } from '../context/auth.context';
-import { getTrabajadorById, updateTrabajador } from '../services/user.service'; 
+import { getTrabajadorById, changePassword } from '../services/user.service'; 
 import MicroempresaServices from '../services/microempresa.service.js';
-import Icon from 'react-native-vector-icons/Ionicons';
+import Icon from 'react-native-vector-icons/FontAwesome';
 import { useTheme } from '../context/theme.context';
 
 export default function TrabajadorScreen() {
@@ -23,16 +23,13 @@ export default function TrabajadorScreen() {
 
   const [dataTrabajador, setDataTrabajador] = useState(null);
   const [loading, setLoading] = useState(true); 
-  const [modalVisible, setModalVisible] = useState(false);
-  const [infoVisible, setInfoVisible] = useState(false);
-
-  // Estados para los campos del formulario
-  const [EditinguserId, setEditingUserId] = useState(null);
-  const [nombre, setNombre] = useState('');
-  const [apellido, setApellido] = useState('');
-  const [telefono, setTelefono] = useState('');
-  const [email, setEmail] = useState('');
   const [microempresa, setMicroempresa] = useState(null);
+
+  // Estados para el modal de cambio de contraseña
+  const [modalVisible, setModalVisible] = useState(false);
+  const [oldPassword, setOldPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [infoVisible, setInfoVisible] = useState(false);
 
   useEffect(() => {
     const fetchMicroempresaData = async () => {
@@ -47,7 +44,7 @@ export default function TrabajadorScreen() {
       } 
     }; 
     fetchMicroempresaData();
-  }, []);
+  }, [user]);
 
   useEffect(() => {
     const fetchTrabajadorData = async () => {
@@ -67,8 +64,8 @@ export default function TrabajadorScreen() {
     
   if (loading) {
     return (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#007BFF" />
+      <View style={[styles.loadingContainer, { backgroundColor: theme.background }]}>
+        <ActivityIndicator size="large" color={theme.text} />
         <Text style={{ color: theme.text }}>Cargando perfil del trabajador...</Text>
       </View>
     );
@@ -76,60 +73,34 @@ export default function TrabajadorScreen() {
     
   if (!dataTrabajador) {
     return (
-      <View style={styles.container}>
-        <Text style={[styles.error, { color: theme.text }]}>No se pudo cargar la información del trabajador.</Text>
+      <View style={[styles.container, { backgroundColor: theme.background }]}>
+        <Text style={[styles.error, { color: theme.text }]}>
+          No se pudo cargar la información del trabajador.
+        </Text>
       </View>
     );
   }
   
-  const handleEditProfile = () => { 
-    setNombre(dataTrabajador.data?.nombre || '');
-    setApellido(dataTrabajador.data?.apellido || '');
-    setTelefono(dataTrabajador.data?.telefono || '');
-    setEmail(dataTrabajador.data?.email || '');
-    setEditingUserId(dataTrabajador.data?._id || null);
-    setModalVisible(true);
-  };
-
-  const handleCancelEdit = () => {
-    setModalVisible(false);
-  }; 
-
-  const limpiarFormulario = () => {
-    setNombre('');
-    setApellido('');
-    setTelefono('');
-    setEmail('');
-    setEditingUserId(null);
-    setModalVisible(false);
-  };
-
-  const handleSaveProfile = async () => {
+  // Función para cambiar contraseña
+  const handleChangePassword = async () => {
+    if (!oldPassword || !newPassword) {
+      Alert.alert("Error", "Por favor completa ambos campos.");
+      return;
+    }
     try {
-      const updatedData = {};
-      if (nombre !== dataTrabajador.data.nombre) updatedData.nombre = nombre;
-      if (apellido !== dataTrabajador.data.apellido) updatedData.apellido = apellido;
-      if (telefono !== dataTrabajador.data.telefono) updatedData.telefono = telefono;
-      if (email !== dataTrabajador.data.email) updatedData.email = email;
-
-      if (Object.keys(updatedData).length === 0) {
-        Alert.alert('No hay cambios', 'No has realizado modificaciones.');
-        return;
-      }
-
-      const response = await updateTrabajador(EditinguserId, { trabajadorData: updatedData });
-      if (response && !response[1]) {
-        setDataTrabajador({ ...dataTrabajador, data: { ...dataTrabajador.data, ...updatedData } });
-        limpiarFormulario();
-        Alert.alert('Éxito', 'Perfil actualizado correctamente.');
+      const [message, error] = await changePassword(user.id, oldPassword, newPassword);
+      if (error) {
+        Alert.alert("Error", error);
       } else {
-        Alert.alert('Error', 'No se pudo actualizar el perfil.');
+        Alert.alert("Éxito", "Contraseña actualizada correctamente.");
+        setModalVisible(false);
+        setOldPassword('');
+        setNewPassword('');
       }
     } catch (error) {
-      console.error("Error updating profile:", error.message || error);
-      Alert.alert('Error', 'No se pudo actualizar el perfil.');
+      Alert.alert("Error", "No se pudo cambiar la contraseña.");
     }
-  }; 
+  };
 
   const handleShowInformation = () => {
     setInfoVisible(true);
@@ -139,117 +110,97 @@ export default function TrabajadorScreen() {
     <View style={[styles.container, { backgroundColor: theme.background }]}>
       <View style={styles.headerContainer}>
         <TouchableOpacity onPress={handleShowInformation} style={styles.infoIcon}>
-          <Icon name="information-circle-outline" size={25} color={theme.text} />
+          <Icon name="info-circle" size={25} color={theme.text} />
         </TouchableOpacity>
       </View>
           
       <Text style={[styles.title, { color: theme.text }]}>Perfil del Trabajador</Text>
-      <View style={[styles.infoContainer, { backgroundColor: theme.background === "#FFFFFF" ? "#f4f4f4" : "#333" }]}>
+      <View style={[styles.infoContainer, { backgroundColor: theme.background === "#FFFFFF" ? "#f2f2f2" : "#444" }]}>
         <View style={styles.infoRow}>
-          <Text style={[styles.label, { color: theme.text }]}>Nombre:</Text>
+          <Icon name="user" size={20} color="#007BFF" style={styles.infoIcon} />
+          <Text style={[styles.label, { color: theme.text }]}>Nombre: </Text>
           <Text style={[styles.value, { color: theme.text }]}>{dataTrabajador.data.nombre || 'Sin nombre'}</Text>
         </View>
         <View style={styles.infoRow}>
-          <Text style={[styles.label, { color: theme.text }]}>Apellido:</Text>
+          <Icon name="user" size={20} color="#007BFF" style={styles.infoIcon} />
+          <Text style={[styles.label, { color: theme.text }]}>Apellido: </Text>
           <Text style={[styles.value, { color: theme.text }]}>{dataTrabajador.data.apellido || 'Sin apellido'}</Text>
         </View>
         <View style={styles.infoRow}>
-          <Text style={[styles.label, { color: theme.text }]}>Teléfono:</Text>
+          <Icon name="phone" size={20} color="#007BFF" style={styles.infoIcon} />
+          <Text style={[styles.label, { color: theme.text }]}>Teléfono: </Text>
           <Text style={[styles.value, { color: theme.text }]}>{dataTrabajador.data.telefono || 'Sin teléfono'}</Text>
         </View>
         <View style={styles.infoRow}>
-          <Text style={[styles.label, { color: theme.text }]}>Email:</Text>
+          <Icon name="envelope" size={20} color="#007BFF" style={styles.infoIcon} />
+          <Text style={[styles.label, { color: theme.text }]}>Email: </Text>
           <Text style={[styles.value, { color: theme.text }]}>{dataTrabajador.data.email || 'Sin email'}</Text>
         </View>
       </View>
     
       <View style={styles.buttonContainer}>
-        <TouchableOpacity style={[styles.button, { backgroundColor: "#1e90ff" }]} onPress={handleEditProfile}>
-          <Text style={styles.buttonText}>Editar Perfil</Text>
+        {/* Botón para cambiar contraseña */}
+        <TouchableOpacity style={styles.button} onPress={() => setModalVisible(true)}>
+          <Icon name="lock" size={20} color="#fff" style={styles.buttonIcon} />
+          <Text style={styles.buttonText}>Cambiar Contraseña</Text>
         </TouchableOpacity>
+        {/* Los demás botones se mantienen */}
         {dataTrabajador.data.isAdmin && (
-    <>
-      <TouchableOpacity style={[styles.button, { backgroundColor: "#007BFF", marginVertical: 10 }]} 
-        onPress={() => navigation.navigate('GestorSuscripcion')}>
-        <Text style={styles.buttonText}>Gestionar Suscripción</Text>
-      </TouchableOpacity>
-
-      {microempresa && microempresa._id && (
-        <TouchableOpacity style={[styles.button, { backgroundColor: "#007BFF", marginBottom: 10 }]} 
-          onPress={() => navigation.navigate('VincularMercadoPago', { idMicroempresa: microempresa._id })}>
-          <Text style={styles.buttonText}>Vincular Mercado Pago</Text>
-        </TouchableOpacity>
-      )}
-    </>
-  )}
+          <>
+            <TouchableOpacity style={styles.button} onPress={() => navigation.navigate('GestorSuscripcion')}>
+              <Icon name="cogs" size={20} color="#fff" style={styles.buttonIcon} />
+              <Text style={styles.buttonText}>Gestionar Suscripción</Text>
+            </TouchableOpacity>
+            {microempresa && microempresa._id && (
+              <TouchableOpacity style={styles.button} onPress={() => navigation.navigate('VincularMercadoPago', { idMicroempresa: microempresa._id })}>
+                <Icon name="money" size={20} color="#fff" style={styles.buttonIcon} />
+                <Text style={styles.buttonText}>Vincular Mercado Pago</Text>
+              </TouchableOpacity>
+            )}
+          </>
+        )}
       </View>
       
+      {/* Modal para cambio de contraseña */}
       <Modal 
         animationType="slide"
         transparent={true}
         visible={modalVisible}
-        onRequestClose={handleCancelEdit}>
-        <View style={styles.modalContainer}>
-          <View style={[styles.modalContent, { backgroundColor: theme.background === "#FFFFFF" ? "#fff" : "#444" }]}>
-            <Text style={[styles.modalTitle, { color: theme.text }]}>Editar Perfil</Text>
-            <TextInput
-              style={[styles.input, { color: theme.text, borderBottomColor: theme.background === "#FFFFFF" ? "gray" : "#777" }]}
-              placeholder="Nombre"
-              value={nombre}
-              onChangeText={setNombre}
-              placeholderTextColor={theme.text}
-            />
-            <TextInput
-              style={[styles.input, { color: theme.text, borderBottomColor: theme.background === "#FFFFFF" ? "gray" : "#777" }]}
-              placeholder="Apellido"
-              value={apellido}
-              onChangeText={setApellido}
-              placeholderTextColor={theme.text}
-            />
-            <TextInput
-              style={[styles.input, { color: theme.text, borderBottomColor: theme.background === "#FFFFFF" ? "gray" : "#777" }]}
-              placeholder="Teléfono"
-              value={telefono}
-              onChangeText={setTelefono}
-              keyboardType="phone-pad"
-              placeholderTextColor={theme.text}
-            />
-            <TextInput 
-              style={[styles.input, { color: theme.text, borderBottomColor: theme.background === "#FFFFFF" ? "gray" : "#777" }]}
-              placeholder="Email"
-              value={email}
-              onChangeText={setEmail}
-              keyboardType="email-address" 
-              placeholderTextColor={theme.text}
-            />
-            <View style={styles.buttonRow}>
-              <TouchableOpacity style={[styles.modalButton, { backgroundColor: "#FF0000" }]} onPress={handleCancelEdit}>
-                <Text style={styles.buttonText}>Cancelar</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={[styles.modalButton, { backgroundColor: "#28a745" }]} onPress={handleSaveProfile}>
-                <Text style={styles.buttonText}>Guardar</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </View>
-      </Modal>
-      
-      <Modal
-        animationType="fade"
-        transparent={true}
-        visible={infoVisible}
-        onRequestClose={() => setInfoVisible(false)}
+        onRequestClose={() => setModalVisible(false)}
       >
         <View style={styles.modalContainer}>
           <View style={[styles.modalContent, { backgroundColor: theme.background === "#FFFFFF" ? "#fff" : "#444" }]}>
-            <Text style={[styles.modalTitle, { color: theme.text }]}>Para Reservas con Abono</Text>
-            <Text style={[styles.modalText, { color: theme.text }]}>
-              Para habilitar la opción de abono en reservas, debes vincular tu cuenta con Mercado Pago,
-              configurar el porcentaje de abono de un servicio y generar su link de pago.
-            </Text>
-            <TouchableOpacity style={styles.modalCloseButton} onPress={() => setInfoVisible(false)}>
-              <Text style={styles.closedButtonText}>Cerrar</Text>
-            </TouchableOpacity>
+            <Text style={[styles.modalTitle, { color: theme.text }]}>Cambiar Contraseña</Text>
+            <TextInput
+              style={[styles.input, { color: theme.text, borderBottomColor: theme.background === "#FFFFFF" ? "#CED4DA" : "#777" }]}
+              placeholder="Contraseña Actual"
+              secureTextEntry
+              autoCapitalize="none"
+              autoCorrect={false}
+              value={oldPassword}
+              onChangeText={setOldPassword}
+              placeholderTextColor={theme.text}
+            />
+            <TextInput
+              style={[styles.input, { color: theme.text, borderBottomColor: theme.background === "#FFFFFF" ? "#CED4DA" : "#777" }]}
+              placeholder="Nueva Contraseña"
+              secureTextEntry
+              autoCapitalize="none"
+              autoCorrect={false}
+              value={newPassword}
+              onChangeText={setNewPassword}
+              placeholderTextColor={theme.text}
+            />
+            <View style={styles.buttonRow}>
+              <TouchableOpacity style={[styles.modalButton, styles.cancelButton]} onPress={() => setModalVisible(false)}>
+                <Icon name="times" size={18} color="#fff" style={styles.modalButtonIcon} />
+                <Text style={styles.buttonText}>Cancelar</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={[styles.modalButton, styles.saveButton]} onPress={handleChangePassword}>
+                <Icon name="check" size={18} color="#fff" style={styles.modalButtonIcon} />
+                <Text style={styles.buttonText}>Guardar</Text>
+              </TouchableOpacity>
+            </View>
           </View>
         </View>
       </Modal>
@@ -261,19 +212,18 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     padding: 20,
-    backgroundColor: '#fff',
-  }, 
+  },
   headerContainer: {
     width: '100%',
     alignItems: 'flex-end',
     marginBottom: 10,
     position: 'absolute',
     top: 10,
-    zIndex: 10,
     right: 10,
+    zIndex: 10,
   },
   infoIcon: {
-    padding: 10,
+    marginRight: 10,
   },
   loadingContainer: {
     flex: 1,
@@ -281,99 +231,138 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   title: {
-    fontSize: 24,
-    fontWeight: 'bold',
+    fontSize: 28,
+    fontWeight: '700',
     marginBottom: 20,
-    textAlign: 'center', 
+    textAlign: 'center',
+    color: '#343A40',
   },
   infoContainer: {
+    backgroundColor: '#fff',
+    padding: 20,
+    borderRadius: 10,
     marginBottom: 30,
-    padding: 15,
-    borderRadius: 8,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 5,
+    elevation: 3,
   },
   infoRow: {
     flexDirection: 'row',
-    marginBottom: 10,
+    alignItems: 'center',
+    marginBottom: 15,
   },
   label: {
     fontWeight: 'bold',
     fontSize: 16,
+    color: '#495057',
     marginRight: 5,
   },
   value: {
     fontSize: 16,
+    color: '#6C757D',
   },
+  // Botones (todos con el mismo ancho y estilo)
   buttonContainer: {
     marginTop: 20,
-  },
-  error: {
-    color: 'red',
-    textAlign: 'center',
-    fontSize: 16,
-  }, 
-  button: {
-    paddingVertical: 12,
-    paddingHorizontal: 20,
-    borderRadius: 8,
     alignItems: 'center',
+  },
+  button: {
+    width: '90%',
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#007BFF',
+    paddingVertical: 15,
+    borderRadius: 10,
     marginVertical: 5,
   },
-  buttonText: {
-    color: '#FFF',
-    fontSize: 16,
-    fontWeight: 'bold',
+  buttonIcon: {
+    marginRight: 8,
   },
+  buttonText: {
+    color: '#fff',
+    fontSize: 18,
+    fontWeight: '600',
+  },
+  // Modal estilos
   modalContainer: {
     flex: 1,
     justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: 'rgba(0,0,0,0.5)',
+    backgroundColor: 'rgba(0,0,0,0.6)',
+    padding: 20,
   },
   modalContent: {
-    padding: 20,
-    borderRadius: 8,
+    backgroundColor: '#fff',
+    borderRadius: 10,
+    padding: 25,
     width: '90%',
     alignItems: 'center',
   },
   modalTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    marginBottom: 10,
-  },
-  buttonRow: {
-    flexDirection: 'row', 
-    justifyContent: 'space-between', 
-    width: '100%', 
-    marginTop: 10, 
-  },
-  modalButton: {
-    padding: 10,
-    borderRadius: 5,
-    alignItems: 'center',
-    flex: 1,
-    marginHorizontal: 5, 
+    fontSize: 22,
+    fontWeight: '700',
+    marginBottom: 20,
+    color: '#343A40',
   },
   input: {
     width: '100%',
     borderBottomWidth: 1,
-    borderBottomColor: 'gray',
-    marginBottom: 15,
-    padding: 5,
-  },
-  closedButtonText: {
-    color: '#fff',
-    fontWeight: '700',
-  },
-  modalCloseButton: {
-    backgroundColor: '#6c757d',
-    paddingVertical: 10,
-    paddingHorizontal: 20,
-    borderRadius: 8,
-  },
-  modalText: {
-    fontSize: 16,
-    textAlign: 'center',
     marginBottom: 20,
-    paddingHorizontal: 10,  
+    paddingVertical: 8,
+    paddingHorizontal: 10,
+    fontSize: 16,
+  },
+  buttonRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    width: '100%',
+  },
+  modalButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+    paddingVertical: 12,
+    borderRadius: 8,
+    justifyContent: 'center',
+    marginHorizontal: 5,
+  },
+  cancelButton: {
+    backgroundColor: '#DC3545',
+  },
+  saveButton: {
+    backgroundColor: '#28A745',
+  },
+  modalButtonIcon: {
+    marginRight: 5,
+  },
+  // Header Card para datos de la microempresa (mantiene los datos ordenados)
+  headerCard: {
+    backgroundColor: '#fff',
+    borderRadius: 12,
+    padding: 15,
+    marginBottom: 25,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.1,
+    shadowRadius: 5,
+    elevation: 3,
+  },
+  headerInfo: {
+    alignItems: 'center',
+  },
+  headerName: {
+    fontSize: 22,
+    fontWeight: '700',
+    color: '#333',
+    marginBottom: 8,
+    textAlign: 'center',
+  },
+  headerDescription: {
+    fontSize: 16,
+    color: '#666',
+    textAlign: 'center',
+    marginBottom: 12,
   },
 });
