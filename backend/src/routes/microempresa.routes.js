@@ -24,7 +24,7 @@ router.get("/fotoPerfil/:id", microempresaController.getMicroempresaFotoPerfil);
 router.get("/page/:page/limit/:limit", isTrabajador, microempresaController.getMicroempresasForPage);
 router.get("/:id", microempresaController.getMicroempresaById);
 // router.get("/nombre/:nombre", isAdmin, microempresaController.getMicroempresaByNombre);
-router.post("/", suscripcionMiddleware.verificarSuscripcion, microempresaController.createMicroempresa);
+router.post("/", microempresaController.createMicroempresa);
 router.put("/:id", microempresaController.updateMicroempresaById);
 router.delete("/:id", microempresaController.deleteMicroempresaById);
 router.get("/categoria/:categoria", microempresaController.getMicroempresasPorCategoria);

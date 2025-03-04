@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Alert, StyleSheet, ActivityIndicator, Modal, Text } from 'react-native';
+import { View, Alert, StyleSheet, ActivityIndicator, Modal, Text,  KeyboardAvoidingView, ScrollView, Platform } from 'react-native';
 import PaymentForm from '../components/paymentform.component.js'; // Ruta del componente
 // LLAMAR A FUNCION GENERAR TOKEN ID
 import { obtenerSuscripcion, getIssuers, getIdentificationTypes, cardForm } from '../services/suscripcion.service.js'; 
@@ -64,11 +64,11 @@ const PaymentScreen = ({ route, navigation }) => {
           navigation.navigate('HomeNavigator', { screen: 'Suscripciones' });
         }
       } else {
-        Alert.alert('Error', 'No se pudo generar el token de la tarjeta');
+        Alert.alert('Error', 'No se pudo procesar la tarjeta');
       }
     } catch (error) { 
       console.error("Error processing payment:", error.message || error);
-      Alert.alert('Error', 'Ocurrió un error al procesar el pago');
+      Alert.alert('Ocurrió un error al procesar el pago', 'Datos de Tarjeta incorrectos' );
     } finally {
       setIsLoading(false); // Ocultar el indicador de carga
     }
@@ -86,38 +86,45 @@ const PaymentScreen = ({ route, navigation }) => {
   }; 
 
   return (
-    <View style={styles.container}> 
-      <PaymentForm onSubmit={handlePayment} fetchDynamicData={fetchDynamicData} selectedPlan={selectedPlan} />
-      {/* Modal para el estado de carga */}
+    <KeyboardAvoidingView 
+      behavior={Platform.OS === "ios" ? "padding" : "height"} 
+      style={styles.container}
+    >
+      <ScrollView contentContainerStyle={styles.scrollContainer} keyboardShouldPersistTaps="handled">
+        <PaymentForm onSubmit={handlePayment} fetchDynamicData={fetchDynamicData} selectedPlan={selectedPlan} />
+      </ScrollView>
+
       <Modal visible={isLoading} transparent={true} animationType="fade">
         <View style={styles.loadingOverlay}>
           <ActivityIndicator size="large" color="#ffffff" />
           <Text style={styles.loadingText}>Procesando pago...</Text>
         </View>
       </Modal>
-   </View>
+   </KeyboardAvoidingView>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: 'center',
+  },
+  scrollContainer: {
+    flexGrow: 1,
+    justifyContent: "center",
     padding: 20,
   },
   loadingOverlay: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.5)', // Fondo semitransparente
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
   },
   loadingText: {
     marginTop: 10,
-    color: '#ffffff',
+    color: "#ffffff",
     fontSize: 16,
-    fontWeight: 'bold',
+    fontWeight: "bold",
   },
-  
 });
 
 export default PaymentScreen;

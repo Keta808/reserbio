@@ -203,7 +203,32 @@ export default function TrabajadorScreen() {
             </View>
           </View>
         </View>
+      </Modal> 
+        {/* Modal de Información */}
+      <Modal
+        animationType="fade"
+        transparent={true}
+        visible={infoVisible}
+        onRequestClose={() => setInfoVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Información</Text>
+            <Text style={styles.modalText}>
+              Para activar la función de reservar con abono es necesario:
+            </Text>
+            <Text style={styles.modalText}>
+              - Vincular tu cuenta a Mercado Pago.{"\n"}
+              - Configurar el porcentaje de abono de un servicio.{"\n"}
+              - Generar el link de pago.
+            </Text>
+            <TouchableOpacity style={styles.modalCloseButton} onPress={() => setInfoVisible(false)}>
+              <Text style={styles.modalButtonText}>Cerrar</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
       </Modal>
+
     </View>
   );
 }
@@ -290,6 +315,7 @@ const styles = StyleSheet.create({
   modalContainer: {
     flex: 1,
     justifyContent: 'center',
+    alignItems: 'center',
     backgroundColor: 'rgba(0,0,0,0.6)',
     padding: 20,
   },
@@ -364,5 +390,41 @@ const styles = StyleSheet.create({
     color: '#666',
     textAlign: 'center',
     marginBottom: 12,
+  },
+  modalOverlay: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0,0,0,0.5)',
+  },
+  modalContent: {
+    backgroundColor: '#fff',
+    borderRadius: 10,
+    padding: 20,
+    width: '80%',
+    alignItems: 'center',
+  },
+  modalTitle: {
+    fontSize: 22,
+    fontWeight: 'bold',
+    marginBottom: 10,
+    textAlign: 'center',
+  },
+  modalText: {
+    fontSize: 16,
+    textAlign: 'center',
+    marginBottom: 10,
+  },
+  modalCloseButton: {
+    backgroundColor: '#007BFF',
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 8,
+    marginTop: 10,
+  },
+  modalButtonText: {
+    fontSize: 16,
+    color: '#fff',
+    fontWeight: 'bold',
   },
 });
