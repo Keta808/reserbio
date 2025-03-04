@@ -46,14 +46,6 @@ export default function HomeClienteScreen() {
   return (
     <SafeAreaView style={[styles.safeArea, { backgroundColor: theme.background }]}>
       <View style={[styles.container, { backgroundColor: theme.background }]}>
-        {/* Botón para cambiar el modo (claro/oscuro) */}
-        <TouchableOpacity style={styles.toggleIcon} onPress={toggleTheme}>
-          <Ionicons
-            name={theme.background === "#FFFFFF" ? "moon" : "sunny"}
-            size={25}
-            color={theme.text}
-          />
-        </TouchableOpacity>
 
         <Text style={[styles.title, { color: theme.text }]}>¡Bienvenido Cliente!</Text>
 

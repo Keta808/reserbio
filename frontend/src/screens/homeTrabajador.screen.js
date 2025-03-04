@@ -39,14 +39,6 @@ export default function HomeTrabajadorScreen() {
   return (
     <SafeAreaView style={[styles.safeArea, { backgroundColor: theme.background }]}>
       <View style={styles.container}>
-        {/* Toggle de modo oscuro */}
-        <TouchableOpacity style={styles.toggleIcon} onPress={toggleTheme}>
-          <Ionicons
-            name={theme.background === "#FFFFFF" ? "moon" : "sunny"}
-            size={25}
-            color={theme.text}
-          />
-        </TouchableOpacity>
         
         <Text style={[styles.title, { color: theme.text }]}>¡Bienvenido Trabajador!</Text>
 

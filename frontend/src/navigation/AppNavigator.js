@@ -1,5 +1,5 @@
 import React, { useContext, useEffect, useState } from 'react';
-import { View, Text, ActivityIndicator, StyleSheet } from 'react-native';
+import { View, Text, ActivityIndicator, StyleSheet, TouchableOpacity } from 'react-native';
 import { createStackNavigator } from '@react-navigation/stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -37,20 +37,17 @@ import ServicioScreen from '../screens/servicio.screen.js';
 import MercadoPagoScreen from '../screens/mercadopago.screen.js';
 import ServicioPaymentScreen from '../screens/servicioPayment.screen.js'; 
 
-
-
-// Pantalla test
-
+// Otras pantallas
 import Horario from '../screens/horario.screen.js';
 import EditarHorarioScreen from '../screens/editarHorarioScreen.js';
 import ConfirmacionReservaSlotScreen from '../screens/confirmacionReservaSlot.screen.js';
 import InvitarTrabajadorScreen from '../screens/invitarTrabajadores.screen.js';
-// Nueva pantalla para trabajadores no admin sin microempresa
 import NoMicroempresaScreen from '../screens/noMicroempresa.screen.js';
 
-// Contexto de autenticación
+// Contexto de autenticación y tema
 import { AuthContext } from '../context/auth.context';
 import { Ionicons } from '@expo/vector-icons';
+import { useTheme } from '../context/theme.context';
 
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -62,65 +59,81 @@ const LoadingScreen = () => (
   </View>
 );
 
-const HomeClienteNavigator = () => (
- <Tab.Navigator screenOptions={({ route }) => ({
-  tabBarIcon: ({ color }) => {
-    let iconName;
+// Calculamos colores de contraste para header y tabBar según el tema principal.
+const getContrastColor = (background) =>
+  background === "#FFFFFF" ? "#F0F0F0" : "#222222";
 
-    if (route.name === "HomeCliente") {
-      iconName = "home"; 
-    } else if (route.name === "ListaMicroempresas") {
-      iconName = "list"; 
-    } else if (route.name === "Reservas") {
-      iconName = "calendar"; 
-    } else if (route.name === "Perfil") {
-      iconName = "person"; 
-    } else if (route.name === "Suscripcion") {
-      iconName = "card"; 
-    }
-
-    return <Ionicons name={iconName} size={28} color={color} />;
-  },
-  tabBarShowLabel: false, // Oculta los nombres de las pestañas
-  tabBarStyle: styles.tabBarStyle, //  Aplica los estilos globales
-  tabBarItemStyle: styles.tabBarItemStyle, 
-  safeAreaInsets: { bottom: 0 }, 
-})}> 
-    <Tab.Screen name="ListaMicroempresas" component={ListaMicroempresasScreen} />
-    <Tab.Screen name="HomeCliente" component={HomeClienteScreen} />
-    <Tab.Screen name="Reservas" component={ReservaClienteScreen} /> 
-    <Tab.Screen name="Perfil" component={PerfilClienteScreen} />
-    <Tab.Screen name="Suscripcion" component={SuscripcionScreen} />
-  </Tab.Navigator>
-);
+// Configuramos el Tab Navigator para Cliente sin header (se usará el header global del AppNavigator)
+const HomeClienteNavigator = () => {
+  const { theme } = useTheme();
+  return (
+    <Tab.Navigator
+      screenOptions={({ route }) => ({
+        tabBarIcon: ({ color }) => {
+          let iconName;
+          if (route.name === "HomeCliente") {
+            iconName = "home"; 
+          } else if (route.name === "ListaMicroempresas") {
+            iconName = "list"; 
+          } else if (route.name === "Reservas") {
+            iconName = "calendar"; 
+          } else if (route.name === "Perfil") {
+            iconName = "person"; 
+          } else if (route.name === "Suscripcion") {
+            iconName = "card"; 
+          }
+          return <Ionicons name={iconName} size={28} color={color} />;
+        },
+        tabBarShowLabel: false,
+        tabBarStyle: {
+          ...styles.tabBarStyle,
+          backgroundColor: getContrastColor(theme.background),
+        },
+        tabBarItemStyle: styles.tabBarItemStyle,
+        safeAreaInsets: { bottom: 0 },
+        headerShown: false,
+      })}
+    > 
+      <Tab.Screen name="ListaMicroempresas" component={ListaMicroempresasScreen} />
+      <Tab.Screen name="HomeCliente" component={HomeClienteScreen} />
+      <Tab.Screen name="Reservas" component={ReservaClienteScreen} /> 
+      <Tab.Screen name="Perfil" component={PerfilClienteScreen} />
+      <Tab.Screen name="Suscripcion" component={SuscripcionScreen} />
+    </Tab.Navigator>
+  );
+};
 
 const HomeTrabajadorNavigator = () => {
   const { microempresa } = useMicroempresa();
- 
+  const { theme } = useTheme();
   return (
-    <Tab.Navigator  screenOptions={({ route }) => ({
-      tabBarIcon: ({ color }) => {
-        let iconName;
-
-        if (route.name === "HomeTrabajador") {
-          iconName = "home"; 
-        } else if (route.name === "Calendario") {
-          iconName = "calendar"; 
-        } else if (route.name === "Microempresa") {
-          iconName = "briefcase"; 
-        } else if (route.name === "Perfil") {
-          iconName = "person";
-        } else if (route.name === "Horario") {
-          iconName = "time"; 
-        }
-
-        return <Ionicons name={iconName} size={28} color={color} />;
-      },
-      tabBarShowLabel: false, //  Oculta los nombres de las pestañas
-      tabBarStyle: styles.tabBarStyle, //  Aplica los estilos globales
-      tabBarItemStyle: styles.tabBarItemStyle, //  Ajusta el espaciado
-      safeAreaInsets: { bottom: 0 },
-    })}>
+    <Tab.Navigator
+      screenOptions={({ route }) => ({
+        tabBarIcon: ({ color }) => {
+          let iconName;
+          if (route.name === "HomeTrabajador") {
+            iconName = "home"; 
+          } else if (route.name === "Calendario") {
+            iconName = "calendar"; 
+          } else if (route.name === "Microempresa") {
+            iconName = "briefcase"; 
+          } else if (route.name === "Perfil") {
+            iconName = "person";
+          } else if (route.name === "Horario") {
+            iconName = "time"; 
+          }
+          return <Ionicons name={iconName} size={28} color={color} />;
+        },
+        tabBarShowLabel: false,
+        tabBarStyle: {
+          ...styles.tabBarStyle,
+          backgroundColor: getContrastColor(theme.background),
+        },
+        tabBarItemStyle: styles.tabBarItemStyle,
+        safeAreaInsets: { bottom: 0 },
+        headerShown: false,
+      })}
+    >
       <Tab.Screen name="HomeTrabajador" component={HomeTrabajadorScreen} />  
       <Tab.Screen name="Calendario" component={CalendarScreen} />
       <Tab.Screen 
@@ -134,7 +147,8 @@ const HomeTrabajadorNavigator = () => {
   );
 };
 
-// TrabajadorStack: aquí definimos el flujo para usuarios Trabajador
+// En este caso, queremos un único header global, por lo que en los stacks anidados
+// (ClienteStack y TrabajadorStack) se oculta el header, de modo que el header global del AppNavigator sea el único visible.
 const TrabajadorStack = () => {
   const { microempresa, isAdmin, loading } = useMicroempresa();
 
@@ -147,13 +161,10 @@ const TrabajadorStack = () => {
     );
   }
 
-  // Definir la ruta inicial según el rol y la existencia de microempresa
   let initialRoute;
   if (isAdmin) {
-    // Trabajador admin: si tiene microempresa, Home; si no, Formulario para crearla
     initialRoute = microempresa ? "HomeNavigator" : "FormularioMicroempresa";
   } else {
-    // Trabajador no admin: si tiene microempresa, Home; si no, pantalla informativa
     initialRoute = microempresa ? "HomeNavigator" : "NoMicroempresaScreen";
   }
 
@@ -165,7 +176,6 @@ const TrabajadorStack = () => {
       <Stack.Screen name="FormularioMicroempresa" component={FormularioMicroempresa} />
       <Stack.Screen name="HomeNavigator" component={HomeTrabajadorNavigator} />
       <Stack.Screen name="NoMicroempresaScreen" component={NoMicroempresaScreen} />
-      {/* Otras pantallas del flujo */}
       <Stack.Screen name="SeleccionMicroempresa" component={SeleccionMicroempresaScreen} /> 
       <Stack.Screen name="GestorSuscripcion" component={gestorSuscripcionScreen} /> 
       <Stack.Screen name="CardScreen" component={CardScreen} />
@@ -187,7 +197,10 @@ const TrabajadorStack = () => {
 };
 
 const ClienteStack = () => (
-  <Stack.Navigator screenOptions={{ headerShown: false }}>
+  <Stack.Navigator
+    // Ocultamos el header en los stacks anidados para que se muestre el header global
+    screenOptions={{ headerShown: false }}
+  >
     <Stack.Screen name="HomeNavigator" component={HomeClienteNavigator} />
     <Stack.Screen name="ListaMicroempresas" component={ListaMicroempresasScreen} />  
     <Stack.Screen name="MicroempresaCliente" component={MicroempresaClienteScreen} />
@@ -203,6 +216,7 @@ const ClienteStack = () => (
 const AppNavigator = () => {
   const { setIsAuthenticated, isAuthenticated, user } = useContext(AuthContext);
   const [isLoading, setIsLoading] = useState(true);
+  const { theme, toggleTheme } = useTheme();
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -221,7 +235,6 @@ const AppNavigator = () => {
         setIsLoading(false);
       }
     };
-
     checkAuth();
   }, [setIsAuthenticated]);
 
@@ -230,17 +243,29 @@ const AppNavigator = () => {
   }
   
   return (
-    <Stack.Navigator screenOptions={{ headerShown: false }}>
+    <Stack.Navigator
+      screenOptions={{
+        // Definimos un header global con un fondo que contrasta ligeramente con el fondo principal
+        headerShown: true,
+        headerStyle: { backgroundColor: getContrastColor(theme.background) },
+        headerTitleStyle: { color: theme.text },
+        headerRight: () => (
+          <TouchableOpacity onPress={toggleTheme} style={{ marginRight: 15 }}>
+            <Ionicons
+              name={theme.background === "#FFFFFF" ? "moon" : "sunny"}
+              size={24}
+              color={theme.text}
+            />
+          </TouchableOpacity>
+        ),
+      }}
+    >
       {isAuthenticated ? (
-        (() => {
-          console.log('Valor de user:', user); 
-          console.log('Valor de user.kind:', user?.kind);
-          return user?.kind === 'Cliente' ? ( 
-            <Stack.Screen name="Cliente" component={ClienteStack} />
-          ) : (
-            <Stack.Screen name="Worker" component={TrabajadorStack} />
-          );
-        })()
+        user?.kind === 'Cliente' ? (
+          <Stack.Screen name="Main" component={ClienteStack} options={{ title: "Cliente" }} />
+        ) : (
+          <Stack.Screen name="Main" component={TrabajadorStack} options={{ title: "Trabajador" }} />
+        )
       ) : (
         <>
           <Stack.Screen name="Login" component={LoginScreen} />
@@ -250,6 +275,7 @@ const AppNavigator = () => {
     </Stack.Navigator>
   );
 };
+
 // Estilos Globales
 const styles = StyleSheet.create({
   loadingContainer: {
@@ -258,13 +284,12 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   tabBarStyle: {
-    height: 60, //  Ajusta la altura del Tab Navigator
-    backgroundColor: "#FFFFFF",
+    height: 60,
     borderTopWidth: 0,
     bottom: 0,
     left: 0,
     right: 0,
-    elevation: 10, //  Sombra en Android
+    elevation: 10,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: -3 },
     shadowOpacity: 0.1,
@@ -274,7 +299,7 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    marginVertical: 10, 
+    marginVertical: 10,
   },
 });
 
