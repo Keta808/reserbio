@@ -14,12 +14,12 @@ const router = Router();
 router.use(authentificationMiddleware); 
 
 router.get("/", servicioController.getServicios); 
-router.post("/", verificarAdminMicroempresa.verificarAdminMicroempresa, servicioController.createServicio);
-router.delete("/:id", verificarAdminMicroempresa.verificarAdminMicroempresa, servicioController.deleteServicio);
-router.put("/:id", verificarAdminMicroempresa.verificarAdminMicroempresa, servicioController.updateServicio);
+router.post("/", verificarAdminMicroempresa, servicioController.createServicio);
+router.delete("/:id", verificarAdminMicroempresa, servicioController.deleteServicio);
+router.put("/:id", verificarAdminMicroempresa, servicioController.updateServicio);
 router.get("/servicio/:id", servicioController.getServicioById); 
 router.get("/servicios/:id", servicioController.getServiciosByMicroempresaId);
-router.post("/servicio/:id", verificarAdminMicroempresa.verificarAdminMicroempresa, servicioController.configurarPorcentajeAbono);
+router.post("/servicio/:id", verificarAdminMicroempresa, servicioController.configurarPorcentajeAbono);
 router.post("/servicios/:id", servicioController.calcularMontoAbono);
 
 router.get("/servicio/:id/microempresa", servicioController.getMicroempresaIdByServicioId);
