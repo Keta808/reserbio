@@ -25,7 +25,7 @@ const MercadoPagoAccSchema = new mongoose.Schema({
     mercadopagoAccountStatus: {
       type: String,
       enum: ["pending", "active", "rejected"],
-      default: "pendiente",
+      default: "active",
     },
     fechaExpiracion: {
       type: Date,

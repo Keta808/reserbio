@@ -20,8 +20,8 @@ router.use(verifyJWT);
 // 📌 Ruta para enviar una invitación (solo dueños con plan premium)
 router.post(
     "/enviar",
-    // suscripcionMiddleware.verificarSuscripcion,
-    // suscripcionMiddleware.isPlanPremium,
+    suscripcionMiddleware.verificarSuscripcion,  
+    suscripcionMiddleware.isPlanPremium,
     InvitacionController.enviarInvitacion,
 );
 
