@@ -150,10 +150,20 @@ async function cancelarSuscripcion(idUser, preapprovalId){
     throw error;
   }
 }
+async function getSuscripcionByUserId(idUser){
+  try {
+    const response = await instance.get(`/suscripcion/suscripcion-usuario/${idUser}`);
+    return response.data;
+  } catch (error) {
+    console.error('Error al obtener la suscripción del usuario:', error.response?.data || error.message);
+    throw error;
+  }
+}
+
 export { obtenerPlanes, deleteSuscripcion, obtenerSuscripciones, 
 obtenerSuscripcion, actualizarSuscripcion, getIssuers, 
 getIdentificationTypes, cardForm, getSuscripcion,
 updateSuscripcionCard, searchSuscripcionMP, getSuscripcionById, 
 updateSuscripcionMP, cancelarSuscripcion,
-getUserSubscription, 
+getUserSubscription, getSuscripcionByUserId,
 };

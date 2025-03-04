@@ -77,7 +77,7 @@ async function createMicroempresa(microempresa) {
             direccion,
             email,
             categoria,
-            idPlan,
+            idSuscripcion,
             idTrabajador,
             imagenes,
         } = microempresa;
@@ -106,7 +106,7 @@ async function createMicroempresa(microempresa) {
             direccion,
             email,
             categoria,
-            idPlan,
+            idSuscripcion,
             idTrabajador,
             imagenes,
             fotoPerfil: {
@@ -186,7 +186,7 @@ async function updateMicroempresaById(id, microempresa) {
             direccion,
             email,
             categoria,
-            idPlan,
+            idSuscripcion,
             idTrabajador,
             imagenes,
         } = microempresa;
@@ -203,7 +203,7 @@ async function updateMicroempresaById(id, microempresa) {
         if (direccion) microempresaFound.direccion = direccion;
         if (email) microempresaFound.email = email;
         if (categoria) microempresaFound.categoria = categoria;
-        microempresaFound.idPlan = idPlan;
+        microempresaFound.idSuscripcion = idSuscripcion;
         if (idTrabajador) microempresaFound.idTrabajador = idTrabajador;
         microempresaFound.imagenes = imagenes;
 

@@ -18,6 +18,7 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 import { useNavigation, useRoute } from "@react-navigation/native";
 import horarioService from "../services/horario.service";
 import Icon from 'react-native-vector-icons/Ionicons';
+import { useTheme } from "../context/theme.context";
 
 if (Platform.OS === 'android') {
   UIManager.setLayoutAnimationEnabledExperimental && UIManager.setLayoutAnimationEnabledExperimental(true);
@@ -27,6 +28,7 @@ const EditarHorarioScreen = () => {
   const navigation = useNavigation();
   const route = useRoute();
   const { horarioId, trabajadorId, dia, bloquesExistentes = [] } = route.params;
+  const { theme } = useTheme();
 
   const [bloques, setBloques] = useState(bloquesExistentes);
   const [nuevoBloque, setNuevoBloque] = useState({ hora_inicio: '', hora_fin: '' });
@@ -190,10 +192,10 @@ const EditarHorarioScreen = () => {
   // Si no se está editando y se está cargando los días, muestra una pantalla de loading
   if (!horarioId && loading) {
     return (
-      <SafeAreaView style={styles.safeArea}>
+      <SafeAreaView style={[styles.safeArea, { backgroundColor: theme.background }]}>
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#007bff" />
-          <Text style={styles.loadingText}>Cargando...</Text>
+          <ActivityIndicator size="large" color={theme.text} />
+          <Text style={[styles.loadingText, { color: theme.text }]}>Cargando...</Text>
         </View>
       </SafeAreaView>
     );
@@ -202,12 +204,12 @@ const EditarHorarioScreen = () => {
   // Si no se está editando y no hay días disponibles, muestra una pantalla completa
   if (!horarioId && diasDisponibles.length === 0) {
     return (
-      <SafeAreaView style={styles.safeArea}>
+      <SafeAreaView style={[styles.safeArea, { backgroundColor: theme.background }]}>
         <View style={styles.emptyDiasContainerFull}>
-          <Text style={styles.emptyDiasTextFull}>
+          <Text style={[styles.emptyDiasTextFull, { color: theme.text }]}>
             No hay días disponibles para crear.
           </Text>
-          <Text style={styles.emptyDiasTextFull}>
+          <Text style={[styles.emptyDiasTextFull, { color: theme.text }]}>
             Si deseas editar los horarios, puedes hacerlo en la pantalla "Horarios".
           </Text>
           <TouchableOpacity style={styles.editHorariosButton} onPress={() => navigation.goBack()}>
@@ -219,38 +221,43 @@ const EditarHorarioScreen = () => {
   }
 
   return (
-    <SafeAreaView style={styles.safeArea}>
-      <View style={styles.container}>
+    <SafeAreaView style={[styles.safeArea, { backgroundColor: theme.background }]}>
+      <View style={[styles.container, { backgroundColor: theme.background }]}>
         {/* Header con botón de volver atrás, título y ayuda */}
         <View style={styles.headerContainer}>
           <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButtonHeader}>
-            <Icon name="arrow-back" size={28} color="#007bff" />
+            <Icon name="arrow-back" size={28} color={theme.text} />
           </TouchableOpacity>
-          <Text style={styles.title}>
+          <Text style={[styles.title, { color: theme.text }]}>
             {horarioId ? `Editar Horario para ${dia}` : "Crear Nuevo Horario"}
           </Text>
           <TouchableOpacity onPress={() => setHelpVisible(true)} style={styles.helpButton}>
-            <Icon name="help-circle-outline" size={28} color="#007bff" />
+            <Icon name="help-circle-outline" size={28} color={theme.text} />
           </TouchableOpacity>
         </View>
 
         {/* Si no se edita un horario, se muestran los días disponibles */}
         {!horarioId && (
           <>
-            <Text style={styles.subtitle}>Selecciona un día disponible:</Text>
+            <Text style={[styles.subtitle, { color: theme.text }]}>Selecciona un día disponible:</Text>
             <View style={styles.diasContainer}>
               {diasDisponibles.map((diaDisponible, index) => (
                 <TouchableOpacity
                   key={index}
                   style={[
                     styles.diaButton,
-                    selectedDia === diaDisponible && styles.diaButtonSelected
+                    {
+                      backgroundColor: selectedDia === diaDisponible
+                        ? (theme.background === "#FFFFFF" ? "#3498db" : "#1e90ff")
+                        : (theme.background === "#FFFFFF" ? "#e8e8e8" : "#555")
+                    }
                   ]}
                   onPress={() => setSelectedDia(diaDisponible)}
                 >
                   <Text
                     style={[
                       styles.diaButtonText,
+                      { color: theme.text },
                       selectedDia === diaDisponible && styles.diaButtonTextSelected
                     ]}
                   >
@@ -267,8 +274,8 @@ const EditarHorarioScreen = () => {
           data={bloques}
           keyExtractor={(_, index) => index.toString()}
           renderItem={({ item, index }) => (
-            <View style={styles.bloqueContainer}>
-              <Text style={styles.bloqueText}>
+            <View style={[styles.bloqueContainer, { backgroundColor: theme.background === "#FFFFFF" ? '#fff' : '#333' }]}>
+              <Text style={[styles.bloqueText, { color: theme.text }]}>
                 {item.hora_inicio} - {item.hora_fin}
               </Text>
               <TouchableOpacity
@@ -285,24 +292,30 @@ const EditarHorarioScreen = () => {
             <View style={styles.footer}>
               <TouchableOpacity
                 onPress={() => showTimePickerFunc('hora_inicio')}
-                style={styles.input}
+                style={[
+                  styles.input,
+                  { backgroundColor: theme.background === "#FFFFFF" ? '#fff' : '#444' }
+                ]}
               >
-                <Text style={styles.inputText}>
+                <Text style={[styles.inputText, { color: theme.text }]}>
                   {nuevoBloque.hora_inicio || "Hora de Inicio (HH:mm)"}
                 </Text>
               </TouchableOpacity>
               <TouchableOpacity
                 onPress={() => showTimePickerFunc('hora_fin')}
-                style={styles.input}
+                style={[
+                  styles.input,
+                  { backgroundColor: theme.background === "#FFFFFF" ? '#fff' : '#444' }
+                ]}
               >
-                <Text style={styles.inputText}>
+                <Text style={[styles.inputText, { color: theme.text }]}>
                   {nuevoBloque.hora_fin || "Hora de Fin (HH:mm)"}
                 </Text>
               </TouchableOpacity>
               {Platform.OS === 'ios' && showPicker.visible && (
                 <Modal visible={showPicker.visible} transparent={true} animationType="slide">
                   <View style={styles.modalContainer}>
-                    <View style={styles.modalContent}>
+                    <View style={[styles.modalContent, { backgroundColor: theme.background === "#FFFFFF" ? "#fff" : "#444" }]}>
                       <DateTimePicker
                         mode="time"
                         value={pickerTime}
@@ -339,7 +352,7 @@ const EditarHorarioScreen = () => {
         />
       </View>
 
-      <View style={styles.saveButtonContainer}>
+      <View style={[styles.saveButtonContainer, { backgroundColor: theme.background }]}>
         <TouchableOpacity style={styles.saveButton} onPress={handleGuardar}>
           <Text style={styles.saveButtonText}>Guardar Horario</Text>
         </TouchableOpacity>
@@ -353,9 +366,9 @@ const EditarHorarioScreen = () => {
         onRequestClose={() => setHelpVisible(false)}
       >
         <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>¿Cómo funcionan los bloques?</Text>
-            <Text style={styles.modalMessage}>
+          <View style={[styles.modalContent, { backgroundColor: theme.background === "#FFFFFF" ? "#fff" : "#444" }]}>
+            <Text style={[styles.modalTitle, { color: theme.text }]}>¿Cómo funcionan los bloques?</Text>
+            <Text style={[styles.modalMessage, { color: theme.text }]}>
               Los bloques representan intervalos de tiempo que conforman tu horario.{"\n\n"}
               - Para agregarlos, presiona "Agregar Bloque" luego de seleccionar la hora de inicio y de fin.{"\n"}
               - Si se solapan, se fusionarán automáticamente en un solo bloque.{"\n"}
@@ -380,9 +393,9 @@ const EditarHorarioScreen = () => {
           activeOpacity={1} 
           onPress={() => setErrorModalVisible(false)}
         >
-          <View style={styles.errorModalContent}>
-            <Text style={styles.errorModalTitle}>Error</Text>
-            <Text style={styles.errorModalMessage}>{errorMessage}</Text>
+          <View style={[styles.errorModalContent, { backgroundColor: theme.background === "#FFFFFF" ? "#fff" : "#444" }]}>
+            <Text style={[styles.errorModalTitle, { color: theme.text }]}>Error</Text>
+            <Text style={[styles.errorModalMessage, { color: theme.text }]}>{errorMessage}</Text>
             <TouchableOpacity 
               style={styles.errorModalButton} 
               onPress={() => setErrorModalVisible(false)}
@@ -437,20 +450,14 @@ const styles = StyleSheet.create({
     marginBottom: 15 
   },
   diaButton: { 
-    backgroundColor: '#e8e8e8', 
     padding: 10, 
     margin: 6, 
     borderRadius: 10 
   },
-  diaButtonSelected: { 
-    backgroundColor: '#3498db' 
-  },
   diaButtonText: { 
-    color: '#333', 
-    fontSize: 16 
+    fontSize: 16, 
   },
   diaButtonTextSelected: { 
-    color: '#fff', 
     fontWeight: '600' 
   },
   emptyDiasContainerFull: {
@@ -481,7 +488,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     padding: 15,
-    backgroundColor: '#fff',
     borderRadius: 10,
     marginBottom: 10,
     shadowColor: '#000',
@@ -501,14 +507,12 @@ const styles = StyleSheet.create({
   input: {
     borderWidth: 1,
     borderColor: '#ddd',
-    backgroundColor: '#fff',
     padding: 12,
     borderRadius: 10,
     marginBottom: 12,
     alignItems: 'center',
   },
   inputText: {
-    color: '#333',
     fontSize: 16,
   },
   addButton: { 
@@ -551,7 +555,6 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0,0,0,0.5)' 
   },
   modalContent: { 
-    backgroundColor: '#fff', 
     padding: 20, 
     borderRadius: 10, 
     alignItems: 'center', 
@@ -598,7 +601,6 @@ const styles = StyleSheet.create({
   },
   errorModalContent: {
     width: '80%',
-    backgroundColor: '#fff',
     padding: 20,
     borderRadius: 10,
     alignItems: 'center'
@@ -625,6 +627,7 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontWeight: 'bold'
   },
+  // Se pueden agregar más estilos o modificarlos según el theme
 });
 
 export default EditarHorarioScreen;

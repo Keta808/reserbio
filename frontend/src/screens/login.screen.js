@@ -12,8 +12,10 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { AuthContext } from '../context/auth.context';
 import { useNavigation } from '@react-navigation/native';
+import { useTheme } from '../context/theme.context';
 
 export default function LoginScreen() {
+  const { theme } = useTheme();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   // true = Trabajador, false = Cliente
@@ -27,7 +29,7 @@ export default function LoginScreen() {
   const cliente_prueba = 'cliente@email.com';
   const password_cliente = 'cliente123';
 
-  // Estado y animación para el modal (solo se usa para errores)
+  // Estado y animación para el modal (errores)
   const [modalVisible, setModalVisible] = useState(false);
   const [modalTitle, setModalTitle] = useState('');
   const [modalMessage, setModalMessage] = useState('');
@@ -104,9 +106,9 @@ export default function LoginScreen() {
   };
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.welcomeTitle}>Bienvenido a ReserBio!</Text>
-      <Text style={styles.title}>Iniciar Sesión</Text>
+    <View style={[styles.container, { backgroundColor: theme.background }]}>
+      <Text style={[styles.welcomeTitle, { color: theme.text }]}>Bienvenido a ReserBio!</Text>
+      <Text style={[styles.title, { color: theme.text }]}>Iniciar Sesión</Text>
       
       {/* Toggle personalizado para elegir rol */}
       <View style={styles.toggleContainer}>
@@ -131,7 +133,7 @@ export default function LoginScreen() {
       </View>
       
       <TextInput
-        style={styles.input}
+        style={[styles.input, { backgroundColor: theme.background === "#FFFFFF" ? "#fff" : "#333", color: theme.text, borderColor: theme.background === "#FFFFFF" ? "#ccc" : "#777" }]}
         placeholder="Email"
         placeholderTextColor="#666"
         value={email}
@@ -139,7 +141,7 @@ export default function LoginScreen() {
         keyboardType="email-address"
       />
       <TextInput
-        style={styles.input}
+        style={[styles.input, { backgroundColor: theme.background === "#FFFFFF" ? "#fff" : "#333", color: theme.text, borderColor: theme.background === "#FFFFFF" ? "#ccc" : "#777" }]}
         placeholder="Contraseña"
         placeholderTextColor="#666"
         value={password}
@@ -162,7 +164,7 @@ export default function LoginScreen() {
       </View>
       
       <TouchableOpacity onPress={handleGoToRegister}>
-        <Text style={styles.registerText}>
+        <Text style={[styles.registerText, { color: theme.text }]}>
           ¿Aún no tienes una cuenta? <Text style={styles.registerLink}>Regístrate aquí</Text>
         </Text>
       </TouchableOpacity>
@@ -322,3 +324,4 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
 });
+

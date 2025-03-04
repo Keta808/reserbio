@@ -167,14 +167,21 @@ export default function TrabajadorScreen() {
         <TouchableOpacity style={[styles.button, { backgroundColor: "#1e90ff" }]} onPress={handleEditProfile}>
           <Text style={styles.buttonText}>Editar Perfil</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={[styles.button, { backgroundColor: "#007BFF", marginVertical: 10 }]} onPress={() => navigation.navigate('GestorSuscripcion')}>
-          <Text style={styles.buttonText}>Gestionar Suscripción</Text>
+        {dataTrabajador.data.isAdmin && (
+    <>
+      <TouchableOpacity style={[styles.button, { backgroundColor: "#007BFF", marginVertical: 10 }]} 
+        onPress={() => navigation.navigate('GestorSuscripcion')}>
+        <Text style={styles.buttonText}>Gestionar Suscripción</Text>
+      </TouchableOpacity>
+
+      {microempresa && microempresa._id && (
+        <TouchableOpacity style={[styles.button, { backgroundColor: "#007BFF", marginBottom: 10 }]} 
+          onPress={() => navigation.navigate('VincularMercadoPago', { idMicroempresa: microempresa._id })}>
+          <Text style={styles.buttonText}>Vincular Mercado Pago</Text>
         </TouchableOpacity>
-        {microempresa !== null && (
-          <TouchableOpacity style={[styles.button, { backgroundColor: "#007BFF", marginBottom: 10 }]} onPress={() => navigation.navigate('VincularMercadoPago', { idMicroempresa: microempresa._id })}>
-            <Text style={styles.buttonText}>Vincular Mercado Pago</Text>
-          </TouchableOpacity>
-        )}
+      )}
+    </>
+  )}
       </View>
       
       <Modal 
@@ -370,5 +377,3 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,  
   },
 });
-
-

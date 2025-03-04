@@ -35,7 +35,6 @@ const ServicioSchema = new mongoose.Schema({
     urlPago: {
         type: String,
         default: null,
-      
     },
     },   
 );

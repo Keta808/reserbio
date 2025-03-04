@@ -132,7 +132,7 @@ async function updateCardTokenByUserId(cardTokenId, idUser) {
         if (!idUser || !idUser._id) throw new Error("Error al actualizar la suscripción: usuario no proporcionado.");
         const suscripcion = await Suscripcion.findOne({ 
             idUser, 
-            estado: "active" // Buscar solo suscripciones activas
+            estado: "authorized" // Buscar solo suscripciones activas
         }).exec(); 
         if (!suscripcion) {
             return [null, "No se encontró una suscripción activa para este usuario."];
@@ -324,7 +324,8 @@ async function obtenerSuscripcion(plan, user, cardTokenId, payer_email){
 
         // <<-- AQUÍ SE LLAMA A LA FUNCIÓN PARA ACTUALIZAR isAdmin
         // Suponiendo que tienes la función updateTrabajadorIsAdmin en user.service:
-        const [, errorUpdate] = await userService.updateTrabajadorIsAdmin(newTrabajador._id);
+        const [responseAdmin, errorUpdate] = await userService.updateTrabajadorIsAdmin(newTrabajador._id); 
+        console.log("Respuesta de updateTrabajadorIsAdmin:", responseAdmin);
         if (errorUpdate) {
             console.error("Error al actualizar isAdmin en el trabajador:", errorUpdate);
             // Podrías decidir si continuar o retornar un error.
@@ -354,6 +355,7 @@ async function userChange(id){
             email: user.email,
             password: user.password,
             state: user.state,
+            isAdmin: user.isAdmin,
             kind: "Trabajador",
         });
         await newTrabajador.save(); 
@@ -584,6 +586,21 @@ async function getUserSubscription(idUser){
         return [null, error.response?.data || error.message];
     }
 
+} 
+
+async function getSuscripcionByUserId(idUser) {
+    try {
+        if (!idUser) return [null, "ID de usuario no proporcionado."];
+
+        const suscripcion = await Suscripcion.findOne({ idUser }).exec();
+        if (!suscripcion) return [null, "No se encontró una suscripción para este usuario."];
+
+        return [suscripcion, null];
+    } catch (error) {
+        console.error(`Error al obtener la suscripción:`, error.response?.data || error.message);
+        handleError(error, "suscripcion.service -> getSuscripcionByUserId");
+        return [null, error.response?.data || error.message];
+    }
 }
 
 
@@ -592,5 +609,5 @@ export default { crearSuscripcion, cancelarSuscripcion, getSuscripciones, getSus
 deleteSuscripcion, updateSuscripcion, sincronizarEstados, 
 getIssuers, getIdentificationTypes, cardForm, obtenerSuscripcion, 
 searchSuscripcionMP, getSuscripcionById, updateSuscripcionMP, getSuscripcionBypreapprovalId, updateSuscripcionCard, updateCardTokenByUserId,
-getUserSubscription, userChange,
+getUserSubscription, userChange, getSuscripcionByUserId,
 }; 
