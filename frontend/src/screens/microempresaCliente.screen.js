@@ -44,6 +44,7 @@ export default function MicroempresaClienteScreen({ route, navigation }) {
         return;
       }
       const response = await MicroempresaService.getMicroempresaData(id);
+      console.log("response microempresa", response.data.trabajadores);
       if (response) {
         setMicroempresa(response.data);
       } else {
@@ -242,7 +243,7 @@ export default function MicroempresaClienteScreen({ route, navigation }) {
     { backgroundColor: theme.background === "#FFFFFF" ? "#fff" : "#333" }
   ]}
   onPress={() =>
-    navigation.navigate("Trabajador", { trabajador: item })
+    navigation.navigate("TrabajadoresValoracionScreen", { trabajador: item })
   }
 >
   <Text style={[styles.cardTitle, { color: theme.text }]}>{item.nombre}</Text>
@@ -572,8 +573,3 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
   },
 });
-
-
-
-
-

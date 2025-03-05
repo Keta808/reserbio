@@ -57,9 +57,11 @@ const ReservaClienteScreen = () => {
     try {
       setLoading(true);
       const response = await reservaService.getReservasByCliente(id);
+      console.log('Reservas del cliente:', response.data);
       const reservasConValoracion = await Promise.all(
         response.data.map(async (reserva) => {
           const valoracionResponse = await valoracionService.existeValoracionPorReserva(reserva._id);
+          console.log('Valoración de la reserva:', valoracionResponse);
           return { ...reserva, tieneValoracion: valoracionResponse.existe };
         })
       );
@@ -84,16 +86,19 @@ const ReservaClienteScreen = () => {
   };
 
   const reservasFiltradas = reservas
-    .filter((reserva) => {
-      if (reserva.estado === 'Cancelada') return false;
-      return filtro === 'Activas' ? reserva.estado === 'Activa' : reserva.estado === 'Finalizada';
-    })
-    .sort((a, b) => {
-      if (filtro === 'Finalizadas') {
-        return new Date(b.fecha) - new Date(a.fecha);
-      }
-      return 0;
-    });
+  .filter((reserva) => {
+    if (reserva.estado === 'Cancelada') return false;
+    return filtro === 'Activas' 
+      ? reserva.estado === 'Activa' 
+      : reserva.estado === 'Finalizada' || reserva.estado === 'Realizada'; // Incluir 'Realizada'
+  })
+  .sort((a, b) => {
+    if (filtro === 'Finalizadas') {
+      return new Date(b.fecha) - new Date(a.fecha);
+    }
+    return 0;
+  });
+
 
   // Cambia el filtro y anima el switch
   const cambiarFiltro = () => {
@@ -127,13 +132,13 @@ const ReservaClienteScreen = () => {
       
       try {
         
-        // Obtener el servicio por Id reserva
-        const [servicio, errorServicio] = await reservaService.getUrlPagoByReservaId(reservaSeleccionada);
+        const servicio = await reservaService.getUrlPagoByReservaId(reservaSeleccionada);
 
-        if (errorServicio) {
-            console.log("Error obteniendo Servicio:", errorServicio);
+        if (!servicio) {
+          console.error("Error: No se obtuvo una respuesta válida del servicio.");
+          return;
         }
-
+        
         if (servicio.urlPago && servicio.urlPago !== 'null' && servicio.urlPago !== 'undefined') { 
             const [pagos, errorPagos] = await paymentService.getPaymentByClientId(clienteId);
             if (errorPagos) {
@@ -269,12 +274,13 @@ const ReservaClienteScreen = () => {
                 </TouchableOpacity>
               )}
 
-              {item.estado === 'Finalizada' && (
+              {item.estado === 'Finalizada' || item.estado === 'Realizada' && (
                 <>
                   <TouchableOpacity onPress={() => confirmarEliminacion(item._id)} style={styles.cancelButton}>
                     <AntDesign name="closecircle" size={24} color="red" />
                   </TouchableOpacity>
-                  {!item.tieneValoracion && (
+                  {/* Mostrar botón de valoración solo si la reserva no tiene valoración */}
+                  {!item.tieneValoracion && item.estado === 'Realizada' && (
                     <TouchableOpacity
                       style={styles.valoracionButton}
                       onPress={() => navigation.navigate('Valoracion', { reserva: item, clienteId })}
@@ -402,6 +408,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     marginVertical: 8,
     elevation: 2,
+    height  : 160,
   },
   reservaItemFinalizada: {
     paddingBottom: 50,
@@ -415,9 +422,12 @@ const styles = StyleSheet.create({
   reservaSubText: {
     fontSize: 14,
     color: '#666',
-    marginVertical: 2,
+    marginVertical: 3,
   },
   estado: {
+    position: 'absolute', 
+    bottom: 10, 
+    left: 10,
     marginTop: 8,
     fontSize: 14,
     fontWeight: 'bold',
@@ -448,6 +458,7 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     paddingHorizontal: 12,
     borderRadius: 6,
+  
   },
   valoracionButtonText: {
     color: '#fff',

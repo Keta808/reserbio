@@ -19,8 +19,14 @@ async function getValoracionesPorMicroempresa(microempresaId) {
 async function getValoracionesPorTrabajador(trabajadorId) { 
     try {
         const response = await instance.get(`/valoraciones/trabajador/${trabajadorId}`);
-        return response.data.data;
+        console.log("response front", response.data);
+        return response.data;
     } catch (error) {
+        const message = error.response?.data?.message || error.message;
+        if (message === "No hay valoraciones para este trabajador") {
+            // Si no hay valoraciones, retornamos un array vacío en lugar de lanzar el error
+            return [];
+        }
         console.error(
             "Error al obtener las valoraciones del trabajador:",
             error.response?.data || error.message

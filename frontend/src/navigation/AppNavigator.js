@@ -28,6 +28,9 @@ import ValoracionServicioScreen from '../screens/valoracion.screen.js';
 import AceptarInvitacionScreen from '../screens/aceptarInvitacionScreen.js';
 import PerfilClienteScreen from '../screens/perfilCliente.screen.js';
 
+//test
+import TrabajadoresValoracionScreen from '../screens/trabajadoresValoracion.screen.js'; 
+
 // Pantallas para Trabajador
 import gestorSuscripcionScreen from '../screens/gestorSuscripcion.screen.js'; 
 import CardScreen from '../screens/cardForm.screen.js'; 
@@ -210,6 +213,7 @@ const ClienteStack = () => (
     <Stack.Screen name="Pago" component={PaymentScreen} /> 
     <Stack.Screen name="Login" component={LoginScreen} />
     <Stack.Screen name="ConfirmacionReservaSlotScreen" component={ConfirmacionReservaSlotScreen} />
+    <Stack.Screen name="TrabajadoresValoracionScreen" component={TrabajadoresValoracionScreen} /> 
   </Stack.Navigator>
 );
 

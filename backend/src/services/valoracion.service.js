@@ -43,7 +43,8 @@ async function getValoracionesPorTrabajador(trabajadorId) {
             .populate('reserva', 'fecha hora_inicio servicio')
             .exec();
 
-        if (!valoraciones.length) return [null, "No hay valoraciones para este trabajador"];
+        // En lugar de retornar error, devolvemos un array vacío
+        if (!valoraciones.length) return [[], null];
 
         return [valoraciones, null];
     } catch (error) {
@@ -51,6 +52,7 @@ async function getValoracionesPorTrabajador(trabajadorId) {
         return [null, "Error al obtener las valoraciones del trabajador"];
     }
 }
+
 
 /**
  * Crea una nueva valoración.

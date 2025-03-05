@@ -30,7 +30,7 @@ async function getValoracionesPorTrabajador(req, res) {
         const { trabajadorId } = req.params;
         const [valoraciones, error] = await valoracionService.getValoracionesPorTrabajador(trabajadorId);
 
-        if (error) return res.status(404).json({ message: error });
+        if (error) return res.status(500).json({ message: error }); // O status 404 según convenga
 
         return res.status(200).json(valoraciones);
     } catch (error) {
@@ -38,6 +38,7 @@ async function getValoracionesPorTrabajador(req, res) {
         return res.status(500).json({ message: "Error interno al obtener las valoraciones del trabajador" });
     }
 }
+
 
 /**
  * Crea una nueva valoración.
