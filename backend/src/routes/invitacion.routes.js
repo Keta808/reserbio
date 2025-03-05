@@ -20,11 +20,7 @@ const router = Router();
 router.use(verifyJWT);
 
 // 📌 Ruta para enviar una invitación (solo dueños con plan premium)
-router.post(
-    "/enviar",
-    verificarAdminMicroempresa,
-    InvitacionController.enviarInvitacion,
-);
+router.post("/enviar", InvitacionController.enviarInvitacion);
 
 // 📌 Nueva ruta para verificar un código de invitación
 router.get("/verificar-codigo/:codigo", InvitacionController.verificarCodigoInvitacion);
