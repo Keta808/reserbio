@@ -9,7 +9,7 @@ import { isAdmin, isCliente, isTrabajador } from "../middlewares/authorization.m
 
 import authentificationMiddleware from "../middlewares/authentication.middleware.js"; 
 
-
+import verificarAdminMicroempresa from "../middlewares/verificarAdminM.middleware.js";
 
 const router = Router(); 
 
@@ -23,7 +23,6 @@ router.get("/servicio/:id", servicioController.getServicioById);
 router.get("/servicios/:id", servicioController.getServiciosByMicroempresaId);
 router.post("/servicio/:id", servicioController.configurarPorcentajeAbono);
 router.post("/servicios/:id", servicioController.calcularMontoAbono);
-
 router.get("/servicio/:id/microempresa", servicioController.getMicroempresaIdByServicioId);
 
 

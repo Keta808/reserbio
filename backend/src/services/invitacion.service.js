@@ -8,6 +8,7 @@ import dotenv from "dotenv";
 import mongoose from "mongoose";
 import UserService from "../services/user.service.js"; // ✅ Importar el servicio completo
 import UserModels from "../models/user.model.js";
+const { User } = UserModels;
 
 dotenv.config(); // Cargar variables de entorno
 
@@ -31,6 +32,12 @@ function generateInvitationCode() {
  */
 async function crearInvitacion({ idMicroempresa, email }) {
     try {
+        // 🔎 **Validar si el correo ya está registrado**
+        const usuarioExistente = await User.findOne({ email });
+        if (!usuarioExistente) {
+        throw new Error("El correo no está registrado en el sistema, no se puede enviar invitación.");
+        }
+
         // 🏢 **Verificar que la microempresa existe**
         const microempresa = await Microempresa.findById(idMicroempresa);
         if (!microempresa) throw new Error("La microempresa no existe");
