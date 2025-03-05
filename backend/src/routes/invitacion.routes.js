@@ -9,7 +9,9 @@ import InvitacionController from "../controllers/invitacion.controller.js";
 import verifyJWT from "../middlewares/authentication.middleware.js";
 
 /** Middleware de suscripción */
-import suscripcionMiddleware from "../middlewares/verificarSuscripcion.middleware.js"; 
+// import suscripcionMiddleware from "../middlewares/verificarSuscripcion.middleware.js"; 
+// verifica si el usuario es dueño de la microempresa
+import verificarAdminMicroempresa from "../middlewares/verificarAdminM.middleware.js";
 
 /** Instancia del enrutador */
 const router = Router();
@@ -20,6 +22,7 @@ router.use(verifyJWT);
 // 📌 Ruta para enviar una invitación (solo dueños con plan premium)
 router.post(
     "/enviar",
+    verificarAdminMicroempresa,
     InvitacionController.enviarInvitacion,
 );
 

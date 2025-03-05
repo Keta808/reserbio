@@ -25,8 +25,8 @@ export default function MercadoPagoScreen({ route, navigation }) {
                 
                 const [url, error] = await mercadoPagoServices.generarUrlOnBoarding(idMicroempresa);
                 if (error) {
-                    console.log("Error al obtener la URL de vinculación con MercadoPago:", error);  
-                    setErrorVinculacion(error)
+                    console.log("Error al obtener la URL de vinculación con MercadoPago:", error.message);  
+                    setErrorVinculacion(error.message)
                     return;
                 }
                 console.log("URL de vinculación con MercadoPago generada:", url.data);
@@ -34,7 +34,7 @@ export default function MercadoPagoScreen({ route, navigation }) {
             } catch (error) {
                 console.log("Error al generar la URL de vinculación con MercadoPago.");
                 
-                setErrorVinculacion(error);
+                setErrorVinculacion(error.message);
             } finally {
                 setLoading(false);
             }
@@ -44,9 +44,10 @@ export default function MercadoPagoScreen({ route, navigation }) {
     }, [idMicroempresa]);
 
     useEffect(() => {
+        console.log("Error de vinculación:", errorVinculacion);
         if (errorVinculacion && !hasNavigated) {
             setHasNavigated(true); // Evita múltiples ejecuciones de navegación
-            Alert.alert("Error", "Error al vincular la cuenta de MercadoPago", [
+            Alert.alert("Error al vincular la cuenta de MercadoPago", errorVinculacion, [
                 {
                     text: "OK",
                     onPress: () => navigation.goBack(),
