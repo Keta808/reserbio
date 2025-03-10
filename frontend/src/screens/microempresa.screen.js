@@ -12,6 +12,7 @@ import {
   StatusBar
 } from "react-native";
 import { Image } from "expo-image";
+import ImageViewing from "react-native-image-viewing";
 import { useFocusEffect, useNavigation } from "@react-navigation/native";
 import Ionicons from "react-native-vector-icons/Ionicons";
 import { useTheme } from "../context/theme.context";
@@ -31,6 +32,9 @@ export default function MicroempresaScreen({ route }) {
   const { user } = useAuth();
   const navigation = useNavigation();
   const { theme, toggleTheme } = useTheme();
+  // Estado para visor de imagen
+  const [imageModalVisible, setImageModalVisible] = useState(false);
+  const [selectedImageUrl, setSelectedImageUrl] = useState(null);
 
   const fetchMicroempresa = async () => {
     try {
@@ -175,6 +179,17 @@ export default function MicroempresaScreen({ route }) {
       );
     }, [id])
   );
+
+  // Visor de imagen
+  const openImageModal = (url) => {
+    setSelectedImageUrl(url);
+    setImageModalVisible(true);
+  };
+
+  const closeImageModal = () => {
+    setSelectedImageUrl(null);
+    setImageModalVisible(false);
+  };
 
   if (loading) {
     return (
@@ -353,11 +368,13 @@ export default function MicroempresaScreen({ route }) {
                     contentContainerStyle={{ paddingHorizontal: 10 }}
                     renderItem={({ item }) => (
                       <View style={styles.galleryImageContainer}>
-                        <Image
-                          source={{ uri: item.url }}
-                          style={styles.galleryImage}
-                          contentFit="cover"
-                        />
+                        <TouchableOpacity onPress={() => openImageModal(item.url)}>
+                          <Image
+                            source={{ uri: item.url }}
+                            style={styles.galleryImage}
+                            contentFit="cover"
+                          />
+                        </TouchableOpacity>
                         <TouchableOpacity
                           style={styles.deleteTrabajadorButton}
                           onPress={() => handleDeleteImage(item.public_id)}
@@ -366,6 +383,7 @@ export default function MicroempresaScreen({ route }) {
                         </TouchableOpacity>
                       </View>
                     )}
+                    
                   />
                 ) : (
                   <Text style={[styles.noImagesText, { color: theme.text }]}>
@@ -399,6 +417,14 @@ export default function MicroempresaScreen({ route }) {
         ListFooterComponent={<View style={{ height: 20 }} />}
         contentContainerStyle={styles.listContainer}
       />
+      {/* Visor de imagen */}
+      <ImageViewing
+        images={selectedImageUrl ? [{ uri: selectedImageUrl }] : []}
+        imageIndex={0}
+        visible={imageModalVisible}
+        onRequestClose={closeImageModal}
+      />
+      
     </SafeAreaView>
   );
 }
