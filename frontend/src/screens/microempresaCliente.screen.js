@@ -129,7 +129,7 @@ export default function MicroempresaClienteScreen({ route, navigation }) {
 
   if (loading) {
     return (
-      <View style={styles.loadingContainer}>
+      <View style={[styles.loadingContainer, { backgroundColor: theme.background }]}>
         <ActivityIndicator size="large" color={theme.text} />
         <Text style={[styles.loadingText, { color: theme.text }]}>Cargando datos de la microempresa...</Text>
       </View>
@@ -138,7 +138,7 @@ export default function MicroempresaClienteScreen({ route, navigation }) {
 
   if (!microempresa) {
     return (
-      <View style={styles.errorContainer}>
+      <View style={[styles.errorContainer, { backgroundColor: theme.background }]}>
         <Text style={[styles.error, { color: theme.text }]}>No se pudieron cargar los datos de la microempresa.</Text>
       </View>
     );

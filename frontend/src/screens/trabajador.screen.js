@@ -31,6 +31,7 @@ export default function TrabajadorScreen() {
   const [oldPassword, setOldPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [infoVisible, setInfoVisible] = useState(false);
+  const [mercadoPagoAcc, setMercadoPagoAcc] = useState(null);
 
   useEffect(() => {
     const fetchMicroempresaData = async () => {
@@ -38,6 +39,7 @@ export default function TrabajadorScreen() {
         if (!user || !user.id) return;
         const response = await MicroempresaServices.obtenerMicroempresaPorTrabajador(user.id); 
         if (response?.state === 'Success' && response.data) { 
+          
           setMicroempresa(response.data);
         }
       } catch (error) {
@@ -62,7 +64,30 @@ export default function TrabajadorScreen() {
     };
     fetchTrabajadorData();
   }, [user]);
-    
+  
+  useEffect(() => { 
+      if (!microempresa || !microempresa._id) return;
+      const verificarVinculacion = async () => {
+        try {
+          const idMicroempresa = microempresa._id;
+          
+
+          const [data, error] = await mercadoPagoServices.getMercadoPagoAcc(idMicroempresa);
+          if (error || !data || !data.state || data.state !== 'Success' || !data.data.accessToken) {
+            console.log("La microempresa NO está vinculada a Mercado Pago.");
+            setMercadoPagoAcc(false);
+            return;
+          }
+          console.log("La microempresa está vinculada a Mercado Pago.");
+          setMercadoPagoAcc(true);
+        } catch (error) {
+          console.error('Error al verificar la vinculación con MercadoPago:', error.message);
+          setMercadoPagoAcc(false);
+        }
+      };
+      verificarVinculacion();
+    }, [microempresa]);
+  
   if (loading) {
     return (
       <View style={[styles.loadingContainer, { backgroundColor: theme.background }]}>
@@ -137,7 +162,7 @@ export default function TrabajadorScreen() {
         },
       ]
     );
-  }
+  } 
 
   return (
     <View style={[styles.container, { backgroundColor: theme.background }]}>
@@ -191,10 +216,12 @@ export default function TrabajadorScreen() {
                   <Text style={styles.buttonText}>Vincular Mercado Pago</Text>
                 </TouchableOpacity>
 
-                <TouchableOpacity style={[styles.button, styles.deleteButton]} onPress={handleEliminarVinculacion}>
-                  <Icon name="trash" size={20} color="#fff" style={styles.buttonIcon} />
-                  <Text style={styles.buttonText}>Eliminar Vinculación</Text>
-                </TouchableOpacity>
+                {dataTrabajador.data.isAdmin && mercadoPagoAcc && (
+                  <TouchableOpacity style={[styles.button, styles.deleteButton]} onPress={handleEliminarVinculacion}>
+                    <Icon name="trash" size={20} color="#fff" style={styles.buttonIcon} />
+                    <Text style={styles.buttonText}>Eliminar Vinculación</Text>
+                  </TouchableOpacity>
+)}
               </>
             )}
           </>
@@ -253,14 +280,16 @@ export default function TrabajadorScreen() {
       >
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Información</Text>
+            <Text style={styles.modalTitle}>Vinculacion con Mercado Pago</Text>
             <Text style={styles.modalText}>
               Para activar la función de reservar con abono es necesario:
             </Text>
             <Text style={styles.modalText}>
-              - Vincular tu cuenta a Mercado Pago.{"\n"}
-              - Configurar el porcentaje de abono de un servicio.{"\n"}
-              - Generar el link de pago.
+              1) Vincular tu cuenta de ReserBio con Mercado Pago.{"\n"}
+              2) Configurar el porcentaje de abono de un servicio.{"\n"}
+              3) Generar el link de pago del servicio. {"\n\n"} 
+              Debes ser dueño de una microempresa para poder vincular tu cuenta y exigir abonos para reservas. Una vez vinculado puedes usar tu cuenta de Mercado Pago para recibir el dinero de los abonos.
+
             </Text>
             <TouchableOpacity style={styles.modalCloseButton} onPress={() => setInfoVisible(false)}>
               <Text style={styles.modalButtonText}>Cerrar</Text>
@@ -330,7 +359,7 @@ const styles = StyleSheet.create({
   },
   // Botones (todos con el mismo ancho y estilo)
   buttonContainer: {
-    marginTop: 20,
+    marginTop: 10,
     alignItems: 'center',
   },
   button: {

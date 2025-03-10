@@ -193,7 +193,7 @@ export default function MicroempresaScreen({ route }) {
 
   if (loading) {
     return (
-      <View style={styles.loadingContainer}>
+      <View style={[styles.loadingContainer, { backgroundColor: theme.background }]}>
         <ActivityIndicator size="large" color="#0000ff" />
         <Text style={[styles.loadingText, { color: theme.text }]}>
           Cargando datos de la microempresa...
@@ -204,7 +204,7 @@ export default function MicroempresaScreen({ route }) {
 
   if (!microempresa) {
     return (
-      <View style={styles.errorContainer}>
+      <View style={[styles.errorContainer, { backgroundColor: theme.background }]}>
         <Text style={[styles.error, { color: theme.text }]}>
           No se pudieron cargar los datos de la microempresa.
         </Text>
@@ -296,7 +296,7 @@ export default function MicroempresaScreen({ route }) {
                     </Text>
                     {montoAbono[servicio._id] && montoAbono[servicio._id] > 0 && (
                       <Text style={[styles.servicioAbono, { color: theme.text }]}>
-                        Abono para reservar: ${montoAbono[servicio._id]}
+                        Costo Reserva: ${montoAbono[servicio._id]}
                       </Text>
                     )}
                   </TouchableOpacity>
