@@ -178,14 +178,15 @@ export default function MicroempresaScreen({ route }) {
 
   if (loading) {
     return (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#0000ff" />
+      <View style={[styles.loadingContainer, { backgroundColor: theme.background }]}>
+        <ActivityIndicator size="large" color={theme.text} />
         <Text style={[styles.loadingText, { color: theme.text }]}>
           Cargando datos de la microempresa...
         </Text>
       </View>
     );
   }
+  
 
   if (!microempresa) {
     return (
@@ -197,7 +198,7 @@ export default function MicroempresaScreen({ route }) {
     );
   }
 
-  console.log("📌 Lista de trabajadores con enlaceId:", microempresa.trabajadores);
+
 
   return (
     <SafeAreaView style={[styles.safeArea, { backgroundColor: theme.background }]}>
@@ -303,6 +304,7 @@ export default function MicroempresaScreen({ route }) {
             </View>
   
             {/* Trabajadores */}
+            {console.log("📌 Lista de trabajadores:", microempresa.trabajadores)}
             <View style={styles.sectionContainer}>
               <Text style={[styles.sectionTitle, { color: theme.text }]}>Trabajadores</Text>
               {microempresa.trabajadores.length > 0 ? (
@@ -314,7 +316,7 @@ export default function MicroempresaScreen({ route }) {
                     <View style={[styles.trabajadorCard, { backgroundColor: theme.background === "#FFFFFF" ? "#f2f2f2" : "#444" }]}>
                       <TouchableOpacity
                         style={styles.trabajadorInfo}
-                        onPress={() => navigation.navigate("Trabajador", { trabajador: item })}
+                        onPress={() => navigation.navigate("TrabajadoresValoracionScreen", { trabajador: item })}
                       >
                         <Text style={[styles.cardTitle, { color: theme.text }]}>{item.nombre || "Sin nombre"}</Text>
                         <Text style={[styles.cardDetail, { color: theme.text }]}>{item.telefono || "Sin teléfono"}</Text>

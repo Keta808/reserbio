@@ -97,6 +97,18 @@ const existeValoracionPorReserva = async (reservaId) => {
       return false; // En caso de error, asumimos que no tiene valoración
     }
   };
+
+
+  const getValoracionPorIdReserva = async (reservaId) => {  
+    try {
+      const response = await instance.get(`/valoraciones/getValoracionPorIdReserva/${reservaId}`);
+      console.log("response", response.data);
+      return response.data;
+    } catch (error) {
+      console.error('Error al obtener valoración:', error);
+      return null;
+    }
+  };
   
 
 export default {
@@ -105,7 +117,9 @@ export default {
     crearValoracion,
     eliminarValoracion,
     getValoracionPromedioPorMicroempresa,
-    existeValoracionPorReserva
+    existeValoracionPorReserva,
+    getValoracionPorIdReserva
+
 };
 
 

@@ -35,6 +35,10 @@ const ReservaClienteScreen = () => {
   const [modalAction, setModalAction] = useState(null); // 'cancel' o 'delete'
   const [confirming, setConfirming] = useState(false); // Evita múltiples pulsaciones
 
+  // Estados para el modal de valoración
+  const [modalValoracionVisible, setModalValoracionVisible] = useState(false);
+  const [valoracionDetalle, setValoracionDetalle] = useState(null);
+
   useFocusEffect(
     useCallback(() => {
       const fetchClienteId = async () => {
@@ -86,19 +90,18 @@ const ReservaClienteScreen = () => {
   };
 
   const reservasFiltradas = reservas
-  .filter((reserva) => {
-    if (reserva.estado === 'Cancelada') return false;
-    return filtro === 'Activas' 
-      ? reserva.estado === 'Activa' 
-      : reserva.estado === 'Finalizada' || reserva.estado === 'Realizada'; // Incluir 'Realizada'
-  })
-  .sort((a, b) => {
-    if (filtro === 'Finalizadas') {
-      return new Date(b.fecha) - new Date(a.fecha);
-    }
-    return 0;
-  });
-
+    .filter((reserva) => {
+      if (reserva.estado === 'Cancelada') return false;
+      return filtro === 'Activas' 
+        ? reserva.estado === 'Activa' 
+        : reserva.estado === 'Finalizada' || reserva.estado === 'Realizada';
+    })
+    .sort((a, b) => {
+      if (filtro === 'Finalizadas') {
+        return new Date(b.fecha) - new Date(a.fecha);
+      }
+      return 0;
+    });
 
   // Cambia el filtro y anima el switch
   const cambiarFiltro = () => {
@@ -129,48 +132,38 @@ const ReservaClienteScreen = () => {
   const cancelarReserva = async () => {
     if (reservaSeleccionada && !confirming) {
       setConfirming(true);
-      
       try {
-        
         const servicio = await reservaService.getUrlPagoByReservaId(reservaSeleccionada);
-
         if (!servicio) {
           console.error("Error: No se obtuvo una respuesta válida del servicio.");
           return;
         }
-        
         if (servicio.urlPago && servicio.urlPago !== 'null' && servicio.urlPago !== 'undefined') { 
-            const [pagos, errorPagos] = await paymentService.getPaymentByClientId(clienteId);
-            if (errorPagos) {
-                Alert.alert("Error", "No se pudieron obtener los pagos.");
-                return;
+          const [pagos, errorPagos] = await paymentService.getPaymentByClientId(clienteId);
+          if (errorPagos) {
+            Alert.alert("Error", "No se pudieron obtener los pagos.");
+            return;
+          }
+          if (!pagos?.data?.length) {
+            Alert.alert("Error", "No se encontraron pagos asociados a este servicio.");
+            return;
+          }
+          const pagoAsociado = pagos.data.find(pago => pago.idServicio === servicio._id);
+          if (pagoAsociado) {
+            const [reembolso, errorRembolso] = await paymentService.refundPayment(pagoAsociado.paymentId);
+            if (errorRembolso) {
+              console.error('Error al reembolsar el pago:', errorRembolso);
+              Alert.alert('Error', 'No se pudo procesar el reembolso.');
+              return;
             }
-
-            if (!pagos?.data?.length) {
-                Alert.alert("Error", "No se encontraron pagos asociados a este servicio.");
-                return;
-            }
-
-            const pagoAsociado = pagos.data.find(pago => pago.idServicio === servicio._id);
-            if (pagoAsociado) {
-                const [reembolso, errorRembolso] = await paymentService.refundPayment(pagoAsociado.paymentId);
-                if (errorRembolso) {
-                    console.error('Error al reembolsar el pago:', errorRembolso);
-                    Alert.alert('Error', 'No se pudo procesar el reembolso.');
-                    return;
-                }
-
-                console.log('Pago reembolsado:', reembolso);
-                Alert.alert('Pago reembolsado', 'Se ha reembolsado el pago de la reserva.');
-            } else {
-                Alert.alert("Error", "No se encontró un pago asociado a esta reserva.");
-            }
+            console.log('Pago reembolsado:', reembolso);
+            Alert.alert('Pago reembolsado', 'Se ha reembolsado el pago de la reserva.');
+          } else {
+            Alert.alert("Error", "No se encontró un pago asociado a esta reserva.");
+          }
         } 
-        
-        // Si no hay pago, simplemente se cancela la reserva
         await reservaService.cancelReservaCliente(reservaSeleccionada);
         fetchReservas(clienteId);
-        
       } catch (error) {
         console.error('Error al cancelar la reserva:', error);
       } finally {
@@ -200,6 +193,21 @@ const ReservaClienteScreen = () => {
     }
   };
 
+  // Función para ver la valoración de una reserva
+  const handleVerValoracion = async (reservaId) => {
+    try {
+      const response = await valoracionService.getValoracionPorIdReserva(reservaId);
+      console.log("Respuesta de valoración:", response);
+      // Si la respuesta tiene la data en response.data, la usamos; sino, usamos response directamente
+      const data = response.data ? response.data : response;
+      setValoracionDetalle(data);
+      setModalValoracionVisible(true);
+    } catch (error) {
+      console.error("Error al obtener la valoración", error);
+      Alert.alert("Error", "No se pudo obtener la valoración");
+    }
+  };
+  
   if (loading) {
     return (
       <View style={[styles.loaderContainer, { backgroundColor: theme.background }]}>
@@ -217,7 +225,7 @@ const ReservaClienteScreen = () => {
       <View style={styles.switchContainer}>
         <TouchableOpacity
           onPress={cambiarFiltro}
-          style={[styles.switch, { backgroundColor: theme.background === "#FFFFFF" ? "#f2f2f2" : "#444", }]}
+          style={[styles.switch, { backgroundColor: theme.background === "#FFFFFF" ? "#f2f2f2" : "#444" }]}
         >
           <Animated.View
             style={[
@@ -247,7 +255,7 @@ const ReservaClienteScreen = () => {
             <View
               style={[
                 styles.reservaItem,
-                { backgroundColor: theme.background === "#FFFFFF" ? "#f2f2f2" : "#444", },
+                { backgroundColor: theme.background === "#FFFFFF" ? "#f2f2f2" : "#444" },
                 item.estado === 'Finalizada' && styles.reservaItemFinalizada,
               ]}
             >
@@ -274,19 +282,24 @@ const ReservaClienteScreen = () => {
                 </TouchableOpacity>
               )}
 
-              {item.estado === 'Finalizada' || item.estado === 'Realizada' && (
+              {(item.estado === 'Finalizada' || item.estado === 'Realizada') && (
                 <>
                   <TouchableOpacity onPress={() => confirmarEliminacion(item._id)} style={styles.cancelButton}>
                     <AntDesign name="closecircle" size={24} color="red" />
                   </TouchableOpacity>
-                  {/* Mostrar botón de valoración solo si la reserva no tiene valoración */}
-                  {!item.tieneValoracion && item.estado === 'Realizada' && (
-                    <TouchableOpacity
-                      style={styles.valoracionButton}
-                      onPress={() => navigation.navigate('Valoracion', { reserva: item, clienteId })}
-                    >
-                      <Text style={styles.valoracionButtonText}>Valorar Servicio</Text>
-                    </TouchableOpacity>
+                  {item.estado === 'Realizada' && (
+                    item.tieneValoracion ? (
+                      <TouchableOpacity style={styles.valoracionButton} onPress={() => handleVerValoracion(item._id)}>
+                        <Text style={styles.valoracionButtonText}>Ver Valoración</Text>
+                      </TouchableOpacity>
+                    ) : (
+                      <TouchableOpacity
+                        style={styles.valoracionButton}
+                        onPress={() => navigation.navigate('Valoracion', { reserva: item, clienteId })}
+                      >
+                        <Text style={styles.valoracionButtonText}>Valorar Servicio</Text>
+                      </TouchableOpacity>
+                    )
                   )}
                 </>
               )}
@@ -299,57 +312,98 @@ const ReservaClienteScreen = () => {
         </Text>
       )}
 
-      {/* Modal de confirmación para cancelar o eliminar reserva */}
-      <Modal visible={modalVisible} transparent animationType="fade">
-        <View style={styles.modalContainer}>
-          <View style={[styles.modalContent, { backgroundColor: theme.background === "#FFFFFF" ? "#f2f2f2" : "#444", }]}>
-            <Text style={[styles.modalText, { color: theme.text }]}>
-              {modalAction === 'cancel'
-                ? '¿Seguro que deseas cancelar esta reserva?'
-                : '¿Seguro que deseas eliminar definitivamente esta reserva?'}
-            </Text>
-            <View style={styles.modalButtons}>
-              <TouchableOpacity
-                onPress={() => {
-                  setModalVisible(false);
-                  setReservaSeleccionada(null);
-                  setModalAction(null);
-                }}
-                style={[styles.modalButton, styles.modalCloseButton]}
-              >
-                <Text style={styles.modalButtonText}>Cerrar</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                onPress={() => {
-                  if (modalAction === 'cancel') {
-                    cancelarReserva();
-                  } else if (modalAction === 'delete') {
-                    eliminarReserva();
-                  }
-                }}
-                style={[
-                  styles.modalButton,
-                  modalAction === 'cancel'
-                    ? styles.modalCancelButton
-                    : styles.modalDeleteButton,
-                  confirming && { opacity: 0.5 },
-                ]}
-                disabled={confirming}
-              >
-                <Text style={styles.modalButtonText}>
-                  {confirming
-                    ? modalAction === 'cancel'
-                      ? 'Confirmando'
-                      : 'Eliminando'
-                    : modalAction === 'cancel'
-                    ? 'Cancelar Reserva'
-                    : 'Eliminar Reserva'}
-                </Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </View>
-      </Modal>
+     {/* Modal de confirmación para cancelar o eliminar reserva */}
+<Modal visible={modalVisible} transparent animationType="fade">
+  <View style={styles.modalContainer}>
+    <View
+      style={[
+        styles.modalContent,
+        { backgroundColor: theme.background === "#FFFFFF" ? "#f2f2f2" : "#444" },
+      ]}
+    >
+      <Text style={[styles.modalText, { color: theme.text }]}>
+        {modalAction === 'cancel'
+          ? '¿Seguro que deseas cancelar esta reserva?'
+          : '¿Seguro que deseas eliminar definitivamente esta reserva?'}
+      </Text>
+      <View style={styles.modalButtons}>
+        <TouchableOpacity
+          onPress={() => {
+            setModalVisible(false);
+            setReservaSeleccionada(null);
+            setModalAction(null);
+          }}
+          style={[styles.modalButton]}
+        >
+          <Text style={styles.modalButtonText}>Cerrar</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          onPress={() => {
+            if (modalAction === 'cancel') {
+              cancelarReserva();
+            } else if (modalAction === 'delete') {
+              eliminarReserva();
+            }
+          }}
+          style={[
+            styles.modalButton,
+            modalAction === 'cancel'
+              ? styles.modalCancelButton
+              : styles.modalDeleteButton,
+            confirming && { opacity: 0.5 },
+          ]}
+          disabled={confirming}
+        >
+          <Text style={styles.modalButtonText}>
+            {confirming
+              ? modalAction === 'cancel'
+                ? 'Confirmando'
+                : 'Eliminando'
+              : modalAction === 'cancel'
+              ? 'Cancelar Reserva'
+              : 'Eliminar Reserva'}
+          </Text>
+        </TouchableOpacity>
+      </View>
+    </View>
+  </View>
+</Modal>
+
+{/* Modal para mostrar la valoración de la reserva */}
+<Modal visible={modalValoracionVisible} transparent animationType="fade">
+  <View style={styles.modalContainer}>
+    <View
+      style={[
+        styles.modalContent,
+        { backgroundColor: theme.background === "#FFFFFF" ? "#fff" : "#444" },
+      ]}
+    >
+      <Text style={[styles.modalTitle, { color: theme.text }]}>
+        Valoración del Servicio
+      </Text>
+      <View style={styles.modalRatingContainer}>
+        {Array.from({ length: 5 }).map((_, i) => (
+          <AntDesign
+            key={i}
+            name={i < (valoracionDetalle?.puntuacion || 0) ? "star" : "staro"}
+            size={24}
+            color="#FFD700"
+          />
+        ))}
+      </View>
+      <Text style={[styles.modalComment, { color: theme.text }]}>
+        {valoracionDetalle?.comentario || "Sin comentario"}
+      </Text>
+      <TouchableOpacity
+        style={styles.modalButton}
+        onPress={() => setModalValoracionVisible(false)}
+      >
+        <Text style={styles.modalButtonText}>Cerrar</Text>
+      </TouchableOpacity>
+    </View>
+  </View>
+</Modal>
+
     </View>
   );
 };
@@ -357,7 +411,7 @@ const ReservaClienteScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f9f9f9', // se sobreescribe con el theme
+    backgroundColor: '#f9f9f9',
     padding: 16,
   },
   header: {
@@ -408,7 +462,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     marginVertical: 8,
     elevation: 2,
-    height  : 160,
+    height: 160,
   },
   reservaItemFinalizada: {
     paddingBottom: 50,
@@ -458,7 +512,6 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     paddingHorizontal: 12,
     borderRadius: 6,
-  
   },
   valoracionButtonText: {
     color: '#fff',
@@ -470,6 +523,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
+  
+  
   modalContainer: { 
     flex: 1, 
     justifyContent: 'center', 
@@ -487,33 +542,48 @@ const styles = StyleSheet.create({
     fontSize: 16,
     marginBottom: 20,
     textAlign: 'center',
-    color: '#333',
+  },
+  modalTitle: {
+    fontSize: 22,
+    fontWeight: '700',
+    marginBottom: 20,
+  },
+  modalRatingContainer: {
+    flexDirection: 'row',
+    marginBottom: 20,
+  },
+  modalComment: {
+    fontSize: 16,
+    textAlign: 'center',
+    marginBottom: 20,
   },
   modalButtons: {
     flexDirection: 'row',
     justifyContent: 'space-around',
     width: '100%',
   },
+  // Botón unificado para ambos modales
   modalButton: {
     paddingVertical: 10,
-    paddingHorizontal: 15,
+    paddingHorizontal: 20,
     borderRadius: 8,
     minWidth: '40%',
     alignItems: 'center',
+    backgroundColor: '#007BFF',
+    marginTop: 10,
   },
+  modalButtonText: {
+    color: '#fff',
+    fontWeight: 'bold',
+  },
+  // Opcionales: colores específicos para acciones de cancelación/eliminación
   modalCancelButton: {
     backgroundColor: 'red',
   },
   modalDeleteButton: {
     backgroundColor: 'red',
   },
-  modalCloseButton: {
-    backgroundColor: '#ccc',
-  },
-  modalButtonText: {
-    color: '#fff',
-    fontWeight: 'bold',
-  },
 });
 
 export default ReservaClienteScreen;
+    

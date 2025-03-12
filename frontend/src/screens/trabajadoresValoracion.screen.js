@@ -15,9 +15,10 @@ export default function TrabajadorValoracionesScreen({ route, navigation }) {
   const { theme } = useTheme();
   const [valoraciones, setValoraciones] = useState([]);
   const [loading, setLoading] = useState(true);
+  console.log(trabajador);
 
   // Umbral mínimo de valoraciones
-  const MIN_RATINGS = 0;
+  const MIN_RATINGS = 3;
 
   useEffect(() => {
     async function fetchValoraciones() {
@@ -68,11 +69,13 @@ export default function TrabajadorValoracionesScreen({ route, navigation }) {
             {trabajador.nombre} {trabajador.apellido}
           </Text>
         </View>
-        <View style={styles.infoRow}>
-          <Icon name="envelope" size={20} color="#007BFF" style={styles.infoIcon} />
-          <Text style={[styles.label, { color: theme.text }]}>Email: </Text>
-          <Text style={[styles.value, { color: theme.text }]}>{trabajador.email}</Text>
-        </View>
+        {trabajador.email && (
+              <View style={styles.infoRow}>
+                <Icon name="envelope" size={20} color="#007BFF" style={styles.infoIcon} />
+                <Text style={[styles.label, { color: theme.text }]}>Email: </Text>
+                <Text style={[styles.value, { color: theme.text }]}>{trabajador.email}</Text>
+              </View>
+            )}
         <View style={styles.infoRow}>
           <Icon name="phone" size={20} color="#007BFF" style={styles.infoIcon} />
           <Text style={[styles.label, { color: theme.text }]}>Teléfono: </Text>

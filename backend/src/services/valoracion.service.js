@@ -145,11 +145,25 @@ async function existeValoracionPorReserva(reservaId) {
 } 
 
 
+async function getValoracionPorIdReserva(reservaId) {
+    try {
+        const valoracion = await Valoracion.findOne({ reserva: reservaId });
+        return valoracion;
+    } catch (error) {
+        handleError(error, "valoracion.service -> getValoracionPorIdReserva");
+        return null;
+    }
+}
+
+
 export default {
     getValoracionPromedioPorMicroempresa,
     getValoracionesPorMicroempresa,
     getValoracionesPorTrabajador,
     crearValoracion,
     eliminarValoracion,
-    existeValoracionPorReserva
-};
+    existeValoracionPorReserva,
+    getValoracionPorIdReserva,
+
+}
+

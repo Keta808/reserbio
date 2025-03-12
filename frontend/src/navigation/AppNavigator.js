@@ -195,6 +195,7 @@ const TrabajadorStack = () => {
       <Stack.Screen name="VincularMercadoPago" component={MercadoPagoScreen} />
       <Stack.Screen name="Horario" component={Horario} />
       <Stack.Screen name="EditarHorario" component={EditarHorarioScreen} /> 
+      <Stack.Screen name= "TrabajadoresValoracionScreen" component={TrabajadoresValoracionScreen} />
     </Stack.Navigator>
   );
 };

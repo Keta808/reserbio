@@ -104,6 +104,20 @@ async function existeValoracionPorReserva(req, res) {
     }
 }
 
+async function getValoracionPorIdReserva(req, res) {
+    try {
+        const { reservaId } = req.params;
+       const valoracion = await valoracionService.getValoracionPorIdReserva(reservaId);
+
+       console.log("valoracion", valoracion);
+    return res.status(200).json(valoracion);
+    }       
+    catch (error) {
+        console.error("Error en getValoracionPorIdReserva:", error);
+        return res.status(500).json({ message: "Error interno al obtener la valoración" });
+    }
+} 
+
 export default {
     getValoracionPromedioPorMicroempresa,
     getValoracionesPorMicroempresa,
@@ -111,5 +125,6 @@ export default {
     crearValoracion,
     eliminarValoracion,
     existeValoracionPorReserva,
+    getValoracionPorIdReserva,
     
 };
