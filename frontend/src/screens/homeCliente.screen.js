@@ -1,6 +1,6 @@
 import React, { useContext } from "react";
 import { 
-  View, Text, TouchableOpacity, StyleSheet, SafeAreaView, Platform, StatusBar, Alert 
+  View, Text, TouchableOpacity, StyleSheet, SafeAreaView, Platform, StatusBar, Alert,
 } from "react-native";
 import { AuthContext } from "../context/auth.context";
 import { useNavigation } from "@react-navigation/native";
@@ -12,7 +12,7 @@ export default function HomeClienteScreen() {
   const { logout } = useContext(AuthContext);
   const navigation = useNavigation();
   const { theme, toggleTheme } = useTheme();
-
+ 
   const handleLogout = async () => {
     await logout();
   };
@@ -137,6 +137,11 @@ const styles = StyleSheet.create({
   },
   redButton: {
     backgroundColor: "#FF0000",
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
 });
 

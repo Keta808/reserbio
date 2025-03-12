@@ -55,12 +55,13 @@ import { useTheme } from '../context/theme.context';
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
 
-const LoadingScreen = () => (
-  <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+const LoadingScreen = () => {
+  const { theme } = useTheme();
+  <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: theme.background  }}>
     <ActivityIndicator size="large" color="#0000ff" />
     <Text>Verificando autenticación...</Text>
   </View>
-);
+};
 
 // Calculamos colores de contraste para header y tabBar según el tema principal.
 const getContrastColor = (background) =>
@@ -154,10 +155,11 @@ const HomeTrabajadorNavigator = () => {
 // (ClienteStack y TrabajadorStack) se oculta el header, de modo que el header global del AppNavigator sea el único visible.
 const TrabajadorStack = () => {
   const { microempresa, isAdmin, loading } = useMicroempresa();
+  const { theme } = useTheme();
 
   if (loading) {
     return (
-      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: theme.background }}>
         <ActivityIndicator size="large" color="#0000ff" />
         <Text>Cargando información...</Text>
       </View>
@@ -215,6 +217,7 @@ const ClienteStack = () => (
     <Stack.Screen name="Login" component={LoginScreen} />
     <Stack.Screen name="ConfirmacionReservaSlotScreen" component={ConfirmacionReservaSlotScreen} />
     <Stack.Screen name="TrabajadoresValoracionScreen" component={TrabajadoresValoracionScreen} /> 
+    <Stack.Screen name="ServicioPaymentScreen" component={ServicioPaymentScreen} />
   </Stack.Navigator>
 );
 

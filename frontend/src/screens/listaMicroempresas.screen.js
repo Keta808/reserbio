@@ -312,7 +312,7 @@ const styles = StyleSheet.create({
     fontFamily: "Inter",
     textShadowColor: "rgba(0, 0, 0, 0.5)",
     textShadowOffset: { width: 1, height: 1 },
-    textShadowRadius: 2,
+    textShadowRadius: 1,
   },
   cardDetail: {
     fontSize: 14,

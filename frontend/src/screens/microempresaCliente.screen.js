@@ -142,7 +142,7 @@ export default function MicroempresaClienteScreen({ route, navigation }) {
 
   if (!microempresa) {
     return (
-      <View style={styles.errorContainer}>
+      <View style={[styles.errorContainer, { backgroundColor: theme.background }]}>
         <Text style={[styles.error, { color: theme.text }]}>No se pudieron cargar los datos de la microempresa.</Text>
       </View>
     );

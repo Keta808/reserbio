@@ -5,8 +5,9 @@ import {
 import ServicioService from "../services/servicio.service";
 import mercadopagoServices from '../services/mercadopago.service.js';
 import AntDesign from '@expo/vector-icons/AntDesign';
-import { useTheme } from '../context/theme.context';
-
+import { useTheme } from '../context/theme.context'; 
+import Icon from 'react-native-vector-icons/FontAwesome';
+import MicroempresaService from '../services/microempresa.service.js';
 const ServicioScreen = ({ route }) => {
   const { theme } = useTheme();
   const [servicios, setServicios] = useState([]);	
@@ -20,6 +21,7 @@ const ServicioScreen = ({ route }) => {
   const [editingServicioId, setEditingServicioId] = useState(null);
   const [vinculadoMP, setVinculadoMP] = useState(false);
   const { id } = route.params;
+  const [infoVisible, setInfoVisible] = useState(false);
 
   useEffect(() => {
     const fetchServicios = async () => {
@@ -50,7 +52,7 @@ const ServicioScreen = ({ route }) => {
         const idMicroempresa = id;
         const [data, error] = await mercadopagoServices.getMercadoPagoAcc(idMicroempresa);
         if (error || !data || !data.state || data.state !== 'Success' || !data.data.accessToken) {
-          console.log("La microempresa no está vinculada a Mercado Pago.");
+          console.log("La microempresa NO está vinculada a Mercado Pago.");
           setVinculadoMP(false);
           return;
         }
@@ -115,7 +117,7 @@ const ServicioScreen = ({ route }) => {
       } 
     } catch (error) {
       console.error('Error al agregar el servicio:', error.message);
-      Alert.alert('Error', 'Hubo un problema al agregar el servicio.');
+      Alert.alert('Hubo un problema al agregar el servicio.', error.message);
     }
   };
 
@@ -187,7 +189,7 @@ const ServicioScreen = ({ route }) => {
       console.log("ID servicio para generar pago:", idServicio);
       const [urlPago, error] = await mercadopagoServices.crearPreferenciaServicio(idServicio);
       if (error) {
-        Alert.alert("Error", error);
+        Alert.alert("Error Al generar pago", error.message);
         return;
       }
       console.log("URL de pago generada:", urlPago);
@@ -203,11 +205,17 @@ const ServicioScreen = ({ route }) => {
      
   const renderServicioItem = ({ item }) => (
     <View style={[styles.servicioCard, { backgroundColor: theme.background === "#FFFFFF" ? "#f2f2f2" : "#333" }]}>
+       {/* Contenedor del nombre del servicio e ícono de información */}
+    <View style={styles.servicioHeader}>
       <Text style={[styles.servicioName, { color: theme.text }]}>{item.nombre}</Text>
+      <TouchableOpacity onPress={() => handleShowInformation(item)}>
+        <Icon name="info-circle" size={20} color={theme.text} />
+      </TouchableOpacity>
+    </View>
       <Text style={[styles.servicioDetail, { color: theme.text }]}>💲 Precio: ${item.precio}</Text>
       <Text style={[styles.servicioDetail, { color: theme.text }]}>⏳ Duración: {item.duracion} minutos</Text>
       <Text style={[styles.servicioDetail, { color: theme.text }]}>📖 {item.descripcion}</Text>
-      {item.porcentajeAbono !== undefined && (
+      {item.porcentajeAbono !== undefined && item.porcentajeAbono > 0 && (
         <Text style={[styles.servicioDetail, { color: theme.text }]}>💳 Abono: {item.porcentajeAbono}%</Text>
       )}
       {item.urlPago && <Text style={styles.pagoGeneradoText}>✅ Abono Generado</Text>} 
@@ -225,7 +233,11 @@ const ServicioScreen = ({ route }) => {
         </TouchableOpacity>  
       </View>  
     </View>
-  ); 
+  );  
+
+  const handleShowInformation = () => {
+    setInfoVisible(true);
+  };
 
   return (
     <View style={[styles.container, { backgroundColor: theme.background }]}>
@@ -299,7 +311,7 @@ const ServicioScreen = ({ route }) => {
             />
             <TextInput 
               style={[styles.input, { color: theme.text, borderColor: theme.background === "#FFFFFF" ? "#ccc" : "#555" }]} 
-              placeholder="Porcentaje Abono para reserva (Opcional)" 
+              placeholder="Porcentaje Abono (Opcional)" 
               keyboardType="numeric" 
               value={porcentajeAbono} 
               onChangeText={(text) => {
@@ -316,12 +328,38 @@ const ServicioScreen = ({ route }) => {
                 <Text style={styles.cancelButtonText}>Cancelar</Text>
               </TouchableOpacity>
               <TouchableOpacity style={styles.submitButton} onPress={editingServicioId ? handleGuardar : handleAgregarServicio}>
-                <Text style={styles.submitButtonText}>{editingServicioId ? 'Guardar Cambios' : 'Agregar'}</Text>
+                <Text style={styles.submitButtonText}>{editingServicioId ? 'Guardar' : 'Agregar'}</Text>
               </TouchableOpacity>
             </View>
           </View>
         </View>
+      </Modal> 
+      <Modal
+  animationType="fade"
+  transparent={true}
+  visible={infoVisible}
+  onRequestClose={() => setInfoVisible(false)}
+>
+  <View style={styles.modalOverlay}>
+    <View style={styles.modalContent}>
+      <Text style={styles.modalTitle}>Para Reservas con Abono</Text>
+      <Text style={styles.modalText}>
+        Para activar la función de reservar con abono es necesario:
+      </Text>
+      <Text style={styles.modalText}>
+        1) Vincular tu cuenta de ReserBio con Mercado Pago en la pantalla de perfil. {"\n\n"} 
+
+        2) Configurar el porcentaje de abono del servicio que quieres exigir abono. {"\n\n"}
+
+        3) Generar el link de pago del servicio.
+      </Text>
+      <TouchableOpacity style={styles.modalCloseButton} onPress={() => setInfoVisible(false)}>
+        <Text style={styles.modalButtonText}>Cerrar</Text>
+      </TouchableOpacity>
+    </View>
+  </View>
       </Modal>
+
     </View>
   );
 };
@@ -420,6 +458,7 @@ const styles = StyleSheet.create({
     marginRight: 5,
   },
   input: {
+    width: '100%',
     borderWidth: 1,
     borderRadius: 5,
     padding: 10,
@@ -449,10 +488,12 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     marginRight: 5,
+    
   },
   cancelButtonText: {
     color: '#fff',
     fontSize: 16,
+    fonrtWeight: 'Inter',
   }, 
   generarPagoButton: {
     backgroundColor: "#007BFF",
@@ -467,6 +508,47 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     textAlign: 'center',
     marginTop: 10,
+  },
+  servicioHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',  // Asegura alineación correcta con el nombre del servicio
+  },
+  modalOverlay: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0,0,0,0.5)',
+  },
+  modalContent: {
+    backgroundColor: '#fff',
+    borderRadius: 10,
+    padding: 20,
+    width: '80%',
+    alignItems: 'center',
+  },
+  modalTitle: {
+    fontSize: 22,
+    fontWeight: 'bold',
+    marginBottom: 10,
+    textAlign: 'center',
+  },
+  modalText: {
+    fontSize: 16,
+    textAlign: 'center',
+    marginBottom: 10,
+  },
+  modalCloseButton: {
+    backgroundColor: '#007BFF',
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 8,
+    marginTop: 10,
+  },
+  modalButtonText: {
+    fontSize: 16,
+    color: '#fff',
+    fontWeight: 'bold',
   },
 });
 

@@ -72,7 +72,7 @@ const ServicioPaymentScreen = () => {
             {!browserOpen && (
                 <View>
                     <Text style={{ fontSize: 16, textAlign: "center", marginBottom: 15 }}>
-                        Por favor, regresa a la app después de completar el pago en Mercado Pago.
+                        Por favor, presiona el boton para verificar el pago para realizar la reserva, si el pago fue existoso se realizara la reserva. Si no pagaste no se reservara tu cita, si quieres cancelar y volver a la aplicacion presiona cancelar. 
                     </Text>
                     <Button title="Verificar Pago" onPress={verificarPago} />
                     <Button title="Cancelar" onPress={() => navigation.goBack()} color="red" />
