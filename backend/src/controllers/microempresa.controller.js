@@ -12,17 +12,18 @@ import { handleError } from "../utils/errorHandler.js";
 import mongoose from "mongoose";
 
 /**
- * Obtiene todas las microempresas de la base de datos
+ * Obtiene una página de microempresas de la base de datos con orden aleatorio persistente
  */
 async function getMicroempresas(req, res) {
   try {
-    const [microempresas, errorMicroempresas] = await MicroempresaService.getMicroempresas();
-    // populate para mostrar todos los datos de trabajadores
-    if (errorMicroempresas) return respondError(req, res, 404, errorMicroempresas);
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 2;
+    const seed = req.query.seed || ""; 
 
-    microempresas.length === 0
-      ? respondSuccess(req, res, 204)
-      : respondSuccess(req, res, 200, microempresas);
+    const result = await MicroempresaService.getMicroempresas(page, limit, seed);
+
+    // 🔹 Si `result.microempresas` es undefined o vacío, devolvemos una respuesta vacía sin error
+    respondSuccess(req, res, 200, result);  
   } catch (error) {
     handleError(error, "microempresa.controller -> getMicroempresas");
     respondError(req, res, 400, error.message);

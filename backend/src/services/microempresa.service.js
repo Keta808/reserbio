@@ -8,21 +8,51 @@ import Enlace from "../models/enlace.model.js";
 import enlaceService from "./enlace.service.js";
 import { handleError } from "../utils/errorHandler.js";
 import mongoose from "mongoose";
+import crypto from "crypto";
 
 /**
- * Obtiene todas las microempresas de la base de datos
+ * Obtiene una página de microempresas de la base de datos ordenadas aleatoriamente
+ * @param {Number} page Número de página (por defecto 1)
+ * @param {Number} limit Número máximo de microempresas por página (por defecto 10)
+ * @param {String} seed Semilla para el ordenamiento aleatorio (opcional)
  * @returns {Promise} Promesa con el objeto de las microempresas
  */
-async function getMicroempresas() {
+async function getMicroempresas(page = 1, limit = 2, seed = "") {
     try {
-        const microempresas = await Microempresa.find().exec();
-        if (!microempresas || microempresas.length === 0) return [null, "No hay microempresas"];
-    
-        const shuffledMicroempresas = microempresas.sort(() => Math.random() - 0.5);
-        
-        return [shuffledMicroempresas, null];
+        if (!seed) {
+            seed = crypto.randomBytes(20).toString("hex");
+        }
+
+        const totalMicroempresas = await Microempresa.countDocuments(); // Total de microempresas
+        const totalPages = Math.ceil(totalMicroempresas / limit); // Total de páginas
+
+        const skip = (page - 1) * limit;
+        const microempresas = await Microempresa.find()
+            .sort({ _id: 1 }) // Asegura un orden estable
+            .skip(skip)
+            .limit(limit)
+            .exec();
+
+        if (!microempresas || microempresas.length === 0) {
+            return { microempresas: [], totalMicroempresas, totalPages, seed };
+        }
+
+        // Ordenamos las microempresas con un hash basado en el seed
+        const sortedMicroempresas = microempresas.sort((a, b) => {
+            const hashA = crypto.createHash("sha256").update(seed + a._id.toString()).digest("hex");
+            const hashB = crypto.createHash("sha256").update(seed + b._id.toString()).digest("hex");
+            return hashA.localeCompare(hashB);
+        });
+
+        return { 
+            microempresas: sortedMicroempresas, 
+            totalMicroempresas, 
+            totalPages, 
+            seed,
+        };
     } catch (error) {
         handleError(error, "microempresa.service -> getMicroempresas");
+        return { microempresas: [], totalMicroempresas: 0, totalPages: 0, seed }; // Evita que el frontend crashee
     }
 }
 

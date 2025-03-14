@@ -54,20 +54,22 @@ async function getMicroempresaData(idMicroempresa) {
   }
 }
 
-async function getMicroempresas() {
+async function getMicroempresas(page = 1, limit = 2, seed) {
   try {
-    const response = await instance.get('/microempresas'); // Llama al endpoint
-   // console.log('📋 Microempresas obtenidas:', response.data); // Opcional: para debug
-    return response.data; // Devuelve las microempresas
+    const params = { page, limit };
+    if (seed) params.seed = seed; // Solo agregar 'seed' si tiene valor
+
+    const response = await instance.get(`/microempresas`, { params });
+    return response.data;
   } catch (error) {
-    console.error('❌ Error al obtener las microempresas:', error.response?.data || error.message);
+    console.error("❌ Error al obtener las microempresas:", error.response?.data || error.message);
     throw error;
   }
 }
 
 async function getMicroempresaFotoPerfil(id) {
   try {
-      console.log(`🔍 Solicitando foto de perfil para microempresa con ID: ${id}`);
+      // console.log(`🔍 Solicitando foto de perfil para microempresa con ID: ${id}`);
 
       const response = await instance.get(`/microempresas/fotoPerfil/${id}`);
 
@@ -76,7 +78,7 @@ async function getMicroempresaFotoPerfil(id) {
           return null;
       }
 
-      console.log("📸 URL de la foto de perfil recibida:", response.data.fotoPerfil);
+      // console.log("📸 URL de la foto de perfil recibida:", response.data.fotoPerfil);
       return response.data.fotoPerfil;
   } catch (error) {
       console.error(
