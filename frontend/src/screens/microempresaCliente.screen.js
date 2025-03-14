@@ -44,6 +44,7 @@ export default function MicroempresaClienteScreen({ route, navigation }) {
         return;
       }
       const response = await MicroempresaService.getMicroempresaData(id);
+      console.log("response microempresa", response.data.trabajadores);
       if (response) {
         setMicroempresa(response.data);
       } else {
@@ -129,16 +130,19 @@ export default function MicroempresaClienteScreen({ route, navigation }) {
 
   if (loading) {
     return (
-      <View style={styles.loadingContainer}>
+      <View style={[styles.loadingContainer, { backgroundColor: theme.background }]}>
         <ActivityIndicator size="large" color={theme.text} />
-        <Text style={[styles.loadingText, { color: theme.text }]}>Cargando datos de la microempresa...</Text>
+        <Text style={[styles.loadingText, { color: theme.text }]}>
+          Cargando datos de la microempresa...
+        </Text>
       </View>
     );
   }
+  
 
   if (!microempresa) {
     return (
-      <View style={styles.errorContainer}>
+      <View style={[styles.errorContainer, { backgroundColor: theme.background }]}>
         <Text style={[styles.error, { color: theme.text }]}>No se pudieron cargar los datos de la microempresa.</Text>
       </View>
     );
@@ -220,13 +224,14 @@ export default function MicroempresaClienteScreen({ route, navigation }) {
                       <Icon name="info-circle" size={24} color="#007BFF" />
                     </TouchableOpacity>
                   </View>
-                ))}
-              </View>
-            )}
-          </View>
-        }
-        ListFooterComponent={
-          <View style={styles.footerContainer}>
+                  ))}
+                </View>
+              )}
+            </View>
+          }
+          ListFooterComponent={
+            <View style={styles.footerContainer}>
+
              {/* Trabajadores */}
              <View style={styles.sectionContainer}>
              <Text style={[styles.sectionTitle, { color: theme.text }]}>Trabajadores</Text>
@@ -237,17 +242,17 @@ export default function MicroempresaClienteScreen({ route, navigation }) {
                   key={"flatlist_trabajadores_cliente"}
                   renderItem={({ item }) => (
                     <TouchableOpacity
-  style={[
-    styles.card,
-    { backgroundColor: theme.background === "#FFFFFF" ? "#fff" : "#333" }
-  ]}
-  onPress={() =>
-    navigation.navigate("Trabajador", { trabajador: item })
-  }
->
-  <Text style={[styles.cardTitle, { color: theme.text }]}>{item.nombre}</Text>
-  <Text style={[styles.cardDetail, { color: theme.text }]}>{item.telefono}</Text>
-</TouchableOpacity>
+                    style={[
+                      styles.card,
+                      { backgroundColor: theme.background === "#FFFFFF" ? "#fff" : "#333" }
+                    ]}
+                    onPress={() =>
+                      navigation.navigate("TrabajadoresValoracionScreen", { trabajador: item })
+                    }
+                  >
+                    <Text style={[styles.cardTitle, { color: theme.text }]}>{item.nombre}</Text>
+                    <Text style={[styles.cardDetail, { color: theme.text }]}>{item.telefono}</Text>
+                  </TouchableOpacity>
 
                   )}
                   keyExtractor={(item) => item._id}
@@ -572,8 +577,3 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
   },
 });
-
-
-
-
-

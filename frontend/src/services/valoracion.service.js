@@ -19,8 +19,14 @@ async function getValoracionesPorMicroempresa(microempresaId) {
 async function getValoracionesPorTrabajador(trabajadorId) { 
     try {
         const response = await instance.get(`/valoraciones/trabajador/${trabajadorId}`);
-        return response.data.data;
+        console.log("response front", response.data);
+        return response.data;
     } catch (error) {
+        const message = error.response?.data?.message || error.message;
+        if (message === "No hay valoraciones para este trabajador") {
+            // Si no hay valoraciones, retornamos un array vacío en lugar de lanzar el error
+            return [];
+        }
         console.error(
             "Error al obtener las valoraciones del trabajador:",
             error.response?.data || error.message
@@ -91,6 +97,18 @@ const existeValoracionPorReserva = async (reservaId) => {
       return false; // En caso de error, asumimos que no tiene valoración
     }
   };
+
+
+  const getValoracionPorIdReserva = async (reservaId) => {  
+    try {
+      const response = await instance.get(`/valoraciones/getValoracionPorIdReserva/${reservaId}`);
+      console.log("response", response.data);
+      return response.data;
+    } catch (error) {
+      console.error('Error al obtener valoración:', error);
+      return null;
+    }
+  };
   
 
 export default {
@@ -99,7 +117,9 @@ export default {
     crearValoracion,
     eliminarValoracion,
     getValoracionPromedioPorMicroempresa,
-    existeValoracionPorReserva
+    existeValoracionPorReserva,
+    getValoracionPorIdReserva
+
 };
 
 

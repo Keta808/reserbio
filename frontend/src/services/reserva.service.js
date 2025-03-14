@@ -34,6 +34,7 @@ async function getReservasByTrabajadorId(trabajadorId) {
           name: `${reserva.servicio.nombre} - ${reserva.cliente.nombre}`,
           start: startDate,
           end: endDate,
+          estado: reserva.estado,   
           servicioNombre: reserva.servicio.nombre,
           clienteNombre: reserva.cliente.nombre,
           idCliente: reserva.cliente._id,
@@ -191,6 +192,19 @@ async function getUrlPagoByReservaId(idReserva) {
     }
 }
 
+async function marcarReservaRealizada(id) {
+    try {
+        const response = await instance.put(`/reservas/${id}/realizada`);
+        return response.data;
+    } catch (error) {
+        console.error(
+            "Error al marcar la reserva como realizada:",
+            error.response?.data || error.message
+        );
+        throw error;
+    }
+}
+
 
 
 export default {
@@ -204,4 +218,5 @@ export default {
     createReservaHorario,
     getActiveReservationCount,
     getUrlPagoByReservaId,
+    marcarReservaRealizada,
 };

@@ -17,7 +17,6 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import reservaService from '../services/reserva.service';
 import paymentService from '../services/payment.services';
 import { useTheme } from '../context/theme.context';
-import Ionicons from 'react-native-vector-icons/Ionicons';
 
 moment.locale('es');
 
@@ -68,6 +67,22 @@ const AgendaScreen = () => {
     fetchData();
   }, [fetchData]);
 
+  // Función para marcar una reserva como realizada
+  const markReservaRealizada = async (id) => {
+    try {
+      await reservaService.marcarReservaRealizada(id);
+      // Actualizamos la lista, eliminando la reserva marcada
+      const updatedItems = { ...items };
+      const selectedKey = moment(selectedDate).format('YYYY-MM-DD');
+      if (updatedItems[selectedKey]) {
+        updatedItems[selectedKey] = updatedItems[selectedKey].filter(e => e.id !== id);
+        setItems(updatedItems);
+      }
+    } catch (error) {
+      console.error("Error al marcar reserva realizada:", error);
+    }
+  };
+
   // Genera un array de 10 días (desde 2 días atrás hasta 7 días adelante)
   const generateDays = () => {
     const days = [];
@@ -102,37 +117,40 @@ const AgendaScreen = () => {
       
       try { 
         // Obtener el servicio por Id reserva
-                const [servicio, errorServicio] = await reservaService.getUrlPagoByReservaId(selectedEvent.id);
-                if (errorServicio) {
-                    console.log("Error obteniendo Servicio:", errorServicio);
-                }
-                const idCliente = selectedEvent.idCliente;
-                if (servicio.urlPago && servicio.urlPago !== 'null' && servicio.urlPago !== 'undefined') { 
-                    const [pagos, errorPagos] = await paymentService.getPaymentByClientId(idCliente);
-                    if (errorPagos) {
-                        Alert.alert("Error", "No se pudieron obtener los pagos.");
-                        return;
-                    }
-        
-                    if (!pagos?.data?.length) {
-                        Alert.alert("Error", "No se encontraron pagos asociados a este servicio.");
-                        return;
-                    }
-                    const pagoAsociado = pagos.data.find(pago => pago.idServicio === servicio._id);
-                    if (pagoAsociado) {
-                        const [reembolso, errorRembolso] = await paymentService.refundPayment(pagoAsociado.paymentId);
-                        if (errorRembolso) {
-                            console.error('Error al reembolsar el pago:', errorRembolso);
-                            Alert.alert('Error', 'No se pudo procesar el reembolso.');
-                            return;
-                        }
-        
-                        console.log('Pago reembolsado:', reembolso);
-                        Alert.alert('Pago reembolsado', 'Se ha reembolsado el pago de la reserva.');
-                    } else {
-                        Alert.alert("Error", "No se encontró un pago asociado a esta reserva.");
-                    }
-                } 
+        const servicio = await reservaService.getUrlPagoByReservaId(reservaSeleccionada);
+
+        if (!servicio) {
+          console.error("Error: No se obtuvo una respuesta válida del servicio.");
+          return;
+        }
+
+        const idCliente = selectedEvent.idCliente;
+        if (servicio.urlPago && servicio.urlPago !== 'null' && servicio.urlPago !== 'undefined') { 
+          const [pagos, errorPagos] = await paymentService.getPaymentByClientId(idCliente);
+          if (errorPagos) {
+            Alert.alert("Error", "No se pudieron obtener los pagos.");
+            return;
+          }
+  
+          if (!pagos?.data?.length) {
+            Alert.alert("Error", "No se encontraron pagos asociados a este servicio.");
+            return;
+          }
+          const pagoAsociado = pagos.data.find(pago => pago.idServicio === servicio._id);
+          if (pagoAsociado) {
+            const [reembolso, errorRembolso] = await paymentService.refundPayment(pagoAsociado.paymentId);
+            if (errorRembolso) {
+              console.error('Error al reembolsar el pago:', errorRembolso);
+              Alert.alert('Error', 'No se pudo procesar el reembolso.');
+              return;
+            }
+  
+            console.log('Pago reembolsado:', reembolso);
+            Alert.alert('Pago reembolsado', 'Se ha reembolsado el pago de la reserva.');
+          } else {
+            Alert.alert("Error", "No se encontró un pago asociado a esta reserva.");
+          }
+        } 
         console.log("Cancelando reserva:", selectedEvent);
      
         await reservaService.cancelReserva(selectedEvent.id);
@@ -186,8 +204,6 @@ const AgendaScreen = () => {
   return (
     <SafeAreaView style={[styles.safeArea, { backgroundColor: theme.background }]}>
       <View style={styles.container}>
-        
-
         {/* Calendar Strip */}
         <View style={[styles.stripContainer, { 
           backgroundColor: theme.background === "#FFFFFF" ? "#f2f2f2" : "#333",
@@ -237,7 +253,16 @@ const AgendaScreen = () => {
                 <RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); fetchData(); }} />
               }
               renderItem={({ item }) => {
-                const isCancelable = moment(item.start).isSameOrAfter(moment(), 'day');
+                const ahora = moment();
+                const horaInicio = moment(item.start);
+                const horaFin = moment(item.end);
+            
+                console.log("Estado de la reserva:", item.estado);
+            
+                const isFinalizada = horaFin.isBefore(ahora); // La reserva ya terminó
+                const isCancelable = horaInicio.isAfter(ahora); // La reserva aún no ha comenzado
+                const isRealizada = item.estado === "Realizada"; // Estado de la reserva
+            
                 return (
                   <View style={[styles.eventItem, { backgroundColor: theme.background === "#FFFFFF" ? "#f2f2f2" : "#333" }]}>
                     <View style={styles.eventInfo}>
@@ -250,10 +275,22 @@ const AgendaScreen = () => {
                       <Text style={[styles.eventTime, { color: theme.text }]}>
                         Hora de servicio: {moment.parseZone(item.start).format('HH:mm')} - {moment.parseZone(item.end).format('HH:mm')}
                       </Text>
+                      <Text style={[styles.eventTime, { color: theme.text }]}>  
+                        Estado: {isRealizada ? 'Realizada' : isFinalizada ? 'Finalizada' : 'Activa'}  
+                      </Text>
                     </View>
-                    {isCancelable && (
+            
+                    {/* Mostrar botón de cancelar si la reserva no está realizada */}
+                    {isCancelable && !isRealizada && (
                       <TouchableOpacity style={styles.cancelButton} onPress={() => openCancelModal(item)}>
                         <Text style={styles.cancelButtonText}>X</Text>
+                      </TouchableOpacity>
+                    )}
+            
+                    {/* Mostrar botón de marcar como realizada si aún no está en ese estado */}
+                    {isFinalizada && !isRealizada && (
+                      <TouchableOpacity style={styles.realizadaButton} onPress={() => markReservaRealizada(item.id)}>
+                        <Text style={styles.realizadaButtonText}>✓</Text>
                       </TouchableOpacity>
                     )}
                   </View>
@@ -444,6 +481,18 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontWeight: 'bold',
   },
+  realizadaButton: {
+    marginLeft: 10,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    backgroundColor: '#4CAF50',
+    borderRadius: 20,
+  },
+  realizadaButtonText: {
+    fontSize: 18,
+    color: '#fff',
+    fontWeight: 'bold',
+  },
   modalOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.5)',
@@ -521,4 +570,3 @@ const styles = StyleSheet.create({
 });
 
 export default AgendaScreen;
-

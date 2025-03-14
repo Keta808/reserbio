@@ -1,6 +1,6 @@
-import React, { useContext, useEffect } from "react";
+import React, { useContext, useEffect, useState } from "react";
 import { 
-  View, Text, TouchableOpacity, StyleSheet, Alert, SafeAreaView, Platform, StatusBar 
+  View, Text, TouchableOpacity, StyleSheet, Alert, SafeAreaView, Platform, StatusBar, ActivityIndicator,
 } from "react-native";
 import { AuthContext } from "../context/auth.context";
 import { useNavigation } from "@react-navigation/native";
@@ -12,12 +12,15 @@ export default function HomeTrabajadorScreen() {
   const { theme, toggleTheme } = useTheme();
   const { user, logout } = useContext(AuthContext);
   const { microempresa, fetchMicroempresa } = useContext(MicroempresaContext);
+  const [loading, setLoading] = useState(true);
   const navigation = useNavigation();
 
   useEffect(() => {
     if (user && !microempresa) {
       fetchMicroempresa(user.id);
+      
     }
+    setLoading(false);
   }, [user, microempresa, fetchMicroempresa]);
 
   const handleGoToPerfilTrabajador = () => {
@@ -34,7 +37,14 @@ export default function HomeTrabajadorScreen() {
       return;
     }
     navigation.navigate("Microempresa", { id: microempresa._id, userId: user.id });
-  };
+  }; 
+  if(loading){
+    return (<View style={[styles.loadingContainer, { backgroundColor: theme.background }]}>
+            <ActivityIndicator size="large" color={theme.text} />
+            <Text style={{ color: theme.text }}>Cargando aplicacion...</Text>
+          </View>
+        );
+  }
 
   return (
     <SafeAreaView style={[styles.safeArea, { backgroundColor: theme.background }]}>
@@ -119,6 +129,11 @@ const styles = StyleSheet.create({
     right: 20,
     padding: 10,
     borderRadius: 20,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
 });
 
