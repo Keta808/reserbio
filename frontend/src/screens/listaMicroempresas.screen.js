@@ -226,9 +226,10 @@ export default function ListaMicroempresasScreen({ navigation }) {
     <Text style={styles.paginationButtonText}>Anterior</Text>
   </TouchableOpacity>
 
-  <Text style={styles.paginationText}>
-    Página {paginaActual} de {totalPaginas}
+  <Text style={[styles.paginationText, { color: theme.text }]}>
+  Página {paginaActual} de {totalPaginas}
   </Text>
+
 
   <TouchableOpacity
     style={styles.paginationButton}
