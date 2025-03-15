@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from "react";
-import { View, ActivityIndicator, Alert, Button, Text } from "react-native";
+import { View, ActivityIndicator, Alert, TouchableOpacity, Text, StyleSheet } from "react-native";
 import * as WebBrowser from "expo-web-browser";
 
 import { useNavigation, useRoute } from "@react-navigation/native";
 import reservaService from "../services/reserva.service";
 import paymentService from "../services/payment.services.js";
-
+import { useTheme } from '../context/theme.context';
 const ServicioPaymentScreen = () => {
 
     const route = useRoute();
@@ -13,6 +13,7 @@ const ServicioPaymentScreen = () => {
     const [loading, setLoading] = useState(true);
     const { urlPago, idServicio, reservaData } = route.params;
     const [browserOpen, setBrowserOpen] = useState(false);
+    const { theme } = useTheme();
 
     useEffect(() => {
         //  Abre Mercado Pago en el navegador externo
@@ -33,24 +34,34 @@ const ServicioPaymentScreen = () => {
         }
     };
 
+    const actualizarPago = async () => { 
+        try {
+            return await paymentService.actualizarPago({
+                idServicio,
+                idCliente: reservaData.cliente,
+            });
+        } catch (error) {
+            console.error("Error al actualizar el idCliente en Payment:", error);
+            return { state: "Error" };
+        }
+
+    };
+
     const verificarPago = async () => {
         try {
             setLoading(true);
             const response = await paymentService.verificarUltimoPago(idServicio);
 
-            if (response.state === "Success" && (response.data.state === "approved" || response.data.state === "Pending")) {
+            if (response.state === "Success" && ["approved", "pending", "authorized"].includes(response.data.state)) {
                 //  Confirmar reserva si el pago está aprobado o pendiente
-                const response = await reservaService.createReservaHorario(reservaData);
-                console.log("Reserva creada:", response);
+                const reservaResponse = await reservaService.createReservaHorario(reservaData);
+                console.log("Reserva creada:", reservaResponse);
                  //  Actualizar el `idCliente` en el pago
-            const actualizarPagoResponse = await paymentService.actualizarPago({
-                idServicio,
-                idCliente: reservaData.cliente,
-            });
-            if (actualizarPagoResponse.state === "Error") {
-                console.log("Error al actualizar el idCliente en Payment.");
-            }
-            Alert.alert("Reserva exitosa", "Tu reserva ha sido confirmada.");
+                 const actualizarPagoResponse = await actualizarPago();
+                 if (actualizarPagoResponse.state === "Error") {
+                     console.log("Error al actualizar el idCliente en Payment.");
+                 }
+            Alert.alert("Reserva exitosa", "Tu reserva ha sido confirmada. Ve a la agenda de Tus Reservas para ver los detalles.");
             navigation.navigate("HomeNavigator", { screen: "Reservas" });
             } else {
                 Alert.alert("Pago no verificado", "No se encontró un pago aprobado.");
@@ -66,20 +77,82 @@ const ServicioPaymentScreen = () => {
     };
 
     return (
-        <View style={{ flex: 1, justifyContent: "center", alignItems: "center", padding: 20 }}>
+        <View style={[styles.container, { backgroundColor: theme.background }]}>
             {loading && <ActivityIndicator size="large" color="#000" />}
             
             {!browserOpen && (
-                <View>
-                    <Text style={{ fontSize: 16, textAlign: "center", marginBottom: 15 }}>
-                        Por favor, presiona el boton para verificar el pago para realizar la reserva, si el pago fue existoso se realizara la reserva. Si no pagaste no se reservara tu cita, si quieres cancelar y volver a la aplicacion presiona cancelar. 
-                    </Text>
-                    <Button title="Verificar Pago" onPress={verificarPago} />
-                    <Button title="Cancelar" onPress={() => navigation.goBack()} color="red" />
+               <View style={styles.contenedorBotones}>
+                    <Text style={[styles.texto, { color: theme.text }]}>
+                    Presiona "Verificar Pago" para completar la reserva. Si el pago no se realizó, la cita no se reservará. Si deseas cancelar y no reservar, presiona "Cancelar".
+                    Puedes ver tus reservas en la sección "Tus Reservas".
+                </Text>
+                    <TouchableOpacity style={styles.verificarPagoBoton} onPress={verificarPago}>
+                    <Text style={styles.verificarPagoTexto}>Verificar Pago</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity style={styles.cancelarBoton} onPress={() => navigation.goBack()}>
+                    <Text style={styles.cancelarTexto}>Cancelar</Text>
+                </TouchableOpacity>
                 </View>
             )}
         </View>
     );
 };
+
+const styles = StyleSheet.create({
+    container: {
+        flex: 1,
+        justifyContent: "center",
+        alignItems: "center",
+        padding: 20,
+    },
+    texto: {
+        fontSize: 16,
+        textAlign: "center",
+        marginBottom: 20,
+        color: "#333",
+    },
+    verificarPagoBoton: {
+        backgroundColor: "#007AFF",
+        width: "80%",
+        paddingVertical: 15,
+        borderRadius: 10,
+        alignItems: "center",
+        justifyContent: "center",
+        marginBottom: 15,
+        shadowColor: "#000000",
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.3,
+        shadowRadius: 5,
+        elevation: 6,
+    },
+    verificarPagoTexto: {
+        color: "#FFF",
+        fontSize: 18,
+        fontWeight: "bold",
+    },
+    contenedorBotones: {  // Nuevo estilo agregado
+        alignItems: "center", // Centra los botones horizontalmente
+        width: "100%",        // Asegura que los botones ocupen todo el ancho disponible
+    },
+    cancelarBoton: {
+        backgroundColor: "#FF3B30",
+        width: "80%",
+        paddingVertical: 15,
+        borderRadius: 12,
+        alignItems: "center",
+        justifyContent: "center",
+        shadowColor: "#000000",
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.3,
+        shadowRadius: 5,
+        elevation: 6,
+    },
+    cancelarTexto: {
+        color: "#FFF",
+        fontSize: 18,
+        fontWeight: "bold",
+    },
+});
 
 export default ServicioPaymentScreen;

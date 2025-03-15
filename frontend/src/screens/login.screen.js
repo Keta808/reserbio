@@ -107,7 +107,7 @@ export default function LoginScreen() {
 
   return (
     <View style={[styles.container, { backgroundColor: theme.background }]}>
-      <Text style={[styles.welcomeTitle, { color: theme.text }]}>Bienvenido a ReserBio!</Text>
+      <Text style={[styles.welcomeTitle, { color: theme.text }]}>¡Bienvenido a ReserBio!</Text>
       <Text style={[styles.title, { color: theme.text }]}>Iniciar Sesión</Text>
       
       {/* Toggle personalizado para elegir rol */}

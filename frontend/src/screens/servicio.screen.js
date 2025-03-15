@@ -351,8 +351,11 @@ const ServicioScreen = ({ route }) => {
 
         2) Configurar el porcentaje de abono del servicio que quieres exigir abono. {"\n\n"}
 
-        3) Generar el link de pago del servicio.
-      </Text>
+        3) Generar el link de pago del servicio. {"\n\n"} 
+
+        IMPORTANTE: El link de pago del servicio tiene una duracion de 30 días, debes generar un nuevo link pasado 30 dias para que tus clientes puedan abonar para reservar. {"\n\n"}
+        Para cancelar la reserva con abono de un servicio, simplemente elimina el servicio y vuelve a agregarlo. {"\n\n"}
+     </Text>
       <TouchableOpacity style={styles.modalCloseButton} onPress={() => setInfoVisible(false)}>
         <Text style={styles.modalButtonText}>Cerrar</Text>
       </TouchableOpacity>
