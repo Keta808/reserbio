@@ -61,12 +61,22 @@ async function rechazarInvitacion(codigoInvitacion) {
  */
 async function obtenerInvitacionesPendientes(idMicroempresa) {
     try {
+        if (!idMicroempresa) {
+            throw new Error("ID de la microempresa no proporcionado.");
+        }
+
         const response = await instance.get(`/invitaciones/pendientes/${idMicroempresa}`);
-        console.log('📋 Invitaciones pendientes obtenidas:', response.data);
-        return response.data;
+        console.log("📋 Invitaciones pendientes obtenidas:", response.data);
+
+        return { success: true, data: response.data };
     } catch (error) {
-        console.error('❌ Error al obtener invitaciones pendientes:', error.response?.data || error.message);
-        throw error;
+        console.error("❌ Error al obtener invitaciones pendientes:", error.response?.data || error.message);
+
+        return {
+            success: false,
+            message: error.response?.data?.message || "Error al obtener invitaciones",
+            errorDetails: error.response?.data || error.message,
+        };
     }
 }
 

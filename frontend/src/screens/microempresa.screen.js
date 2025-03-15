@@ -349,13 +349,23 @@ export default function MicroempresaScreen({ route }) {
                 <Text style={[styles.noImagesText, { color: theme.text }]}>No hay trabajadores aún.</Text>
               )}
               <View style={styles.buttonContainer}>
-                <TouchableOpacity
-                  style={[styles.button, styles.greenButton]}
-                  onPress={() => navigation.navigate("InvitarTrabajador", { idMicroempresa: id })}
-                >
-                  <Text style={styles.buttonText}>Invitar Trabajador</Text>
-                </TouchableOpacity>
-              </View>
+  <TouchableOpacity
+    style={[styles.button, styles.greenButton, { flex: 1, marginRight: 5 }]} // Ajustar ancho
+    onPress={() => navigation.navigate("InvitarTrabajador", { idMicroempresa: id })}
+  >
+    <Text style={styles.buttonText}>Invitar Trabajador</Text>
+  </TouchableOpacity>
+
+  <TouchableOpacity
+    style={[styles.button, styles.blueButton, { flex: 1, marginLeft: 5 }]} // Ajustar ancho
+    onPress={() => navigation.navigate("Invitaciones", { idMicroempresa: id })}
+  >
+    <Text style={styles.buttonText}>Ver Invitaciones</Text>
+  </TouchableOpacity>
+</View>
+
+
+
             </View>
   
             {/* Galería */}
@@ -503,9 +513,13 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   buttonContainer: {
+    flexDirection: "row", // Alinea los botones en fila
+    justifyContent: "space-between", // Espacia los botones uniformemente
+    alignItems: "center", // Asegura alineación vertical uniforme
     marginTop: 10,
     paddingHorizontal: 10,
   },
+  
   button: {
     width: "100%",
     paddingVertical: 15,
@@ -644,11 +658,5 @@ const styles = StyleSheet.create({
     height: 100,
     borderRadius: 10,
   },
+  
 });
-
-
-
-
-
-
-
