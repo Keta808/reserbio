@@ -2,7 +2,7 @@ import React, { useState, useCallback } from 'react';
 import { View, Text, FlatList, TouchableOpacity, Alert, StyleSheet } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { useTheme } from '../context/theme.context';
-import invitacionService from '../services/invitacion.service';
+import InvitacionService from '../services/invitacion.service';
 import Ionicons from "react-native-vector-icons/Ionicons";
 import { useNavigation } from '@react-navigation/native';
 
@@ -10,9 +10,7 @@ const InvitacionesScreen = ({ route }) => {
   const navigation = useNavigation();
   const { theme } = useTheme();
   const [invitaciones, setInvitaciones] = useState([]);
-  console.log("\ud83d\udccc route.params:", route.params);
   const idMicroempresa = route.params?.idMicroempresa || route.params?.microempresaId || null;
-  console.log("\ud83d\udccc ID recibido:", idMicroempresa);
 
   useFocusEffect(
     useCallback(() => {
@@ -27,8 +25,7 @@ const InvitacionesScreen = ({ route }) => {
     }
   
     try {
-      const data = await invitacionService.obtenerInvitacionesPendientes(idMicroempresa);
-      console.log('📋 Respuesta completa del backend:', JSON.stringify(data, null, 2));
+      const data = await InvitacionService.obtenerInvitacionesPendientes(idMicroempresa);
       
       const invitacionesLista = data?.data?.data || [];
   
@@ -46,14 +43,21 @@ const InvitacionesScreen = ({ route }) => {
 
   const handleEliminar = (id) => {
     Alert.alert('Eliminar Invitación', '¿Seguro que deseas eliminar esta invitación?', [
-      { text: 'Cancelar', style: 'cancel' },
-      { text: 'Eliminar', onPress: () => eliminarInvitacion(id), style: 'destructive' }
+        { text: 'Cancelar', style: 'cancel' },
+        { text: 'Eliminar', onPress: () => eliminarInvitacion(id), style: 'destructive' }
     ]);
-  };
+};
 
-  const eliminarInvitacion = (id) => {
-    setInvitaciones(prev => prev.filter(inv => inv.id !== id));
-  };
+const eliminarInvitacion = async (id) => {
+    try {
+        await InvitacionService.eliminarInvitacion(id); // Llamada al backend
+        setInvitaciones(prev => prev.filter(inv => inv._id !== id)); // Actualizar UI
+        Alert.alert('Éxito', 'Invitación eliminada correctamente.');
+    } catch (error) {
+        Alert.alert('Error', 'No se pudo eliminar la invitación.');
+        console.error("❌ Error al eliminar la invitación:", error);
+    }
+};
 
   return (
     <View style={[styles.container, { backgroundColor: theme.background }]}>

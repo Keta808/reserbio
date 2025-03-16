@@ -234,9 +234,38 @@ async function actualizarInvitacionesExpiradas() {
     );
 }
 
+/**
+ * Elimina una invitación por su ID
+ */
+async function eliminarInvitacion(id) {
+    try {
+        console.log("id recibido en service: ", id);
+        // Validar si el ID es un ObjectId válido ANTES de hacer la consulta
+        if (!mongoose.Types.ObjectId.isValid(id)) {
+            console.log("Error en service: ID de invitación no válido.");
+            throw new Error("ID de invitación no válido.");
+        }
+
+        // Verificar si la invitación existe
+        const invitacion = await Invitacion.findById(id);
+        if (!invitacion) {
+            throw new Error("La invitación no existe.");
+        }
+
+        // Eliminar la invitación
+        await Invitacion.findByIdAndDelete(id);
+
+        return { message: "Invitación eliminada correctamente." };
+    } catch (error) {
+        console.error("❌ Error al eliminar la invitación:", error.message);
+        throw new Error(error.message);
+    }
+}
+
 export default {
     crearInvitacion,
     verificarCodigoInvitacion,
     aceptarInvitacionPorCodigo,
     obtenerInvitaciones,
+    eliminarInvitacion,
 };

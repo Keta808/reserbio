@@ -1,5 +1,4 @@
 import instance from './root.services.js';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 
 /**
  * Enviar una invitación a un trabajador
@@ -80,9 +79,30 @@ async function obtenerInvitacionesPendientes(idMicroempresa) {
     }
 }
 
+/**
+ * Eliminar una invitación por su ID
+ * @param {string} idInvitacion - ID de la invitación a eliminar
+ * @returns {Promise} - Respuesta de la API
+ */
+async function eliminarInvitacion(idInvitacion) {
+    try {
+        if (!idInvitacion) {
+            throw new Error("El ID de la invitación es requerido.");
+        }
+
+        const response = await instance.delete(`/invitaciones/eliminar/${idInvitacion}`);
+        console.log("🗑️ Invitación eliminada con éxito:", response.data);
+        return response.data;
+    } catch (error) {
+        console.error("❌ Error al eliminar la invitación:", error.response?.data || error.message);
+        throw error;
+    }
+}
+
 export default {
     enviarInvitacion,
     aceptarInvitacion,
     rechazarInvitacion,
     obtenerInvitacionesPendientes,
+    eliminarInvitacion,
 };
