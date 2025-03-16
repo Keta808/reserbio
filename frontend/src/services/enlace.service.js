@@ -62,10 +62,27 @@ async function obtenerEnlacesPorTrabajador(userId) {
     }
 }
 
+/**
+ * Obtiene el historial de microempresas de un usuario
+ * @param {string} idUsuario - ID del usuario
+ * @returns {Promise} - Historial de microempresas
+ */
+async function obtenerHistorialMicroempresas(idUsuario) {
+    try {
+        const response = await instance.get(`/enlaces/historial/${idUsuario}`);
+        console.log('📜 Historial de microempresas obtenido:', response.data);
+        return response.data;
+    } catch (error) {
+        console.error('❌ Error al obtener el historial de microempresas:', error.response?.data || error.message);
+        throw error;
+    }
+}
+
 export default {
     actualizarEstadoEnlace,
     obtenerTrabajadoresMicroempresa,
     desvincularTrabajador,
     obtenerEnlacesPorTrabajador,
+    obtenerHistorialMicroempresas
 };
 

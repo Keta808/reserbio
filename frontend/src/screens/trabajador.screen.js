@@ -164,6 +164,11 @@ export default function TrabajadorScreen() {
     );
   } 
 
+  // funcion para ir a historial de trabajadores
+  const handleVerHistorial = () => {
+    navigation.navigate('HistorialTrabajador', { idTrabajador: user.id });
+  };  
+
   return (
     <View style={[styles.container, { backgroundColor: theme.background }]}>
       <View style={styles.headerContainer}>
@@ -201,6 +206,10 @@ export default function TrabajadorScreen() {
         <TouchableOpacity style={styles.button} onPress={() => setModalVisible(true)}>
           <Icon name="lock" size={20} color="#fff" style={styles.buttonIcon} />
           <Text style={styles.buttonText}>Cambiar Contraseña</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.button} onPress={handleVerHistorial}>
+          <Icon name="lock" size={20} color="#fff" style={styles.buttonIcon} />
+          <Text style={styles.buttonText}>Ver Historial de Trabajador</Text>
         </TouchableOpacity>
         {/* Los demás botones se mantienen */}
         {dataTrabajador.data.isAdmin && (
