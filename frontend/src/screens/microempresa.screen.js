@@ -16,7 +16,7 @@ import ImageViewing from "react-native-image-viewing";
 import { useFocusEffect, useNavigation } from "@react-navigation/native";
 import Ionicons from "react-native-vector-icons/Ionicons";
 import { useTheme } from "../context/theme.context";
-
+import { getTrabajadorById } from '../services/user.service'; 
 import ServiciosService from "../services/servicio.service";
 import MicroempresaService from "../services/microempresa.service";
 import EnlaceService from "../services/enlace.service";
@@ -35,7 +35,7 @@ export default function MicroempresaScreen({ route }) {
   // Estado para visor de imagen
   const [imageModalVisible, setImageModalVisible] = useState(false);
   const [selectedImageUrl, setSelectedImageUrl] = useState(null);
-
+  const [dataTrabajador, setDataTrabajador] = useState(null);
   const fetchMicroempresa = async () => {
     try {
       console.log("📥 Fetching microempresa with ID:", id);
@@ -106,7 +106,21 @@ export default function MicroempresaScreen({ route }) {
       setMontoAbono(newMontos);
     };
     obtenerMontosAbono();
-  }, [servicios]);
+  }, [servicios]); 
+  
+  useEffect(() => {
+      const fetchTrabajadorData = async () => {
+        try {
+          if (!user || !user.id) return;
+          const trabajadorData = await getTrabajadorById(user.id);
+          setDataTrabajador(trabajadorData);
+        } catch (error) {
+          console.error("Error fetching trabajador data:", error.message || error);
+          Alert.alert("Error", "No se pudo cargar la información del trabajador.");
+        } 
+      };
+      fetchTrabajadorData();
+    }, [user]);
 
   const handleDeleteImage = (publicId) => {
     Alert.alert(
@@ -307,15 +321,18 @@ export default function MicroempresaScreen({ route }) {
                   No hay servicios registrados aún.
                 </Text>
               )}
-  
+            {dataTrabajador.data.isAdmin && ( 
               <View style={styles.buttonContainer}>
-                <TouchableOpacity
-                  style={[styles.button, styles.greenButton]}
-                  onPress={() => navigation.navigate("Servicio", { id })}
-                >
-                  <Text style={styles.buttonText}>Configurar Servicios</Text>
-                </TouchableOpacity>
-              </View>
+              <TouchableOpacity
+                style={[styles.button, styles.greenButton]}
+                onPress={() => navigation.navigate("Servicio", { id })}
+              >
+                <Text style={styles.buttonText}>Configurar Servicios</Text>
+              </TouchableOpacity>
+            </View>
+
+            )}
+              
             </View>
   
             {/* Trabajadores */}

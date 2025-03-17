@@ -262,7 +262,7 @@ async function obtenerMicroempresaPorTrabajador(idTrabajador) {
     const response = await instance.get(`/microempresas/maintrabajador/${idTrabajador}`); 
     return response.data; 
   } catch (error) {
-    console.error("Error al obtener la microempresa del main trabajador:", error.response?.data || error.message);
+    console.log("Error al obtener la microempresa del main trabajador:", error.response?.data || error.message);
     throw error;
   }
 }

@@ -3,9 +3,9 @@ import { StatusBar } from 'expo-status-bar';
 import { StyleSheet, View } from 'react-native'; 
 import AppNavigator from './navigation/AppNavigator';
 import { AuthProvider } from './context/auth.context'; 
-import { NavigationContainer } from '@react-navigation/native'; // ❌ Elimina ThemeProvider aquí
-import { ThemeProvider } from './context/theme.context'; // ✅ Mantén esta importación
-import { MicroempresaProvider } from './context/microempresa.context'; // ✅ Ajusta la ruta si es necesario
+import { NavigationContainer } from '@react-navigation/native'; 
+import { ThemeProvider } from './context/theme.context'; //  Mantén esta importación
+import { MicroempresaProvider } from './context/microempresa.context'; //  Ajusta la ruta si es necesario
 
 
 export default function App() {

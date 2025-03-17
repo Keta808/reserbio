@@ -83,8 +83,9 @@ const ServicioPaymentScreen = () => {
             {!browserOpen && (
                <View style={styles.contenedorBotones}>
                     <Text style={[styles.texto, { color: theme.text }]}>
-                    Presiona "Verificar Pago" para completar la reserva. Si el pago no se realizó, la cita no se reservará. Si deseas cancelar y no reservar, presiona "Cancelar".
-                    Puedes ver tus reservas en la sección "Tus Reservas".
+                    Presiona "Verificar Pago" para completar la reserva. Si el pago no se realizó, la cita no se reservará. Si deseas cancelar sin reservar, presiona "Cancelar".
+                    Una vez el pago este verificado, puedes ver tus reservas en la sección "Tus Reservas". 
+                    Si ya abonaste y hay errores en la verificacion, puedes contactar a la microempresa para que confirmen tu abono y tu reserva.
                 </Text>
                     <TouchableOpacity style={styles.verificarPagoBoton} onPress={verificarPago}>
                     <Text style={styles.verificarPagoTexto}>Verificar Pago</Text>
@@ -107,7 +108,7 @@ const styles = StyleSheet.create({
         padding: 20,
     },
     texto: {
-        fontSize: 16,
+        fontSize: 20,
         textAlign: "center",
         marginBottom: 20,
         color: "#333",

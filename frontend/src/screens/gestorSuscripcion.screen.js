@@ -6,7 +6,7 @@ import { AuthContext } from '../context/auth.context';
 
 
 const GestorSuscripcionScreen = () => { 
-  const { user } = useContext(AuthContext);
+  const { user, logout } = useContext(AuthContext);
   const [suscripcion, setSuscripcion] = useState(null);
   const [loading, setLoading] = useState(true);
   const navigation = useNavigation(); 
@@ -39,7 +39,7 @@ const GestorSuscripcionScreen = () => {
   const handleCancelSubscription = async () => {
     Alert.alert(
       "Cancelar Suscripción",
-      "¿Estás seguro de que deseas cancelar tu suscripción? Se borraran tus datos y no podrás usar la aplicación como MICROEMPRESA hasta que consigas una nueva suscripción.",
+      "¿Estás seguro de que deseas CANCELAR tu suscripción? Se borraran tus datos como trabajador y no podrás usar la aplicación como MICROEMPRESA hasta que te suscribas nuevamente a otro plan.",
       [
         {
           text: "Cancelar",
@@ -59,7 +59,6 @@ const GestorSuscripcionScreen = () => {
                 setSuscripcion(null);
                 await logout();
                 navigation.navigate("Login");
-
               } else {
                 Alert.alert('Error', 'No se pudo cancelar la suscripción');
               }
