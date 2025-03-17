@@ -38,18 +38,24 @@ async function createMicroempresa(datosFormulario) {
 async function getMicroempresaData(idMicroempresa) {
   try {
     if (!idMicroempresa) {
-      throw new Error('El ID de la microempresa es obligatorio.');
+      throw new Error("El ID de la microempresa es obligatorio.");
     }
 
     const response = await instance.get(`/microempresas/${idMicroempresa}`);
+
     if (!response?.data?.data) {
-      throw new Error('La respuesta no contiene datos válidos.');
+      throw new Error("La respuesta no contiene datos válidos.");
     }
 
-    // console.log('📋 Datos de la microempresa obtenidos:', response.data.data);
-    return response.data; // Asegúrate de devolver solo la clave `data` del backend
+    // Asegurar que tipoPlan siempre tenga un valor antes de devolver la respuesta
+    response.data.data.tipoPlan = response.data.data.tipoPlan || "Sin Plan";
+
+    return response.data; // Se mantiene la estructura original
   } catch (error) {
-    console.error('❌ Error al obtener los datos de la microempresa:', error.response?.data || error.message || error);
+    console.error(
+      "❌ Error al obtener los datos de la microempresa:",
+      error.response?.data || error.message || error
+    );
     throw error;
   }
 }

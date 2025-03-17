@@ -349,19 +349,24 @@ export default function MicroempresaScreen({ route }) {
                 <Text style={[styles.noImagesText, { color: theme.text }]}>No hay trabajadores aún.</Text>
               )}
               <View style={styles.buttonContainer}>
+                {/* Botón Invitar Trabajador */}
+{microempresa.tipoPlan === "Plan Premium" && (
   <TouchableOpacity
     style={[styles.button, styles.greenButton, { flex: 1, marginRight: 5 }]} // Ajustar ancho
     onPress={() => navigation.navigate("InvitarTrabajador", { idMicroempresa: id })}
   >
     <Text style={styles.buttonText}>Invitar Trabajador</Text>
   </TouchableOpacity>
-
+  )}
+  {/* Botón Ver Invitaciones */}
+{microempresa.tipoPlan === "Plan Premium" && (
   <TouchableOpacity
     style={[styles.button, styles.blueButton, { flex: 1, marginLeft: 5 }]} // Ajustar ancho
     onPress={() => navigation.navigate("Invitaciones", { idMicroempresa: id })}
   >
     <Text style={styles.buttonText}>Ver Invitaciones</Text>
   </TouchableOpacity>
+  )}
 </View>
 
 
