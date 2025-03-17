@@ -208,7 +208,7 @@ export default function TrabajadorScreen() {
           <Text style={styles.buttonText}>Cambiar Contraseña</Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.button} onPress={handleVerHistorial}>
-          <Icon name="lock" size={20} color="#fff" style={styles.buttonIcon} />
+          <Icon name="list-alt" size={20} color="#fff" style={styles.buttonIcon} />
           <Text style={styles.buttonText}>Ver Historial de Trabajador</Text>
         </TouchableOpacity>
         {/* Los demás botones se mantienen */}

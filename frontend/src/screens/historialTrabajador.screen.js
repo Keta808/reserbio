@@ -73,15 +73,6 @@ export default function HistorialTrabajadorScreen() {
           </View>
         )}
       />
-      {/* Contenedor del boton final */}
-      <View style={styles.buttonContainer}>
-        <TouchableOpacity
-          style={styles.button}
-          onPress={() => navigation.navigate("Perfil")}
-        >
-          <Text style={styles.buttonText}>Volver a Perfil</Text>
-        </TouchableOpacity>
-      </View>
     </View>
   );
 }
