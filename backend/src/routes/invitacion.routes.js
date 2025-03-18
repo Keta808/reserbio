@@ -20,7 +20,7 @@ const router = Router();
 router.use(verifyJWT);
 
 // 📌 Ruta para enviar una invitación (solo dueños con plan premium)
-router.post("/enviar", InvitacionController.enviarInvitacion);
+router.post("/enviar", verificarAdminMicroempresa, InvitacionController.enviarInvitacion);
 
 // 📌 Nueva ruta para verificar un código de invitación
 router.get("/verificar-codigo/:codigo", InvitacionController.verificarCodigoInvitacion);
@@ -31,12 +31,14 @@ router.post("/aceptar/:codigo", InvitacionController.aceptarInvitacion);
 // 📌 Ruta para obtener invitaciones pendientes de una microempresa
 router.get(
     "/pendientes/:idMicroempresa",
+    verificarAdminMicroempresa,
     InvitacionController.obtenerInvitaciones,
 );
 
 // 📌 Ruta para eliminar las invitaciones
 router.delete(
     "/eliminar/:id",
+    verificarAdminMicroempresa,
     InvitacionController.eliminarInvitacion,
 );
 
