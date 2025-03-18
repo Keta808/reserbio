@@ -120,7 +120,7 @@ const AgendaScreen = () => {
         const servicio = await reservaService.getUrlPagoByReservaId(reservaSeleccionada);
 
         if (!servicio) {
-          console.error("Error: No se obtuvo una respuesta válida del servicio.");
+          console.error("Error: No se obtuvo un servicio asociado a la reserva seleccionada.");
           return;
         }
 
@@ -128,7 +128,8 @@ const AgendaScreen = () => {
         if (servicio.urlPago && servicio.urlPago !== 'null' && servicio.urlPago !== 'undefined') { 
           const [pagos, errorPagos] = await paymentService.getPaymentByClientId(idCliente);
           if (errorPagos) {
-            Alert.alert("Error", "No se pudieron obtener los pagos.");
+            Alert.alert("Error al Encontrar Pagos", "No hay pagos del cliente.");
+            console.error('Error al obtener pagos del cliente:', errorPagos);
             return;
           }
   

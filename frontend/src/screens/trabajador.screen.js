@@ -43,7 +43,7 @@ export default function TrabajadorScreen() {
           setMicroempresa(response.data);
         }
       } catch (error) {
-        console.error("No Microempresa Data:", error.message || error);   
+        console.log("No Microempresa Data:", error.message || error);
       } 
     }; 
     fetchMicroempresaData();
@@ -197,7 +197,13 @@ export default function TrabajadorScreen() {
         <View style={styles.infoRow}>
           <Icon name="envelope" size={20} color="#007BFF" style={styles.infoIcon} />
           <Text style={[styles.label, { color: theme.text }]}>Email: </Text>
-          <Text style={[styles.value, { color: theme.text }]}>{dataTrabajador.data.email || 'Sin email'}</Text>
+          <Text
+    style={[styles.value, { color: theme.text, flexShrink: 1 }]}
+    numberOfLines={1}
+    ellipsizeMode="tail"
+  >
+    {dataTrabajador.data.email || 'Sin email'}
+  </Text>
         </View>
       </View>
     
