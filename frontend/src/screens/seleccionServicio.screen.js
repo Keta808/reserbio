@@ -44,7 +44,11 @@ const SeleccionServicioScreen = () => {
       try {
         setLoading(true);
         const data = await servicioService.getServiciosByMicroempresaId(microempresaId);
-        setServicios(data.data);
+        if (!data.data) {
+          setError('La microempresa seleccionada no tiene servicios');
+        } else {
+          setServicios(data.data);
+        }
       } catch (err) {
         console.error('Error al obtener los servicios:', err);
         setError('No se pudo conectar con el servidor');
@@ -52,9 +56,11 @@ const SeleccionServicioScreen = () => {
         setLoading(false);
       }
     };
-
+  
     fetchServicios();
   }, [microempresaId]);
+  
+  
 
   const handleShowDescription = (servicio) => {
     setServiceDescription(servicio.descripcion);
@@ -110,11 +116,17 @@ const SeleccionServicioScreen = () => {
 
   if (error) {
     return (
-      <View style={[styles.errorContainer, { backgroundColor: theme.background }]}>
-        <Text style={[styles.errorText, { color: theme.text }]}>{error}</Text>
-      </View>
+      <SafeAreaView style={[styles.safeArea, { backgroundColor: theme.background }]}>
+        <View style={styles.errorContainer}>
+          <Text style={[styles.errorText, { color: theme.text, textAlign: 'center' }]}>{error}</Text>
+          <TouchableOpacity style={styles.errorBackButton} onPress={() => navigation.goBack()}>
+            <Text style={[styles.errorBackButtonText, { color: '#fff' }]}>Atrás</Text>
+          </TouchableOpacity>
+        </View>
+      </SafeAreaView>
     );
   }
+  
 
   const formatDate = (date) => {
     const day = String(date.getDate()).padStart(2, '0');
@@ -649,6 +661,32 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     fontSize: 16,
   },
+ //error
+  errorContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    position: 'relative',
+    paddingHorizontal: 20,
+  },
+  errorText: {
+    fontSize: 18,
+    fontWeight: '600',
+  },
+  errorBackButton: {
+    position: 'absolute',
+    bottom: 20,
+    left: 20,
+    paddingVertical: 10,
+    paddingHorizontal: 15,
+    backgroundColor: '#dc3545',
+    borderRadius: 6,
+  },
+  errorBackButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
+  },
+
 });
 
 export default SeleccionServicioScreen;
