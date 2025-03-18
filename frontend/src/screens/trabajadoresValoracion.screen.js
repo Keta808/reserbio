@@ -4,7 +4,8 @@ import {
   Text, 
   StyleSheet, 
   FlatList, 
-  ActivityIndicator 
+  ActivityIndicator,
+  TouchableOpacity
 } from "react-native";
 import ValoracionService from "../services/valoracion.service"; // Ajusta la ruta según tu proyecto
 import Icon from "react-native-vector-icons/FontAwesome";
@@ -125,6 +126,11 @@ export default function TrabajadorValoracionesScreen({ route, navigation }) {
           />
         </>
       )}
+      
+        <TouchableOpacity style={styles.atrasBackButton} onPress={() => navigation.goBack()}>
+          <Text style={[styles.atrasBackButtonText, { color: '#fff' }]}>Atrás</Text>
+        </TouchableOpacity>
+
     </View>
   );
 }
@@ -226,4 +232,19 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: "#6C757D",
   },
+
+  atrasBackButton: {
+    position: 'absolute',
+    bottom: 20,
+    left: 20,
+    paddingVertical: 10,
+    paddingHorizontal: 15,
+    backgroundColor: '#dc3545',
+    borderRadius: 6,
+  },
+  atrasBackButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
+  },
+
 });
