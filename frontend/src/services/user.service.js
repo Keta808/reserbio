@@ -65,5 +65,17 @@ async function changePassword(data) {
     throw error;
   }
 }
+async function verificarTrabajador(email) {
+  try {
+    const response = await instance.get(`/users/verificar/${email}`);
+    console.log()
+    if (response.data.state === 'Success') {
+      console.log("Usuario con cuenta Trabajador:", response.data);
+      return true; 
+    } 
+  } catch (error) {
+    return false; 
+  }
+}
 
-export { getTrabajadorById, updateTrabajador, registrarCliente, getClienteById, updateCliente, changePassword };
+export { getTrabajadorById, updateTrabajador, registrarCliente, getClienteById, updateCliente, changePassword, verificarTrabajador };

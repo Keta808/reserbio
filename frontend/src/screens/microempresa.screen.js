@@ -99,7 +99,7 @@ export default function MicroempresaScreen({ route }) {
             const monto = await ServiciosService.calcularMontoAbono(servicio._id, servicio.precio, servicio.porcentajeAbono);
             newMontos[servicio._id] = monto.data;
           } catch (error) {
-            console.error("Error al calcular el monto de abono:", error.message);
+            console.log("Error al calcular el monto de abono:", error.message);
           }
         }
       }
@@ -306,14 +306,14 @@ export default function MicroempresaScreen({ route }) {
                   >
                     <Text style={[styles.servicioName, { color: theme.text }]}>{servicio.nombre}</Text>
                     <Text style={[styles.servicioDetail, { color: theme.text }]}>
-                      Precio: ${servicio.precio}
+                      Precio: ${Number(servicio.precio).toLocaleString("es-ES")}
                     </Text>
                     <Text style={[styles.servicioDetail, { color: theme.text }]}>
                       {servicio.descripcion}
                     </Text>
                     {montoAbono[servicio._id] && montoAbono[servicio._id] > 0 && (
                       <Text style={[styles.servicioAbono, { color: theme.text }]}>
-                        Costo Reserva: ${montoAbono[servicio._id]}
+                        Costo Reserva: ${Number(montoAbono[servicio._id]).toLocaleString("es-ES")}
                       </Text>
                     )}
                   </TouchableOpacity>

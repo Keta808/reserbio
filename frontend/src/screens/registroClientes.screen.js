@@ -13,6 +13,8 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { registrarCliente } from '../services/user.service';
+import { useTheme } from '../context/theme.context'; 
+
 
 export default function RegistroClienteScreen() {
   const navigation = useNavigation();
@@ -22,8 +24,9 @@ export default function RegistroClienteScreen() {
   const [password, setPassword] = useState('');
   // Para el teléfono, se guardarán solo los 8 dígitos ingresados
   const [phoneDigits, setPhoneDigits] = useState('');
-  const [loading, setLoading] = useState(false);
-
+  const [loading, setLoading] = useState(false); 
+   const { theme } = useTheme();
+   
   const handleRegistro = async () => {
     // Verificar que se hayan completado todos los campos
     if (!nombre || !apellido || !email || !password || !phoneDigits) {
@@ -71,13 +74,13 @@ export default function RegistroClienteScreen() {
 
   return (
     <KeyboardAvoidingView
-      style={{ flex: 1, backgroundColor: '#F4F4F4' }}
+      style={{ flex: 1, backgroundColor: theme.background }}
       behavior={Platform.OS === "ios" ? "padding" : undefined}
     >
-      <ScrollView contentContainerStyle={styles.container}>
-        <Text style={styles.title}>Registro de Cliente</Text>
+      <ScrollView contentContainerStyle={[styles.container, { backgroundColor: theme.background }]}>
+        <Text style={[styles.title, { color: theme.text }]}>Registro de Cliente</Text>
         
-        <View style={styles.inputContainer}>
+        <View style={[styles.inputContainer, { backgroundColor: theme.background }]}>
           <Ionicons name="person-outline" size={20} color="#666" style={styles.icon} />
           <TextInput 
             style={styles.input}
@@ -88,7 +91,7 @@ export default function RegistroClienteScreen() {
           />
         </View>
 
-        <View style={styles.inputContainer}>
+        <View style={[styles.inputContainer, { backgroundColor: theme.background }]}>
           <Ionicons name="people-outline" size={20} color="#666" style={styles.icon} />
           <TextInput 
             style={styles.input}
@@ -99,7 +102,7 @@ export default function RegistroClienteScreen() {
           />
         </View>
 
-        <View style={styles.inputContainer}>
+        <View style={[styles.inputContainer, { backgroundColor: theme.background }]}>
           <Ionicons name="mail-outline" size={20} color="#666" style={styles.icon} />
           <TextInput 
             style={styles.input}
@@ -112,7 +115,7 @@ export default function RegistroClienteScreen() {
           />
         </View>
 
-        <View style={styles.inputContainer}>
+        <View style={[styles.inputContainer, { backgroundColor: theme.background }]}>
           <Ionicons name="lock-closed-outline" size={20} color="#666" style={styles.icon} />
           <TextInput 
             style={styles.input}
@@ -125,9 +128,12 @@ export default function RegistroClienteScreen() {
         </View>
 
         {/* Campo de teléfono con prefijo fijo */}
-        <View style={styles.inputContainer}>
+        <View style={[styles.inputContainer, { backgroundColor: theme.background }]}>
           <Ionicons name="call-outline" size={20} color="#666" style={styles.icon} />
-          <Text style={styles.prefix}>+569</Text>
+          <Text style={[styles.prefix, { 
+      backgroundColor: theme.background ,
+      color: '#000000'
+    }] }>+569</Text>
           <TextInput 
             style={[styles.input, { flex: 1 }]}
             placeholder="XXXXXXXX"
@@ -184,7 +190,6 @@ const styles = StyleSheet.create({
   },
   prefix: {
     fontSize: 16,
-    color: '#333',
     marginRight: 5,
   },
   input: {

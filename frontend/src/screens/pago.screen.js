@@ -48,7 +48,7 @@ const PaymentScreen = ({ route, navigation }) => {
          
           Alert.alert(
             'Éxito', 
-            'Suscripción realizada con éxito. Necesitas volver a iniciar sesión.',
+            'Suscripción realizada con éxito. Para usar la aplicacion como Microempresa necesitas volver a iniciar sesión como TRABAJADOR.',
             [
               {
                 text: "OK",
