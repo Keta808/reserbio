@@ -39,6 +39,8 @@ import HomeTrabajadorScreen from '../screens/homeTrabajador.screen.js';
 import ServicioScreen from '../screens/servicio.screen.js';
 import MercadoPagoScreen from '../screens/mercadopago.screen.js';
 import ServicioPaymentScreen from '../screens/servicioPayment.screen.js'; 
+import Invitaciones from '../screens/invitaciones.screen.js';
+import HistorialTrabajadorScreen from '../screens/historialTrabajador.screen.js';
 
 // Otras pantallas
 import Horario from '../screens/horario.screen.js';
@@ -198,6 +200,8 @@ const TrabajadorStack = () => {
       <Stack.Screen name="Horario" component={Horario} />
       <Stack.Screen name="EditarHorario" component={EditarHorarioScreen} /> 
       <Stack.Screen name= "TrabajadoresValoracionScreen" component={TrabajadoresValoracionScreen} />
+      <Stack.Screen name="Invitaciones" component={Invitaciones} />
+      <Stack.Screen name="HistorialTrabajador" component={HistorialTrabajadorScreen} />
     </Stack.Navigator>
   );
 };

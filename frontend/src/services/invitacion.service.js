@@ -1,5 +1,4 @@
 import instance from './root.services.js';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 
 /**
  * Enviar una invitación a un trabajador
@@ -61,11 +60,41 @@ async function rechazarInvitacion(codigoInvitacion) {
  */
 async function obtenerInvitacionesPendientes(idMicroempresa) {
     try {
+        if (!idMicroempresa) {
+            throw new Error("ID de la microempresa no proporcionado.");
+        }
+
         const response = await instance.get(`/invitaciones/pendientes/${idMicroempresa}`);
-        console.log('📋 Invitaciones pendientes obtenidas:', response.data);
+        console.log("📋 Invitaciones pendientes obtenidas:", response.data);
+
+        return { success: true, data: response.data };
+    } catch (error) {
+        console.error("❌ Error al obtener invitaciones pendientes:", error.response?.data || error.message);
+
+        return {
+            success: false,
+            message: error.response?.data?.message || "Error al obtener invitaciones",
+            errorDetails: error.response?.data || error.message,
+        };
+    }
+}
+
+/**
+ * Eliminar una invitación por su ID
+ * @param {string} idInvitacion - ID de la invitación a eliminar
+ * @returns {Promise} - Respuesta de la API
+ */
+async function eliminarInvitacion(idInvitacion) {
+    try {
+        if (!idInvitacion) {
+            throw new Error("El ID de la invitación es requerido.");
+        }
+
+        const response = await instance.delete(`/invitaciones/eliminar/${idInvitacion}`);
+        console.log("🗑️ Invitación eliminada con éxito:", response.data);
         return response.data;
     } catch (error) {
-        console.error('❌ Error al obtener invitaciones pendientes:', error.response?.data || error.message);
+        console.error("❌ Error al eliminar la invitación:", error.response?.data || error.message);
         throw error;
     }
 }
@@ -75,4 +104,5 @@ export default {
     aceptarInvitacion,
     rechazarInvitacion,
     obtenerInvitacionesPendientes,
+    eliminarInvitacion,
 };

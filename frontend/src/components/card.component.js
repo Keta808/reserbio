@@ -46,29 +46,33 @@ const CardForm = ({ onSubmit, fetchDynamicData }) => {
   }; 
   // handler para la fecha de expiracion
   const handleExpirationDateChange = (input) => {
-    const formattedInput = input.replace(/\D/g, ""); // Solo números
+    const formattedInput = input.replace(/\D/g, ""); // Eliminar caracteres no numéricos
     let month = "";
     let year = "";
-  
-    if (formattedInput.length >= 1) {
-      month = formattedInput.slice(0, 2);
+
+    if (formattedInput.length > 0) {
+        month = formattedInput.slice(0, 2);
+    }
+
+    if (formattedInput.length > 2) {
+        year = formattedInput.slice(2, 4);
+    }
+
+    // Solo validar cuando el usuario haya ingresado los dos primeros dígitos del mes
+    if (month.length === 2) {
+        const monthNumber = parseInt(month, 10);
+        if (monthNumber < 1 || monthNumber > 12) {
+            return; // Si es inválido, no actualizar el estado (pero no bloquear la entrada)
+        }
     }
   
-    if (formattedInput.length >= 3) {
-      year = formattedInput.slice(2, 4);
-    }
-  
-    // Validar que el mes sea válido (01 a 12)
-    if (month && (parseInt(month, 10) < 1 || parseInt(month, 10) > 12)) {
-      return; // No actualizar si el mes no es válido
-    }
-  
-    setExpirationMonth(month);
-    setExpirationYear(year);
+    
   
     const formattedDate = month + (year ? `/${year}` : "");
     setExpirationDate(formattedDate);
-  }; 
+    setExpirationMonth(month);
+    setExpirationYear(year);
+  };
   // handler para el codigo de seguridad
   const handleSecurityCodeChange = (input) => {
     const formattedInput = input.replace(/\D/g, ""); // Solo números
@@ -79,33 +83,48 @@ const CardForm = ({ onSubmit, fetchDynamicData }) => {
     }
   }; 
   // Validar si el Rut ingresado es valido con Algoritmo
-  const validarRut = (rut) => {  
-    if (!/^[0-9]+[-|‐]{1}[0-9kK]{1}$/.test(rut)) return false;
+  const validarRut = (rut) => { 
+    console.log("validarRut:", rut); 
+    if (!/^[0-9]+-[0-9kK]{1}$/.test(rut)) {
+      console.log("Formato de RUT incorrecto");
+      return false;
+    }
     const [body, verifier] = rut.split("-");
     let sum = 0;
     let multiplier = 2;
   
     for (let i = body.length - 1; i >= 0; i--) {
-      sum += body[i] * multiplier;
+      sum += parseInt(body[i], 10) * multiplier;
       multiplier = multiplier === 7 ? 2 : multiplier + 1;
     }
   
     const expectedVerifier = 11 - (sum % 11);
     const verifierChar = expectedVerifier === 11 ? "0" : expectedVerifier === 10 ? "K" : expectedVerifier.toString();
-  
+
+    console.log("verifierChar esperado:", verifierChar);
+    console.log("verifier ingresado:", verifier.toUpperCase());
+
     return verifier.toUpperCase() === verifierChar;
   };
   
 
   const formatRut = (input) => {
-    const cleanInput = input.replace(/[^0-9kK]/g, ""); // Elimina todo lo que no sea números o 'k/K'
-    const body = cleanInput.slice(0, -1); // Parte numérica
-    const verifier = cleanInput.slice(-1).toUpperCase(); // Dígito verificador en mayúscula
-    return `${body}${verifier}`;
+    // Eliminar todo lo que no sea números o la letra K/k
+    const cleanInput = input.replace(/[^0-9kK]/g, "");
+    
+    if (cleanInput.length <= 1) return cleanInput; // Si hay solo un dígito, retornar tal cual
+    
+    const body = cleanInput.slice(0, -1); // Números del RUT
+    const verifier = cleanInput.slice(-1).toUpperCase(); // Último dígito (verificador)
+  
+    return `${body}-${verifier}`;
   };
   const handleIdentificationNumberChange = (input) => { 
     if (identificationType === "RUT") {
+      
+     
       const formattedRut = formatRut(input);
+      console.log("formattedRut:", formattedRut);
       setIdentificationNumber(formattedRut);
     } else {
       setIdentificationNumber(input);

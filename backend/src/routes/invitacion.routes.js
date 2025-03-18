@@ -34,6 +34,12 @@ router.get(
     InvitacionController.obtenerInvitaciones,
 );
 
+// 📌 Ruta para eliminar las invitaciones
+router.delete(
+    "/eliminar/:id",
+    InvitacionController.eliminarInvitacion,
+);
+
 // Exporta el enrutador
 export default router;
 

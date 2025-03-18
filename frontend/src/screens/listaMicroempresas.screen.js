@@ -38,12 +38,17 @@ export default function ListaMicroempresasScreen({ navigation }) {
   const [busqueda, setBusqueda] = useState("");
   const [categoriaSeleccionada, setCategoriaSeleccionada] = useState(null);
   const [modalVisible, setModalVisible] = useState(false);
+  const [page, setPage] = useState(1);
+  const limit = 3;
+  const [hasMore, setHasMore] = useState(true);
+  const [paginaActual, setPaginaActual] = useState(1);
+  const [totalPaginas, setTotalPaginas] = useState(1);
 
   useEffect(() => {
-    console.log("🔄 Cargando microempresas al iniciar...");
+    console.log(`📌 Ejecutando useEffect - Página actual: ${paginaActual}`);
     cargarMicroempresas();
-  }, []);
-
+  }, [paginaActual]);
+  
   useEffect(() => {
     if (categoriaSeleccionada) {
       cargarMicroempresasPorCategoria();
@@ -51,22 +56,40 @@ export default function ListaMicroempresasScreen({ navigation }) {
       cargarMicroempresas();
     }
   }, [categoriaSeleccionada]);
-
+  
   const cargarMicroempresas = async () => {
     try {
       setLoading(true);
-      const data = await MicroempresaService.getMicroempresas();
-      console.log("🔍 Datos recibidos del backend:", data);
-
-      if (data && data.state === "Success" && Array.isArray(data.data)) {
+      console.log(`📌 Cargando microempresas - Página actual: ${paginaActual}`);
+  
+      const data = await MicroempresaService.getMicroempresas(paginaActual, limit);
+  
+      console.log("📌 Respuesta del backend:", data);
+  
+      if (data?.state === "Success" && Array.isArray(data.data.microempresas)) {
         const microempresasConImagen = await Promise.all(
-          data.data.map(async (micro) => {
+          data.data.microempresas.map(async (micro) => {
             const fotoPerfil = await MicroempresaService.getMicroempresaFotoPerfil(micro._id);
             return { ...micro, fotoPerfil };
           })
         );
+  
         setMicroempresas(microempresasConImagen);
+  
+        // Ahora usamos totalMicroempresas y totalPages
+        const totalMicroempresas = data.data.totalMicroempresas;
+        const totalPaginasBackend = data.data.totalPages;
+  
+        console.log(`📌 Total de microempresas: ${totalMicroempresas}, Total de páginas: ${totalPaginasBackend}`);
+  
+        if (typeof totalPaginasBackend === "number" && totalPaginasBackend > 0) {
+          setTotalPaginas(totalPaginasBackend);
+        } else {
+          console.warn("⚠️ Error: 'totalPages' no es un número válido.");
+          setTotalPaginas(1);
+        }
       } else {
+        console.warn("⚠️ No se encontraron microempresas o la respuesta no es válida.");
         setMicroempresas([]);
       }
     } catch (error) {
@@ -75,7 +98,7 @@ export default function ListaMicroempresasScreen({ navigation }) {
     } finally {
       setLoading(false);
     }
-  };
+  };  
 
   const cargarMicroempresasPorCategoria = async () => {
     try {
@@ -99,6 +122,7 @@ export default function ListaMicroempresasScreen({ navigation }) {
   return (
     <SafeAreaView style={[styles.safeArea, { backgroundColor: theme.background }]}>
       <View style={[styles.container, { backgroundColor: theme.background }]}>
+  
         {/* Buscador */}
         <TextInput
           style={[styles.input, { color: theme.text, borderColor: theme.text }]}
@@ -107,7 +131,7 @@ export default function ListaMicroempresasScreen({ navigation }) {
           value={busqueda}
           onChangeText={setBusqueda}
         />
-
+  
         {/* Filtro de Categoría */}
         <View style={styles.filterContainer}>
           <Text style={[styles.filterLabel, { color: theme.text }]}>Filtrar:</Text>
@@ -120,7 +144,7 @@ export default function ListaMicroempresasScreen({ navigation }) {
             </Text>
           </TouchableOpacity>
         </View>
-
+  
         {/* Modal de Selección de Categoría */}
         <Modal visible={modalVisible} animationType="slide">
           <View style={[styles.modalContainer, { backgroundColor: theme.background }]}>
@@ -155,7 +179,7 @@ export default function ListaMicroempresasScreen({ navigation }) {
             </TouchableOpacity>
           </View>
         </Modal>
-
+  
         {/* Lista de Microempresas */}
         {loading ? (
           <View style={styles.loadingContainer}>
@@ -163,36 +187,71 @@ export default function ListaMicroempresasScreen({ navigation }) {
             <Text style={{ color: theme.text }}>Cargando microempresas...</Text>
           </View>
         ) : filtrarMicroempresas().length > 0 ? (
-          <FlatList
-            data={filtrarMicroempresas()}
-            keyExtractor={(item) => item._id}
-            renderItem={({ item }) => (
-              <TouchableOpacity
-                style={[
-                  styles.card,
-                  { backgroundColor: theme.background === "#FFFFFF" ? "#f9f9f9" : "#444" }
-                ]}
-                onPress={() => navigation.navigate("MicroempresaCliente", { id: item._id })}
-              >
-                <Image
-                  source={{ uri: item.fotoPerfil || "https://via.placeholder.com/60" }}
-                  style={styles.image}
-                />
-                <View style={styles.infoContainer}>
-                  <Text style={[styles.cardTitle, { color: theme.text }]}>{item.nombre}</Text>
-                  <Text style={[styles.cardDetail, { color: theme.text }]}>{item.direccion}</Text>
-                  <Text style={[styles.cardDetail, { color: theme.text }]}>{item.telefono}</Text>
-                  <Text style={[styles.cardDetail, { color: theme.text }]}>{item.categoria}</Text>
-                </View>
-              </TouchableOpacity>
-            )}
-          />
+          <>
+            <FlatList
+              data={filtrarMicroempresas()}
+              keyExtractor={(item) => item._id}
+              renderItem={({ item }) => (
+                <TouchableOpacity
+                  style={[
+                    styles.card,
+                    { backgroundColor: theme.background === "#FFFFFF" ? "#f9f9f9" : "#444" }
+                  ]}
+                  onPress={() => navigation.navigate("MicroempresaCliente", { id: item._id })}
+                >
+                  <Image
+                    source={{ uri: item.fotoPerfil }}
+                    style={styles.image}
+                  />
+                  <View style={styles.infoContainer}>
+                    <Text style={[styles.cardTitle, { color: theme.text }]}>{item.nombre}</Text>
+                    <Text style={[styles.cardDetail, { color: theme.text }]}>{item.direccion}</Text>
+                    <Text style={[styles.cardDetail, { color: theme.text }]}>{item.telefono}</Text>
+                    <Text style={[styles.cardDetail, { color: theme.text }]}>{item.categoria}</Text>
+                  </View>
+                </TouchableOpacity>
+              )}
+            />
+  
+  <View style={styles.paginationContainer}>
+  <TouchableOpacity
+    style={styles.paginationButton}
+    onPress={() => {
+      if (paginaActual > 1) {
+        setPaginaActual((prev) => prev - 1);
+      }
+    }}
+    disabled={paginaActual === 1} // Desactiva si está en la primera página
+  >
+    <Text style={styles.paginationButtonText}>Anterior</Text>
+  </TouchableOpacity>
+
+  <Text style={[styles.paginationText, { color: theme.text }]}>
+  Página {paginaActual} de {totalPaginas}
+  </Text>
+
+
+  <TouchableOpacity
+    style={styles.paginationButton}
+    onPress={() => {
+      if (paginaActual < totalPaginas) {
+        setPaginaActual((prev) => prev + 1);
+      }
+    }}
+    disabled={paginaActual === totalPaginas} // Desactiva si está en la última página
+  >
+    <Text style={styles.paginationButtonText}>Siguiente</Text>
+  </TouchableOpacity>
+</View>
+
+          </>
         ) : (
           <Text style={{ color: theme.text }}>No hay microempresas disponibles.</Text>
         )}
       </View>
     </SafeAreaView>
   );
+  
 }
 
 const styles = StyleSheet.create({
@@ -320,6 +379,27 @@ const styles = StyleSheet.create({
     textShadowColor: "rgba(0, 0, 0, 0.3)",
     textShadowOffset: { width: 1, height: 1 },
     textShadowRadius: 1,
+  },
+  paginationContainer: {
+    flexDirection: "row", // Alinea elementos en fila
+    justifyContent: "space-between", // Distribuye los elementos a los extremos
+    alignItems: "center", // Alinea verticalmente
+    paddingVertical: 10, // Espaciado arriba y abajo
+    paddingHorizontal: 20, // Espaciado a los lados
+  },
+  paginationButton: {
+    paddingVertical: 8,
+    paddingHorizontal: 15,
+    backgroundColor: "#007bff", // Color azul
+    borderRadius: 5,
+  },
+  paginationButtonText: {
+    color: "white",
+    fontWeight: "bold",
+  },
+  paginationText: {
+    fontSize: 16,
+    fontWeight: "bold",
   },
 });
 

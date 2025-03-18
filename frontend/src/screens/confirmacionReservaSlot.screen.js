@@ -275,7 +275,7 @@ const ConfirmacionReservaSlotScreen = () => {
                   {urlPago && (
                     <Text style={[styles.modalWarning, isDarkMode && { color: theme.text }]}>
                       Seleccionaste un servicio con abono. Debes abonar para que se confirme la reserva.
-                      Una vez pagado, la reserva se confirmará automáticamente.
+                      Una vez pagado, deberás volver a la aplicacion y verificar el pago para reservar en la pantalla de verificacion. 
                     </Text>
                   )}
                 </>

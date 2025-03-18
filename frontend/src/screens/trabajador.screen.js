@@ -43,7 +43,7 @@ export default function TrabajadorScreen() {
           setMicroempresa(response.data);
         }
       } catch (error) {
-        console.error("No Microempresa Data:", error.message || error);   
+        console.log("No Microempresa Data:", error.message || error);
       } 
     }; 
     fetchMicroempresaData();
@@ -164,6 +164,11 @@ export default function TrabajadorScreen() {
     );
   } 
 
+  // funcion para ir a historial de trabajadores
+  const handleVerHistorial = () => {
+    navigation.navigate('HistorialTrabajador', { idTrabajador: user.id });
+  };  
+
   return (
     <View style={[styles.container, { backgroundColor: theme.background }]}>
       <View style={styles.headerContainer}>
@@ -192,7 +197,13 @@ export default function TrabajadorScreen() {
         <View style={styles.infoRow}>
           <Icon name="envelope" size={20} color="#007BFF" style={styles.infoIcon} />
           <Text style={[styles.label, { color: theme.text }]}>Email: </Text>
-          <Text style={[styles.value, { color: theme.text }]}>{dataTrabajador.data.email || 'Sin email'}</Text>
+          <Text
+    style={[styles.value, { color: theme.text, flexShrink: 1 }]}
+    numberOfLines={1}
+    ellipsizeMode="tail"
+  >
+    {dataTrabajador.data.email || 'Sin email'}
+  </Text>
         </View>
       </View>
     
@@ -201,6 +212,10 @@ export default function TrabajadorScreen() {
         <TouchableOpacity style={styles.button} onPress={() => setModalVisible(true)}>
           <Icon name="lock" size={20} color="#fff" style={styles.buttonIcon} />
           <Text style={styles.buttonText}>Cambiar Contraseña</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.button} onPress={handleVerHistorial}>
+          <Icon name="list-alt" size={20} color="#fff" style={styles.buttonIcon} />
+          <Text style={styles.buttonText}>Ver Historial de Trabajador</Text>
         </TouchableOpacity>
         {/* Los demás botones se mantienen */}
         {dataTrabajador.data.isAdmin && (

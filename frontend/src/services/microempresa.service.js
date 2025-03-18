@@ -38,36 +38,44 @@ async function createMicroempresa(datosFormulario) {
 async function getMicroempresaData(idMicroempresa) {
   try {
     if (!idMicroempresa) {
-      throw new Error('El ID de la microempresa es obligatorio.');
+      throw new Error("El ID de la microempresa es obligatorio.");
     }
 
     const response = await instance.get(`/microempresas/${idMicroempresa}`);
+
     if (!response?.data?.data) {
-      throw new Error('La respuesta no contiene datos válidos.');
+      throw new Error("La respuesta no contiene datos válidos.");
     }
 
-    // console.log('📋 Datos de la microempresa obtenidos:', response.data.data);
-    return response.data; // Asegúrate de devolver solo la clave `data` del backend
+    // Asegurar que tipoPlan siempre tenga un valor antes de devolver la respuesta
+    response.data.data.tipoPlan = response.data.data.tipoPlan || "Sin Plan";
+
+    return response.data; // Se mantiene la estructura original
   } catch (error) {
-    console.error('❌ Error al obtener los datos de la microempresa:', error.response?.data || error.message || error);
+    console.error(
+      "❌ Error al obtener los datos de la microempresa:",
+      error.response?.data || error.message || error
+    );
     throw error;
   }
 }
 
-async function getMicroempresas() {
+async function getMicroempresas(page = 1, limit = 2, seed) {
   try {
-    const response = await instance.get('/microempresas'); // Llama al endpoint
-   // console.log('📋 Microempresas obtenidas:', response.data); // Opcional: para debug
-    return response.data; // Devuelve las microempresas
+    const params = { page, limit };
+    if (seed) params.seed = seed; // Solo agregar 'seed' si tiene valor
+
+    const response = await instance.get(`/microempresas`, { params });
+    return response.data;
   } catch (error) {
-    console.error('❌ Error al obtener las microempresas:', error.response?.data || error.message);
+    console.error("❌ Error al obtener las microempresas:", error.response?.data || error.message);
     throw error;
   }
 }
 
 async function getMicroempresaFotoPerfil(id) {
   try {
-      console.log(`🔍 Solicitando foto de perfil para microempresa con ID: ${id}`);
+      // console.log(`🔍 Solicitando foto de perfil para microempresa con ID: ${id}`);
 
       const response = await instance.get(`/microempresas/fotoPerfil/${id}`);
 
@@ -76,7 +84,7 @@ async function getMicroempresaFotoPerfil(id) {
           return null;
       }
 
-      console.log("📸 URL de la foto de perfil recibida:", response.data.fotoPerfil);
+      // console.log("📸 URL de la foto de perfil recibida:", response.data.fotoPerfil);
       return response.data.fotoPerfil;
   } catch (error) {
       console.error(
@@ -254,7 +262,7 @@ async function obtenerMicroempresaPorTrabajador(idTrabajador) {
     const response = await instance.get(`/microempresas/maintrabajador/${idTrabajador}`); 
     return response.data; 
   } catch (error) {
-    console.error("Error al obtener la microempresa del main trabajador:", error.response?.data || error.message);
+    console.log("Error al obtener la microempresa del main trabajador:", error.response?.data || error.message);
     throw error;
   }
 }

@@ -105,7 +105,8 @@ const SuscripcionScreen = () => {
       <View style={[styles.disclaimerContainer, isDarkMode && { backgroundColor: theme.background === "#FFFFFF" ? "#f2f2f2" : "#444" }]}>
         <Text style={[styles.disclaimerText, isDarkMode && { color: theme.text }]}>
           Nota: La suscripción al plan seleccionado se cobrará de manera mensual una vez obtenido el plan. 
-          Puedes gestionar tu suscripción a través de la aplicación. 
+          Puedes gestionar tu suscripción a través de la aplicación. {"\n\n"} 
+          IMPORTANTE: Una vez acabado el plazo de prueba o si cancelas una suscripcion, la informacion de tu microempresa será eliminada y si quieres seguir utilizando la aplicación deberás volver a suscribirte a otro plan. 
         </Text>
       </View>
     </ScrollView>
@@ -196,7 +197,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
   },
   disclaimerText: {
-    fontSize: 12,
+    fontSize: 15,
     color: '#888',
     textAlign: 'center',
   },

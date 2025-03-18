@@ -236,7 +236,9 @@ const PaymentForm = ({ onSubmit, fetchDynamicData, selectedPlan }) => {
       <View style={styles.disclaimerContainer}>
             <Text style={styles.disclaimerText}>
               Nota: La suscripción al plan seleccionado se cobrará de manera mensual una vez obtenido el plan. 
-              Puedes gestionar tu suscripción a través de la aplicación. 
+              Puedes gestionar tu suscripción a través de la aplicación. {"\n\n"}
+              
+              IMPORTANTE: Si decides cancelar tu suscripción, tu microempresa será eliminada y deberás volver a suscribirte a un plan para seguir utilizando la aplicación como Microempresa.
             </Text>
           </View>
     </View>

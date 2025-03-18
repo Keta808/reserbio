@@ -16,7 +16,7 @@ import ImageViewing from "react-native-image-viewing";
 import { useFocusEffect, useNavigation } from "@react-navigation/native";
 import Ionicons from "react-native-vector-icons/Ionicons";
 import { useTheme } from "../context/theme.context";
-
+import { getTrabajadorById } from '../services/user.service'; 
 import ServiciosService from "../services/servicio.service";
 import MicroempresaService from "../services/microempresa.service";
 import EnlaceService from "../services/enlace.service";
@@ -35,7 +35,7 @@ export default function MicroempresaScreen({ route }) {
   // Estado para visor de imagen
   const [imageModalVisible, setImageModalVisible] = useState(false);
   const [selectedImageUrl, setSelectedImageUrl] = useState(null);
-
+  const [dataTrabajador, setDataTrabajador] = useState(null);
   const fetchMicroempresa = async () => {
     try {
       console.log("📥 Fetching microempresa with ID:", id);
@@ -106,7 +106,21 @@ export default function MicroempresaScreen({ route }) {
       setMontoAbono(newMontos);
     };
     obtenerMontosAbono();
-  }, [servicios]);
+  }, [servicios]); 
+  
+  useEffect(() => {
+      const fetchTrabajadorData = async () => {
+        try {
+          if (!user || !user.id) return;
+          const trabajadorData = await getTrabajadorById(user.id);
+          setDataTrabajador(trabajadorData);
+        } catch (error) {
+          console.error("Error fetching trabajador data:", error.message || error);
+          Alert.alert("Error", "No se pudo cargar la información del trabajador.");
+        } 
+      };
+      fetchTrabajadorData();
+    }, [user]);
 
   const handleDeleteImage = (publicId) => {
     Alert.alert(
@@ -260,6 +274,7 @@ export default function MicroempresaScreen({ route }) {
                   🏷️ <Text style={[styles.infoLabel, { color: theme.text }]}>Categoría:</Text> {microempresa.categoria || "Sin categoría"}
                 </Text>
               </View>
+              {user && user.isAdmin && (
               <View style={styles.buttonContainer}>
                 <TouchableOpacity
                   style={[styles.button, styles.blueButton]}
@@ -270,6 +285,7 @@ export default function MicroempresaScreen({ route }) {
                   <Text style={styles.buttonText}>Editar Microempresa</Text>
                 </TouchableOpacity>
               </View>
+            )}
             </View>
   
             {/* Servicios Ofrecidos */}
@@ -307,15 +323,18 @@ export default function MicroempresaScreen({ route }) {
                   No hay servicios registrados aún.
                 </Text>
               )}
-  
+            {dataTrabajador.data.isAdmin && ( 
               <View style={styles.buttonContainer}>
-                <TouchableOpacity
-                  style={[styles.button, styles.greenButton]}
-                  onPress={() => navigation.navigate("Servicio", { id })}
-                >
-                  <Text style={styles.buttonText}>Configurar Servicios</Text>
-                </TouchableOpacity>
-              </View>
+              <TouchableOpacity
+                style={[styles.button, styles.greenButton]}
+                onPress={() => navigation.navigate("Servicio", { id })}
+              >
+                <Text style={styles.buttonText}>Configurar Servicios</Text>
+              </TouchableOpacity>
+            </View>
+
+            )}
+              
             </View>
   
             {/* Trabajadores */}
@@ -349,13 +368,28 @@ export default function MicroempresaScreen({ route }) {
                 <Text style={[styles.noImagesText, { color: theme.text }]}>No hay trabajadores aún.</Text>
               )}
               <View style={styles.buttonContainer}>
-                <TouchableOpacity
-                  style={[styles.button, styles.greenButton]}
-                  onPress={() => navigation.navigate("InvitarTrabajador", { idMicroempresa: id })}
-                >
-                  <Text style={styles.buttonText}>Invitar Trabajador</Text>
-                </TouchableOpacity>
-              </View>
+                {/* Botón Invitar Trabajador */}
+{microempresa.tipoPlan === "Plan Premium" && (
+  <TouchableOpacity
+    style={[styles.button, styles.greenButton, { flex: 1, marginRight: 5 }]} // Ajustar ancho
+    onPress={() => navigation.navigate("InvitarTrabajador", { idMicroempresa: id })}
+  >
+    <Text style={styles.buttonText}>Invitar Trabajador</Text>
+  </TouchableOpacity>
+  )}
+  {/* Botón Ver Invitaciones */}
+{microempresa.tipoPlan === "Plan Premium" && (
+  <TouchableOpacity
+    style={[styles.button, styles.blueButton, { flex: 1, marginLeft: 5 }]} // Ajustar ancho
+    onPress={() => navigation.navigate("Invitaciones", { idMicroempresa: id })}
+  >
+    <Text style={styles.buttonText}>Ver Invitaciones</Text>
+  </TouchableOpacity>
+  )}
+</View>
+
+
+
             </View>
   
             {/* Galería */}
@@ -393,6 +427,7 @@ export default function MicroempresaScreen({ route }) {
                   </Text>
                 )}
               </View>
+              {user && user.isAdmin && (
               <View style={styles.buttonContainer}>
                 <TouchableOpacity
                   style={[styles.button, styles.blueButton]}
@@ -401,19 +436,8 @@ export default function MicroempresaScreen({ route }) {
                   <Text style={styles.buttonText}>Añadir Imágenes</Text>
                 </TouchableOpacity>
               </View>
+              )}
             </View>
-  
-            <TouchableOpacity
-              style={[styles.button, styles.blueButton]}
-              onPress={() => {
-                navigation.reset({
-                  index: 0,
-                  routes: [{ name: "HomeNavigator" }],
-                });
-              }}
-            >
-              <Text style={styles.buttonText}>Volver al Inicio</Text>
-            </TouchableOpacity>
           </View>
         }
         ListFooterComponent={<View style={{ height: 20 }} />}
@@ -503,9 +527,13 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   buttonContainer: {
+    flexDirection: "row", // Alinea los botones en fila
+    justifyContent: "space-between", // Espacia los botones uniformemente
+    alignItems: "center", // Asegura alineación vertical uniforme
     marginTop: 10,
     paddingHorizontal: 10,
   },
+  
   button: {
     width: "100%",
     paddingVertical: 15,
@@ -644,11 +672,5 @@ const styles = StyleSheet.create({
     height: 100,
     borderRadius: 10,
   },
+  
 });
-
-
-
-
-
-
-
