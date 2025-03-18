@@ -260,6 +260,7 @@ export default function MicroempresaScreen({ route }) {
                   🏷️ <Text style={[styles.infoLabel, { color: theme.text }]}>Categoría:</Text> {microempresa.categoria || "Sin categoría"}
                 </Text>
               </View>
+              {user && user.isAdmin && (
               <View style={styles.buttonContainer}>
                 <TouchableOpacity
                   style={[styles.button, styles.blueButton]}
@@ -270,6 +271,7 @@ export default function MicroempresaScreen({ route }) {
                   <Text style={styles.buttonText}>Editar Microempresa</Text>
                 </TouchableOpacity>
               </View>
+            )}
             </View>
   
             {/* Servicios Ofrecidos */}
@@ -308,6 +310,7 @@ export default function MicroempresaScreen({ route }) {
                 </Text>
               )}
   
+              {user && user.isAdmin && (
               <View style={styles.buttonContainer}>
                 <TouchableOpacity
                   style={[styles.button, styles.greenButton]}
@@ -316,6 +319,7 @@ export default function MicroempresaScreen({ route }) {
                   <Text style={styles.buttonText}>Configurar Servicios</Text>
                 </TouchableOpacity>
               </View>
+            )}
             </View>
   
             {/* Trabajadores */}
@@ -408,6 +412,7 @@ export default function MicroempresaScreen({ route }) {
                   </Text>
                 )}
               </View>
+              {user && user.isAdmin && (
               <View style={styles.buttonContainer}>
                 <TouchableOpacity
                   style={[styles.button, styles.blueButton]}
@@ -416,19 +421,8 @@ export default function MicroempresaScreen({ route }) {
                   <Text style={styles.buttonText}>Añadir Imágenes</Text>
                 </TouchableOpacity>
               </View>
+              )}
             </View>
-  
-            <TouchableOpacity
-              style={[styles.button, styles.blueButton]}
-              onPress={() => {
-                navigation.reset({
-                  index: 0,
-                  routes: [{ name: "HomeNavigator" }],
-                });
-              }}
-            >
-              <Text style={styles.buttonText}>Volver al Inicio</Text>
-            </TouchableOpacity>
           </View>
         }
         ListFooterComponent={<View style={{ height: 20 }} />}
