@@ -5,7 +5,10 @@ import {
   TextInput, 
   StyleSheet, 
   Alert, 
-  TouchableOpacity 
+  TouchableOpacity, 
+  KeyboardAvoidingView, 
+  Platform, 
+  ScrollView 
 } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import ActionSheet from "react-native-actions-sheet";
@@ -14,6 +17,8 @@ import { useMicroempresa } from "../context/microempresa.context";
 import { useAuth } from "../context/auth.context";
 import { useTheme } from "../context/theme.context";
 import { getSuscripcionByUserId } from "../services/suscripcion.service.js";
+import { Ionicons } from "@expo/vector-icons";
+
 const CATEGORIAS = [
   "Barberia",
   "Peluqueria",
@@ -42,6 +47,13 @@ const FormularioMicroempresaScreen = ({ navigation }) => {
   const { logout } = useAuth();
 
   const actionSheetRef = useRef(null);
+
+  // Refs para los TextInput (usados para enfocar al tocar el contenedor)
+  const nombreInputRef = useRef(null);
+  const descripcionInputRef = useRef(null);
+  const phoneInputRef = useRef(null);
+  const direccionInputRef = useRef(null);
+  const emailInputRef = useRef(null);
 
   const getUserId = async () => {
     try {
@@ -76,10 +88,10 @@ const FormularioMicroempresaScreen = ({ navigation }) => {
     }
 
     // Validación del teléfono chileno: se ingresa solo la parte numérica (8 dígitos)
-        if (!/^\d{8}$/.test(phoneDigits)) {
-          Alert.alert("Error", "Debes ingresar 8 dígitos para tu número de teléfono");
-          return;
-        }
+    if (!/^\d{8}$/.test(phoneDigits)) {
+      Alert.alert("Error", "Debes ingresar 8 dígitos para tu número de teléfono");
+      return;
+    }
 
     if (!direccion.trim()) {
       newErrors.direccion = "La dirección es obligatoria.";
@@ -138,139 +150,163 @@ const FormularioMicroempresaScreen = ({ navigation }) => {
   };
 
   const handleCancel = async () => {
-    // Se realiza logout y se redirige al Login
     await logout();
     navigation.replace("Login");
   };
 
   return (
-    <View style={[styles.container, { backgroundColor: theme.background }]}>
-      <Text style={[styles.title, { color: theme.text }]}>Crear Microempresa</Text>
+    <KeyboardAvoidingView
+      style={{ flex: 1, backgroundColor: theme.background }}
+      behavior={Platform.OS === "ios" ? "padding" : undefined}
+    >
+      <ScrollView contentContainerStyle={[styles.container, { backgroundColor: theme.background }]}>
+        <Text style={[styles.title, { color: theme.text }]}>Crear Microempresa</Text>
 
-      <TextInput
-        style={[
-          styles.input,
-          { 
-            backgroundColor: theme.background === "#FFFFFF" ? "#fff" : "#555",
-            color: theme.text,
-            borderColor: theme.background === "#FFFFFF" ? "#ccc" : "#777"
-          }
-        ]}
-        placeholder="Nombre"
-        placeholderTextColor={theme.text}
-        value={nombre}
-        onChangeText={setNombre}
-      />
-      {errors.nombre && <Text style={styles.error}>{errors.nombre}</Text>}
+        {/* Campo Nombre */}
+        <TouchableOpacity 
+          activeOpacity={0.8} 
+          onPress={() => nombreInputRef.current?.focus()}
+        >
+          <View style={[styles.inputContainer, { backgroundColor: theme.background }]}>
+            <Ionicons name="business-outline" size={20} color="#666" style={styles.icon} />
+            <TextInput
+              ref={nombreInputRef}
+              style={[styles.input, { color: theme.text }]}
+              placeholder="Nombre"
+              placeholderTextColor={theme.text}
+              value={nombre}
+              onChangeText={setNombre}
+            />
+          </View>
+        </TouchableOpacity>
+        {errors.nombre && <Text style={styles.error}>{errors.nombre}</Text>}
 
-      <TextInput
-        style={[
-          styles.input,
-          { 
-            backgroundColor: theme.background === "#FFFFFF" ? "#fff" : "#555",
-            color: theme.text,
-            borderColor: theme.background === "#FFFFFF" ? "#ccc" : "#777"
-          }
-        ]}
-        placeholder="Descripción"
-        placeholderTextColor={theme.text}
-        value={descripcion}
-        onChangeText={setDescripcion}
-      />
-      {errors.descripcion && <Text style={styles.error}>{errors.descripcion}</Text>}
+        {/* Campo Descripción */}
+        <TouchableOpacity 
+          activeOpacity={0.8} 
+          onPress={() => descripcionInputRef.current?.focus()}
+        >
+          <View style={[styles.inputContainer, { backgroundColor: theme.background }]}>
+            <Ionicons name="document-text-outline" size={20} color="#666" style={styles.icon} />
+            <TextInput
+              ref={descripcionInputRef}
+              style={[styles.input, { color: theme.text }]}
+              placeholder="Descripción"
+              placeholderTextColor={theme.text}
+              value={descripcion}
+              onChangeText={setDescripcion}
+            />
+          </View>
+        </TouchableOpacity>
+        {errors.descripcion && <Text style={styles.error}>{errors.descripcion}</Text>}
 
-      <TextInput
-        style={[
-          styles.input,
-          { 
-            backgroundColor: theme.background === "#FFFFFF" ? "#fff" : "#555",
-            color: theme.text,
-            borderColor: theme.background === "#FFFFFF" ? "#ccc" : "#777"
-          }
-        ]}
-        placeholder="Teléfono"
-        placeholderTextColor={theme.text}
-        value={telefono}
-        onChangeText={setTelefono}
-        keyboardType="phone-pad"
-      />
-      {errors.telefono && <Text style={styles.error}>{errors.telefono}</Text>}
+        {/* Campo Teléfono */}
+        <TouchableOpacity 
+          activeOpacity={0.8} 
+          onPress={() => phoneInputRef.current?.focus()}
+        >
+          <View style={[styles.inputContainer, { backgroundColor: theme.background }]}>
+            <Ionicons name="call-outline" size={20} color="#666" style={styles.icon} />
+            <Text style={[styles.prefix, { backgroundColor: theme.background, color: theme.text }]}>
+              +569
+            </Text>
+            <TextInput
+              ref={phoneInputRef}
+              style={[styles.input, { flex: 1, color: theme.text }]}
+              placeholder="XXXXXXXX"
+              placeholderTextColor={theme.text}
+              value={phoneDigits}
+              onChangeText={setPhoneDigits}
+              keyboardType="phone-pad"
+              maxLength={8}
+            />
+          </View>
+        </TouchableOpacity>
+        {errors.telefono && <Text style={styles.error}>{errors.telefono}</Text>}
 
-      <TextInput
-        style={[
-          styles.input,
-          { 
-            backgroundColor: theme.background === "#FFFFFF" ? "#fff" : "#555",
-            color: theme.text,
-            borderColor: theme.background === "#FFFFFF" ? "#ccc" : "#777"
-          }
-        ]}
-        placeholder="Dirección"
-        placeholderTextColor={theme.text}
-        value={direccion}
-        onChangeText={setDireccion}
-      />
-      {errors.direccion && <Text style={styles.error}>{errors.direccion}</Text>}
+        {/* Campo Dirección */}
+        <TouchableOpacity 
+          activeOpacity={0.8} 
+          onPress={() => direccionInputRef.current?.focus()}
+        >
+          <View style={[styles.inputContainer, { backgroundColor: theme.background }]}>
+            <Ionicons name="location-outline" size={20} color="#666" style={styles.icon} />
+            <TextInput
+              ref={direccionInputRef}
+              style={[styles.input, { color: theme.text }]}
+              placeholder="Dirección"
+              placeholderTextColor={theme.text}
+              value={direccion}
+              onChangeText={setDireccion}
+            />
+          </View>
+        </TouchableOpacity>
+        {errors.direccion && <Text style={styles.error}>{errors.direccion}</Text>}
 
-      <TextInput
-        style={[
-          styles.input,
-          { 
-            backgroundColor: theme.background === "#FFFFFF" ? "#fff" : "#555",
-            color: theme.text,
-            borderColor: theme.background === "#FFFFFF" ? "#ccc" : "#777"
-          }
-        ]}
-        placeholder="Email"
-        placeholderTextColor={theme.text}
-        value={email}
-        onChangeText={setEmail}
-        keyboardType="email-address"
-      />
-      {errors.email && <Text style={styles.error}>{errors.email}</Text>}
+        {/* Campo Email */}
+        <TouchableOpacity 
+          activeOpacity={0.8} 
+          onPress={() => emailInputRef.current?.focus()}
+        >
+          <View style={[styles.inputContainer, { backgroundColor: theme.background }]}>
+            <Ionicons name="mail-outline" size={20} color="#666" style={styles.icon} />
+            <TextInput
+              ref={emailInputRef}
+              style={[styles.input, { color: theme.text }]}
+              placeholder="Email"
+              placeholderTextColor={theme.text}
+              value={email}
+              onChangeText={setEmail}
+              keyboardType="email-address"
+              autoCapitalize="none"
+            />
+          </View>
+        </TouchableOpacity>
+        {errors.email && <Text style={styles.error}>{errors.email}</Text>}
 
-      {/* Selector de categoría */}
-      <TouchableOpacity
-        style={[
-          styles.pickerButton,
-          { backgroundColor: theme.background === "#FFFFFF" ? "#f9f9f9" : "#333" }
-        ]}
-        onPress={() => actionSheetRef.current?.show()}
-      >
-        <Text style={{ color: theme.text }}>{categoria || "Selecciona una categoría..."}</Text>
-      </TouchableOpacity>
-      {errors.categoria && <Text style={styles.error}>{errors.categoria}</Text>}
+        {/* Selector de Categoría */}
+        <TouchableOpacity
+          style={[styles.pickerButton, { backgroundColor: theme.background === "#FFFFFF" ? "#f9f9f9" : "#333" }]}
+          onPress={() => actionSheetRef.current?.show()}
+        >
+          <Text style={{ color: theme.text }}>
+            {categoria || "Selecciona una categoría..."}
+          </Text>
+        </TouchableOpacity>
+        {errors.categoria && <Text style={styles.error}>{errors.categoria}</Text>}
 
-      <ActionSheet ref={actionSheetRef}>
-        {CATEGORIAS.map((item) => (
-          <TouchableOpacity
-            key={item}
-            style={styles.option}
-            onPress={() => {
-              setCategoria(item);
-              actionSheetRef.current?.hide();
-            }}
-          >
-            <Text style={styles.optionText}>{item}</Text>
-          </TouchableOpacity>
-        ))}
-      </ActionSheet>
+        <ActionSheet ref={actionSheetRef}>
+          {CATEGORIAS.map((item) => (
+            <TouchableOpacity
+              key={item}
+              style={styles.option}
+              onPress={() => {
+                setCategoria(item);
+                actionSheetRef.current?.hide();
+              }}
+            >
+              <Text style={styles.optionText}>{item}</Text>
+            </TouchableOpacity>
+          ))}
+        </ActionSheet>
 
-      {/* Botones de acción */}
-      <TouchableOpacity style={[styles.button, styles.createButton]} onPress={handleSubmit}>
-        <Text style={styles.buttonText}>Crear Microempresa</Text>
-      </TouchableOpacity>
-      <TouchableOpacity style={[styles.button, styles.cancelButton]} onPress={handleCancel}>
-        <Text style={styles.buttonText}>Cancelar</Text>
-      </TouchableOpacity>
-    </View>
+        {/* Botones de acción */}
+        <TouchableOpacity style={[styles.button, styles.createButton]} onPress={handleSubmit}>
+          <Text style={styles.buttonText}>Crear Microempresa</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={[styles.button, styles.cancelButton]} onPress={handleCancel}>
+          <Text style={styles.buttonText}>Cancelar</Text>
+        </TouchableOpacity>
+      </ScrollView>
+    </KeyboardAvoidingView>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
+    flexGrow: 1,
     padding: 20,
+    justifyContent: "center",
   },
   title: {
     fontSize: 24,
@@ -278,19 +314,36 @@ const styles = StyleSheet.create({
     marginBottom: 20,
     textAlign: "center",
   },
-  input: {
+  inputContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    width: "100%",
+    paddingHorizontal: 15,
+    paddingVertical: 12,
     borderWidth: 1,
-    borderRadius: 5,
-    padding: 10,
+    borderColor: "#DDD",
+    borderRadius: 10,
+    backgroundColor: "#FFF",
     marginBottom: 15,
+  },
+  icon: {
+    marginRight: 10,
+  },
+  prefix: {
+    fontSize: 16,
+    marginRight: 5,
+  },
+  input: {
+    fontSize: 16,
+    flex: 1,
   },
   pickerButton: {
     borderWidth: 1,
-    borderRadius: 5,
-    padding: 12,
-    textAlign: "center",
-    backgroundColor: "#f9f9f9",
+    borderRadius: 10,
+    paddingVertical: 12,
+    paddingHorizontal: 15,
     marginBottom: 15,
+    justifyContent: "center",
   },
   option: {
     paddingVertical: 10,
@@ -309,10 +362,16 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   button: {
+    width: "100%",
     paddingVertical: 15,
-    borderRadius: 8,
+    borderRadius: 10,
     alignItems: "center",
     marginBottom: 15,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
   },
   createButton: {
     backgroundColor: "#007BFF",
@@ -328,4 +387,3 @@ const styles = StyleSheet.create({
 });
 
 export default FormularioMicroempresaScreen;
-

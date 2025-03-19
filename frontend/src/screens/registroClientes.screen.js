@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { 
   View, 
   Text, 
@@ -15,7 +15,6 @@ import { useNavigation } from '@react-navigation/native';
 import { registrarCliente } from '../services/user.service';
 import { useTheme } from '../context/theme.context'; 
 
-
 export default function RegistroClienteScreen() {
   const navigation = useNavigation();
   const [nombre, setNombre] = useState('');
@@ -25,8 +24,15 @@ export default function RegistroClienteScreen() {
   // Para el teléfono, se guardarán solo los 8 dígitos ingresados
   const [phoneDigits, setPhoneDigits] = useState('');
   const [loading, setLoading] = useState(false); 
-   const { theme } = useTheme();
-   
+  const { theme } = useTheme();
+
+  // Refs para poder hacer focus en cada TextInput al tocar el TouchableOpacity
+  const nombreInputRef = useRef(null);
+  const apellidoInputRef = useRef(null);
+  const emailInputRef = useRef(null);
+  const passwordInputRef = useRef(null);
+  const phoneInputRef = useRef(null);
+
   const handleRegistro = async () => {
     // Verificar que se hayan completado todos los campos
     if (!nombre || !apellido || !email || !password || !phoneDigits) {
@@ -77,75 +83,106 @@ export default function RegistroClienteScreen() {
       style={{ flex: 1, backgroundColor: theme.background }}
       behavior={Platform.OS === "ios" ? "padding" : undefined}
     >
-      <ScrollView contentContainerStyle={[styles.container, { backgroundColor: theme.background }] } >
+      <ScrollView contentContainerStyle={[styles.container, { backgroundColor: theme.background }]}>
         <Text style={[styles.title, { color: theme.text }]}>Registro de Cliente</Text>
         
-        <View style={[styles.inputContainer, { backgroundColor: theme.background }]}>
-          <Ionicons name="person-outline" size={20} color="#666" style={styles.icon} />
-          <TextInput 
-            style={[styles.input, {color: theme.text}]}
-            placeholder="Nombre"
-            placeholderTextColor={theme.text}
-            value={nombre}
-            onChangeText={setNombre}
-            editable={true}
-          />
-        </View>
+        {/* Campo Nombre */}
+        <TouchableOpacity 
+          activeOpacity={0.8} 
+          onPress={() => nombreInputRef.current?.focus()}
+        >
+          <View style={[styles.inputContainer, { backgroundColor: theme.background }]}>
+            <Ionicons name="person-outline" size={20} color="#666" style={styles.icon} />
+            <TextInput 
+              ref={nombreInputRef}
+              style={[styles.input, { color: theme.text }]}
+              placeholder="Nombre"
+              placeholderTextColor={theme.text}
+              value={nombre}
+              onChangeText={setNombre}
+            />
+          </View>
+        </TouchableOpacity>
 
-        <View style={[styles.inputContainer, { backgroundColor: theme.background }]}>
-          <Ionicons name="people-outline" size={20} color="#666" style={styles.icon} />
-          <TextInput 
-            style={[styles.input, {color: theme.text}]}
-            placeholder="Apellido"
-            placeholderTextColor={theme.text}
-            value={apellido}
-            onChangeText={setApellido}
-            editable={true}
-          />
-        </View>
+        {/* Campo Apellido */}
+        <TouchableOpacity 
+          activeOpacity={0.8} 
+          onPress={() => apellidoInputRef.current?.focus()}
+        >
+          <View style={[styles.inputContainer, { backgroundColor: theme.background }]}>
+            <Ionicons name="people-outline" size={20} color="#666" style={styles.icon} />
+            <TextInput 
+              ref={apellidoInputRef}
+              style={[styles.input, { color: theme.text }]}
+              placeholder="Apellido"
+              placeholderTextColor={theme.text}
+              value={apellido}
+              onChangeText={setApellido}
+            />
+          </View>
+        </TouchableOpacity>
 
-        <View style={[styles.inputContainer, { backgroundColor: theme.background }]}>
-          <Ionicons name="mail-outline" size={20} color="#666" style={styles.icon} />
-          <TextInput 
-            style={[styles.input, {color: theme.text}]}
-            placeholder="Email"
-            placeholderTextColor={theme.text}
-            value={email}
-            onChangeText={setEmail}
-            keyboardType="email-address"
-            autoCapitalize="none"
-          />
-        </View>
+        {/* Campo Email */}
+        <TouchableOpacity 
+          activeOpacity={0.8} 
+          onPress={() => emailInputRef.current?.focus()}
+        >
+          <View style={[styles.inputContainer, { backgroundColor: theme.background }]}>
+            <Ionicons name="mail-outline" size={20} color="#666" style={styles.icon} />
+            <TextInput 
+              ref={emailInputRef}
+              style={[styles.input, { color: theme.text }]}
+              placeholder="Email"
+              placeholderTextColor={theme.text}
+              value={email}
+              onChangeText={setEmail}
+              keyboardType="email-address"
+              autoCapitalize="none"
+            />
+          </View>
+        </TouchableOpacity>
 
-        <View style={[styles.inputContainer, { backgroundColor: theme.background }]}>
-          <Ionicons name="lock-closed-outline" size={20} color="#666" style={styles.icon} />
-          <TextInput 
-            style={[styles.input, {color: theme.text}]}
-            placeholder="Contraseña"
-            placeholderTextColor={theme.text}
-            value={password}
-            onChangeText={setPassword}
-            secureTextEntry
-          />
-        </View>
+        {/* Campo Contraseña */}
+        <TouchableOpacity 
+          activeOpacity={0.8} 
+          onPress={() => passwordInputRef.current?.focus()}
+        >
+          <View style={[styles.inputContainer, { backgroundColor: theme.background }]}>
+            <Ionicons name="lock-closed-outline" size={20} color="#666" style={styles.icon} />
+            <TextInput 
+              ref={passwordInputRef}
+              style={[styles.input, { color: theme.text }]}
+              placeholder="Contraseña"
+              placeholderTextColor={theme.text}
+              value={password}
+              onChangeText={setPassword}
+              secureTextEntry
+            />
+          </View>
+        </TouchableOpacity>
 
-        {/* Campo de teléfono con prefijo fijo */}
-        <View style={[styles.inputContainer, { backgroundColor: theme.background }]}>
-          <Ionicons name="call-outline" size={20} color="#666" style={styles.icon} />
-          <Text style={[styles.prefix, { 
-      backgroundColor: theme.background ,
-      color: theme.text,
-    }] }>+569</Text>
-          <TextInput 
-            style={[styles.input, { flex: 1, color: theme.text }]}
-            placeholder="XXXXXXXX"
-            placeholderTextColor={theme.text}
-            value={phoneDigits}
-            onChangeText={setPhoneDigits}
-            keyboardType="number-pad"
-            maxLength={8}
-          />
-        </View>
+        {/* Campo Teléfono con prefijo fijo */}
+        <TouchableOpacity 
+          activeOpacity={0.8} 
+          onPress={() => phoneInputRef.current?.focus()}
+        >
+          <View style={[styles.inputContainer, { backgroundColor: theme.background }]}>
+            <Ionicons name="call-outline" size={20} color="#666" style={styles.icon} />
+            <Text style={[styles.prefix, { backgroundColor: theme.background, color: theme.text }]}>
+              +569
+            </Text>
+            <TextInput 
+              ref={phoneInputRef}
+              style={[styles.input, { flex: 1, color: theme.text }]}
+              placeholder="XXXXXXXX"
+              placeholderTextColor={theme.text}
+              value={phoneDigits}
+              onChangeText={setPhoneDigits}
+              keyboardType="number-pad"
+              maxLength={8}
+            />
+          </View>
+        </TouchableOpacity>
 
         <TouchableOpacity 
           style={styles.button} 
