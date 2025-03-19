@@ -32,7 +32,7 @@ const FormularioMicroempresaScreen = ({ navigation }) => {
   const { theme } = useTheme();
   const [nombre, setNombre] = useState("");
   const [descripcion, setDescripcion] = useState("");
-  const [telefono, setTelefono] = useState("");
+  const [phoneDigits, setPhoneDigits] = useState('');
   const [direccion, setDireccion] = useState("");
   const [email, setEmail] = useState("");
   const [categoria, setCategoria] = useState("");
@@ -75,10 +75,11 @@ const FormularioMicroempresaScreen = ({ navigation }) => {
       valid = false;
     }
 
-    if (!telefono.trim() || !/^\d{9}$/.test(telefono)) {
-      newErrors.telefono = "El teléfono debe tener 9 dígitos.";
-      valid = false;
-    }
+    // Validación del teléfono chileno: se ingresa solo la parte numérica (8 dígitos)
+        if (!/^\d{8}$/.test(phoneDigits)) {
+          Alert.alert("Error", "Debes ingresar 8 dígitos para tu número de teléfono");
+          return;
+        }
 
     if (!direccion.trim()) {
       newErrors.direccion = "La dirección es obligatoria.";
@@ -113,7 +114,7 @@ const FormularioMicroempresaScreen = ({ navigation }) => {
       const nuevaMicroempresa = {
         nombre,
         descripcion,
-        telefono,
+        telefono: "+569" + phoneDigits, 
         direccion,
         email,
         categoria,
