@@ -212,7 +212,7 @@ const ServicioScreen = ({ route }) => {
         <Icon name="info-circle" size={20} color={theme.text} />
       </TouchableOpacity>
     </View>
-      <Text style={[styles.servicioDetail, { color: theme.text }]}>💲 Precio: ${item.precio}</Text>
+      <Text style={[styles.servicioDetail, { color: theme.text }]}>💲 Precio: ${Number(item.precio).toLocaleString("es-ES")}</Text>
       <Text style={[styles.servicioDetail, { color: theme.text }]}>⏳ Duración: {item.duracion} minutos</Text>
       <Text style={[styles.servicioDetail, { color: theme.text }]}>📖 {item.descripcion}</Text>
       {item.porcentajeAbono !== undefined && item.porcentajeAbono > 0 && (

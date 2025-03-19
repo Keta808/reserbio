@@ -333,16 +333,19 @@ export default function MicroempresaClienteScreen({ route, navigation }) {
                   Precio: ${Number(selectedService.precio || 0).toLocaleString("es-ES")}
                 </Text>
                 <Text style={[styles.modalText, { color: theme.text }]}>
-                  Duración: {selectedService.duracion || "No especificada"}
+                  Duración: {selectedService.duracion || "No especificada"} Minutos
                 </Text>
                 <Text style={[styles.modalText, { color: theme.text }]}>
-                  Descripción: {selectedService.descripcion || "Sin descripción"}
-                </Text>
-                {selectedService.porcentajeAbono ? (
+                  {selectedService.descripcion || "Sin descripción"}
+                </Text> 
+
+                {montoAbono[selectedService._id] && montoAbono[selectedService._id] > 0 &&( 
                   <Text style={[styles.modalText, { color: theme.text }]}>
-                    Abono: {selectedService.porcentajeAbono}%
-                  </Text>
-                ) : null}
+                    Precio Abono para Reservar: ${Number(montoAbono[selectedService._id]).toLocaleString("es-ES")}
+                  </Text>  
+                )}
+
+
                 <TouchableOpacity style={styles.closeButton} onPress={closeServiceModal}>
                   <Text style={styles.closeButtonText}>Cerrar</Text>
                 </TouchableOpacity>
@@ -559,7 +562,7 @@ const styles = StyleSheet.create({
     color: "#343A40",
   },
   modalText: {
-    fontSize: 16,
+    fontSize: 18,
     color: "#555",
     marginBottom: 10,
     textAlign: "center",

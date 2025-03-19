@@ -234,7 +234,17 @@ async function updateCliente(req, res) {
     respondError(req, res, 400, error.message);
   }
 }
-
+async function verificarTrabajador(req, res) {
+  try {
+    const { email } = req.params;
+    const [trabajador, errorTrabajador] = await UserService.verificarTrabajador(email);
+    if (errorTrabajador) return respondError(req, res, 404, "Usuario sin cuenta de trabajador");
+    respondSuccess(req, res, 200, trabajador);
+  } catch (error) {
+    handleError(error, "user.controller -> verificarTrabajador");
+    respondError(req, res, 500, error.message); 
+  }
+}
 export default {
   getUsers,
   createUser,
@@ -248,4 +258,5 @@ export default {
   updateTrabajador,
   getClienteById,
   updateCliente,
+  verificarTrabajador,
 };

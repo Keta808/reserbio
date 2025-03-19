@@ -5,18 +5,17 @@ import {
   ScrollView, 
   StyleSheet, 
   TouchableOpacity, 
-  ActivityIndicator 
 } from 'react-native';
 import { obtenerPlanes } from '../services/suscripcion.service.js';
 import { useNavigation } from '@react-navigation/native';
 import { AuthContext } from '../context/auth.context';
 import { useTheme } from '../context/theme.context';
-
+import { verificarTrabajador } from '../services/user.service.js';
 // Descripciones de los planes
 const planDescriptions = {
-  "Plan Gratuito": "Este es el plan gratuito y permite acceder a las funciones básicas del sistema por un plazo de tiempo determinado (3 meses de prueba).",
-  "Plan Basico": "El plan Básico incluye todas las caracteristicas de agenda y reserva del sistema. No se permite agregar trabajadores a tu microempresa.",
-  "Plan Premium": "El plan Premium incluye  todas las caracteristicas de agenda y reserva del sistema con la posibilidad de agregar hasta 10 trabajadores a tu microempresa y soporte prioritario."
+  "Plan Gratuito": "Este es el plan gratuito y permite acceder a las funciones básicas de agenda y reserva por un plazo de tiempo determinado (3 meses de prueba).",
+  "Plan Basico": "El plan Básico incluye todas las caracteristicas de agenda y reserva. No se permite agregar trabajadores a tu microempresa.",
+  "Plan Premium": "El plan Premium incluye todas las caracteristicas de agenda y reserva con la posibilidad de agregar hasta 10 trabajadores a tu microempresa y soporte prioritario."
 };
 
 const SuscripcionScreen = () => {
@@ -25,7 +24,7 @@ const SuscripcionScreen = () => {
   const navigation = useNavigation(); // Para navegar a otras pantallas
   const { user } = useContext(AuthContext); // Obtener el usuario autenticado
   const { theme } = useTheme();
-
+  const [isTrabajador, setIsTrabajador] = useState(false);
   // Determinar si estamos en modo oscuro.
   // En este ejemplo, se considera modo claro cuando el background es "#fff" o "#f0f4f7"
   const isDarkMode = theme.background === "#444" || theme.background === "#333" || theme.background === "#000" || theme.background !== "#fff";
@@ -44,8 +43,23 @@ const SuscripcionScreen = () => {
         setLoading(false);
       }
     };
+
+    const verificarisTrabajador = async () => {
+      try { 
+        if (user?.email) {
+        const response = await verificarTrabajador(user.email);
+          setIsTrabajador(response);
+      }
+      } catch (error) {
+        console.log('El usuario no tiene cuenta Trabajador:', error.message);
+      } finally {
+        setLoading(false);
+      }
+    };
     fetchPlanes();
-  }, []);
+    verificarisTrabajador();
+  }, [user]);
+  
 
   if (loading) {
     return (
@@ -87,13 +101,16 @@ const SuscripcionScreen = () => {
               ]}>
                 <Text style={[styles.planTitle, isDarkMode && { color: theme.text }]}>{String(plan.tipo_plan || "Sin nombre")}</Text>
                 <Text style={[styles.planDescription, isDarkMode && { color: theme.text }]}>{String(description)}</Text>  
-                <Text style={[styles.planPrice, isDarkMode && { color: theme.text }]}>{`$${String(plan.precio || "0")}`}</Text> 
-                <TouchableOpacity 
-                  style={[styles.planButton, isDarkMode && { backgroundColor: "#0077b6" }]}
-                  onPress={() => navigation.navigate('Pago', { selectedPlan: plan, user })}
-                >
-                  <Text style={[styles.planButtonText, isDarkMode && { color: theme.text }]} >Obtener</Text>
-                </TouchableOpacity>
+                <Text style={[styles.planPrice, isDarkMode && { color: theme.text }]}>{`$${String(plan.precio || "0")} `}</Text> 
+                
+                {!isTrabajador && ( // Ocultar el botón si el usuario es trabajador
+                  <TouchableOpacity 
+                    style={[styles.planButton, isDarkMode && { backgroundColor: "#0077b6" }]}
+                    onPress={() => navigation.navigate('Pago', { selectedPlan: plan, user })}
+                  >
+                    <Text style={[styles.planButtonText, isDarkMode && { color: theme.text }]}>SUSCRIBIRSE</Text>
+                  </TouchableOpacity>
+                )}
               </View>
             );
           })
@@ -124,15 +141,17 @@ const styles = StyleSheet.create({
     padding: 15,
     backgroundColor: '#e8f4f8',
     borderRadius: 8,
+    borderWidth: 2,
+    borderColor: '#ddd',
   },
   mainTitle: {
     fontSize: 26,
-    fontWeight: 'bold',
+    fontWeight: 'Inter',
     color: '#0077b6',
     marginBottom: 10,
   },
   mainDescription: {
-    fontSize: 16,
+    fontSize: 18,
     color: '#555',
   },
   loadingContainer: {
@@ -141,14 +160,16 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   title: {
-    fontSize: 24,
-    fontWeight: 'bold',
+    fontSize: 25,
+    fontWeight: 'Inter',
     marginBottom: 20,
+    textAlign: 'center'
   },
   plansContainer: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     justifyContent: 'space-between',
+    
   },
   planCard: {
     width: '48%',
@@ -160,19 +181,21 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.8,
     shadowRadius: 4,
+    borderWidth: 1,
+    borderColor: '#ddd',
   },
   planTitle: {
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: '600',
     marginBottom: 5,
   },
   planDescription: {
-    fontSize: 14,
+    fontSize: 16,
     marginBottom: 10,
   }, 
   planPrice: {
-    fontSize: 16,
-    fontWeight: 'bold',
+    fontSize: 20,
+    fontWeight: 'Inter',
     marginBottom: 10,
     color: '#FF6347',
   },
