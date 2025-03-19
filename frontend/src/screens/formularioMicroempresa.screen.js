@@ -88,7 +88,7 @@ const FormularioMicroempresaScreen = ({ navigation }) => {
     }
 
     // Validación del teléfono chileno: se ingresa solo la parte numérica (8 dígitos)
-    if (!/^\d{8}$/.test(phoneDigits)) {
+    if (!/^\d{9}$/.test(phoneDigits)) {
       Alert.alert("Error", "Debes ingresar 8 dígitos para tu número de teléfono");
       return;
     }
@@ -127,7 +127,7 @@ const FormularioMicroempresaScreen = ({ navigation }) => {
       const nuevaMicroempresa = {
         nombre,
         descripcion,
-        telefono: "+569" + phoneDigits, 
+        telefono: phoneDigits, 
         direccion,
         email,
         categoria,
@@ -135,6 +135,7 @@ const FormularioMicroempresaScreen = ({ navigation }) => {
         idSuscripcion,
       };
       console.log(" Nueva microempresa:", nuevaMicroempresa);
+      
       const response = await MicroempresaService.createMicroempresa(nuevaMicroempresa);
       console.log("📦 Respuesta del backend al crear microempresa:", response.data);
 
@@ -208,7 +209,7 @@ const FormularioMicroempresaScreen = ({ navigation }) => {
           <View style={[styles.inputContainer, { backgroundColor: theme.background }]}>
             <Ionicons name="call-outline" size={20} color="#666" style={styles.icon} />
             <Text style={[styles.prefix, { backgroundColor: theme.background, color: theme.text }]}>
-              +569
+              +56
             </Text>
             <TextInput
               ref={phoneInputRef}
