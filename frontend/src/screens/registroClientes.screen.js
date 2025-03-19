@@ -77,37 +77,39 @@ export default function RegistroClienteScreen() {
       style={{ flex: 1, backgroundColor: theme.background }}
       behavior={Platform.OS === "ios" ? "padding" : undefined}
     >
-      <ScrollView contentContainerStyle={[styles.container, { backgroundColor: theme.background }]}>
+      <ScrollView contentContainerStyle={[styles.container, { backgroundColor: theme.background }] } >
         <Text style={[styles.title, { color: theme.text }]}>Registro de Cliente</Text>
         
         <View style={[styles.inputContainer, { backgroundColor: theme.background }]}>
           <Ionicons name="person-outline" size={20} color="#666" style={styles.icon} />
           <TextInput 
-            style={styles.input}
+            style={[styles.input, {color: theme.text}]}
             placeholder="Nombre"
-            placeholderTextColor="#888"
+            placeholderTextColor={theme.text}
             value={nombre}
             onChangeText={setNombre}
+            editable={true}
           />
         </View>
 
         <View style={[styles.inputContainer, { backgroundColor: theme.background }]}>
           <Ionicons name="people-outline" size={20} color="#666" style={styles.icon} />
           <TextInput 
-            style={styles.input}
+            style={[styles.input, {color: theme.text}]}
             placeholder="Apellido"
-            placeholderTextColor="#888"
+            placeholderTextColor={theme.text}
             value={apellido}
             onChangeText={setApellido}
+            editable={true}
           />
         </View>
 
         <View style={[styles.inputContainer, { backgroundColor: theme.background }]}>
           <Ionicons name="mail-outline" size={20} color="#666" style={styles.icon} />
           <TextInput 
-            style={styles.input}
+            style={[styles.input, {color: theme.text}]}
             placeholder="Email"
-            placeholderTextColor="#888"
+            placeholderTextColor={theme.text}
             value={email}
             onChangeText={setEmail}
             keyboardType="email-address"
@@ -118,9 +120,9 @@ export default function RegistroClienteScreen() {
         <View style={[styles.inputContainer, { backgroundColor: theme.background }]}>
           <Ionicons name="lock-closed-outline" size={20} color="#666" style={styles.icon} />
           <TextInput 
-            style={styles.input}
+            style={[styles.input, {color: theme.text}]}
             placeholder="Contraseña"
-            placeholderTextColor="#888"
+            placeholderTextColor={theme.text}
             value={password}
             onChangeText={setPassword}
             secureTextEntry
@@ -132,12 +134,12 @@ export default function RegistroClienteScreen() {
           <Ionicons name="call-outline" size={20} color="#666" style={styles.icon} />
           <Text style={[styles.prefix, { 
       backgroundColor: theme.background ,
-      color: '#000000'
+      color: theme.text,
     }] }>+569</Text>
           <TextInput 
-            style={[styles.input, { flex: 1 }]}
+            style={[styles.input, { flex: 1, color: theme.text }]}
             placeholder="XXXXXXXX"
-            placeholderTextColor="#888"
+            placeholderTextColor={theme.text}
             value={phoneDigits}
             onChangeText={setPhoneDigits}
             keyboardType="number-pad"

@@ -102,12 +102,13 @@ const FormularioMicroempresaScreen = ({ navigation }) => {
       const userId = await getUserId();
       if (!userId) return; 
       const responseSuscripcion = await getSuscripcionByUserId(userId);
+      console.log("Respuesta de suscripción:", responseSuscripcion);
       if (responseSuscripcion === "Error") {
         Alert.alert("Error", "No tienes Suscripcion.");
         console.error("Error al obtener la suscripción, No tienes suscripcion:", errorSuscripcion.message);
         return;
       } 
-      const idSuscripcion = responseSuscripcion.id;
+      const idSuscripcion = responseSuscripcion.data._id;
       console.log("ID de suscripción:", idSuscripcion);
 
       const nuevaMicroempresa = {
