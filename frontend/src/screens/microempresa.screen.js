@@ -355,12 +355,14 @@ export default function MicroempresaScreen({ route }) {
                         <Text style={[styles.cardTitle, { color: theme.text }]}>{item.nombre || "Sin nombre"}</Text>
                         <Text style={[styles.cardDetail, { color: theme.text }]}>{item.telefono || "Sin teléfono"}</Text>
                       </TouchableOpacity>
+                      {user && user.isAdmin && (
                       <TouchableOpacity
                         style={styles.deleteTrabajadorButton}
                         onPress={() => handleDeleteTrabajador(item)}
                       >
                         <Ionicons name="trash-outline" size={20} color="white" />
                       </TouchableOpacity>
+                      )}
                     </View>
                   )}
                 />
@@ -411,12 +413,14 @@ export default function MicroempresaScreen({ route }) {
                             contentFit="cover"
                           />
                         </TouchableOpacity>
+                        {user && user.isAdmin && (
                         <TouchableOpacity
                           style={styles.deleteTrabajadorButton}
                           onPress={() => handleDeleteImage(item.public_id)}
                         >
                           <Ionicons name="trash-outline" size={20} color="white" />
                         </TouchableOpacity>
+                        )}
                       </View>
                     )}
                     

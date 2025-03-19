@@ -8,6 +8,7 @@ import ActionSheet from "react-native-actions-sheet";
 import MicroempresaService from "../services/microempresa.service.js";
 import { useAuth } from "../context/auth.context";
 import { useTheme } from "../context/theme.context";
+import { Ionicons } from "@expo/vector-icons";
 
 const CATEGORIAS = [
   "Barberia", "Peluqueria", "Estetica", "Masajes", "Manicure",
@@ -60,7 +61,7 @@ const EditarMicroempresaScreen = ({ route, navigation }) => {
     fetchMicroempresa();
   }, [id]);
 
-  const handleSubmit = async () => {
+  const handleSubmit = async () => { 
     let valid = true;
     const newErrors = {};
 
@@ -117,22 +118,25 @@ const EditarMicroempresaScreen = ({ route, navigation }) => {
       await MicroempresaService.updateMicroempresa(id, datosActualizados);
 
       console.log("✅ Microempresa actualizada con éxito.");
-      Alert.alert("Éxito", "Microempresa actualizada correctamente.");
-      navigation.reset({
-        index: 0,
-        routes: [{ name: "Microempresa", params: { id, userId } }],
-      });
+      Alert.alert("Éxito", "Microempresa actualizada correctamente.", [
+        {
+          text: "OK",
+          onPress: () => navigation.goBack() // 🔙 Vuelve a la pantalla anterior
+        }
+      ]);
+      
     } catch (error) {
       console.error("❌ Error al actualizar la microempresa:", error.response?.data || error.message);
       Alert.alert("Error", "No se pudo actualizar la microempresa.");
     }
-  };
+};
 
   return (
     <View style={[styles.container, { backgroundColor: theme.background }]}>
       <Text style={[styles.title, { color: theme.text }]}>Editar Microempresa</Text>
 
-      <TouchableOpacity onPress={() => navigation.navigate("SubirFotoPerfil", { id, modo: "editar" })}>
+      <TouchableOpacity onPress={() => navigation.navigate("SubirFotoPerfil", { id, modo: "editar" })}
+        activeOpacity={0.7}>
         {fotoPerfil ? (
           <Image source={{ uri: fotoPerfil }} style={styles.image} />
         ) : (
@@ -233,7 +237,7 @@ const styles = StyleSheet.create({
     textShadowColor: "rgba(0, 0, 0, 0.25)",
     textShadowOffset: { width: 1, height: 1 },
     textShadowRadius: 2,
-  },
+  },  
   input: {
     borderWidth: 1,
     borderColor: "#ccc",
@@ -273,7 +277,11 @@ const styles = StyleSheet.create({
     borderRadius: 60,
     alignSelf: "center",
     marginBottom: 20,
-  },
+    borderWidth: 2,
+    borderColor: "#ccc",
+    borderStyle: "dashed",
+  }
+  ,
   placeholderImage: {
     width: 120,
     height: 120,

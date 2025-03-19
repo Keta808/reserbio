@@ -16,6 +16,7 @@ import {
 import { Image } from "expo-image";
 import MicroempresaService from "../services/microempresa.service";
 import { useTheme } from "../context/theme.context";
+import Icon from 'react-native-vector-icons/Ionicons';
 
 const CATEGORIAS = [
   "Barberia",
@@ -214,6 +215,7 @@ export default function ListaMicroempresasScreen({ navigation }) {
             />
   
   <View style={styles.paginationContainer}>
+  {/* Botón de Página Anterior */}
   <TouchableOpacity
     style={styles.paginationButton}
     onPress={() => {
@@ -221,16 +223,16 @@ export default function ListaMicroempresasScreen({ navigation }) {
         setPaginaActual((prev) => prev - 1);
       }
     }}
-    disabled={paginaActual === 1} // Desactiva si está en la primera página
+    disabled={paginaActual === 1}
   >
-    <Text style={styles.paginationButtonText}>Anterior</Text>
+    <Icon name="arrow-back" size={24} color={paginaActual === 1 ? "gray" : theme.text} />
   </TouchableOpacity>
 
   <Text style={[styles.paginationText, { color: theme.text }]}>
-  Página {paginaActual} de {totalPaginas}
+    Página {paginaActual} de {totalPaginas}
   </Text>
 
-
+  {/* Botón de Página Siguiente */}
   <TouchableOpacity
     style={styles.paginationButton}
     onPress={() => {
@@ -238,9 +240,9 @@ export default function ListaMicroempresasScreen({ navigation }) {
         setPaginaActual((prev) => prev + 1);
       }
     }}
-    disabled={paginaActual === totalPaginas} // Desactiva si está en la última página
+    disabled={paginaActual === totalPaginas}
   >
-    <Text style={styles.paginationButtonText}>Siguiente</Text>
+    <Icon name="arrow-forward" size={24} color={paginaActual === totalPaginas ? "gray" : theme.text} />
   </TouchableOpacity>
 </View>
 
@@ -382,16 +384,16 @@ const styles = StyleSheet.create({
   },
   paginationContainer: {
     flexDirection: "row", // Alinea elementos en fila
-    justifyContent: "space-between", // Distribuye los elementos a los extremos
+    justifyContent: "center", // Distribuye los elementos a los extremos
     alignItems: "center", // Alinea verticalmente
     paddingVertical: 10, // Espaciado arriba y abajo
-    paddingHorizontal: 20, // Espaciado a los lados
+    gap: 10, // Espaciado a los lados
   },
   paginationButton: {
     paddingVertical: 8,
     paddingHorizontal: 15,
     backgroundColor: "#007bff", // Color azul
-    borderRadius: 5,
+    borderRadius: 7,
   },
   paginationButtonText: {
     color: "white",

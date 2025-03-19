@@ -1,27 +1,32 @@
 import React, { useState } from "react";
-import { View, Text, Button, StyleSheet, Alert } from "react-native";
+import { 
+    View, 
+    Text, 
+    StyleSheet, 
+    Alert, 
+    TouchableOpacity 
+} from "react-native";
 import MicroempresaService from "../services/microempresa.service";
 import * as ImagePicker from "expo-image-picker";
-import { Image } from "expo-image"; // ✅ Usar expo-image para mostrar imágenes
+import { Image } from "expo-image";
+import { useTheme } from "../context/theme.context";
 
 export default function SubirFotoPerfilScreen({ route, navigation }) {
+    const { theme } = useTheme();
     const { id, modo = "crear" } = route.params || {};
     const [image, setImage] = useState(null);
     const [loading, setLoading] = useState(false);
 
     console.log("🚀 ID de la microempresa:", id);
 
-    // ✅ FUNCIÓN PARA SELECCIONAR IMAGEN DESDE LA GALERÍA
     const handlePickImage = async () => {
         try {
-            // 1️⃣ Pedir permisos antes de abrir la galería
             const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
             if (status !== "granted") {
                 Alert.alert("Permiso denegado", "Se necesita acceso a la galería para seleccionar una imagen.");
                 return;
             }
 
-            // 2️⃣ Abrir la galería para seleccionar una imagen
             const result = await ImagePicker.launchImageLibraryAsync({
                 mediaTypes: ['images'],
                 allowsEditing: true,
@@ -29,7 +34,6 @@ export default function SubirFotoPerfilScreen({ route, navigation }) {
                 quality: 1,
             });
 
-            // 3️⃣ Validar si el usuario canceló
             if (result.canceled) {
                 console.log("⚠️ Selección de imagen cancelada");
                 return;
@@ -37,14 +41,12 @@ export default function SubirFotoPerfilScreen({ route, navigation }) {
 
             console.log("📸 Imagen seleccionada:", result.assets[0].uri);
             setImage(result.assets[0].uri);
-
         } catch (error) {
             console.error("❌ Error al seleccionar imagen:", error.message);
             Alert.alert("Error", "No se pudo seleccionar la imagen.");
         }
     };
 
-    // ✅ FUNCIÓN PARA SUBIR LA IMAGEN AL BACKEND
     const handleUploadImage = async () => {
         if (!image) {
             Alert.alert("Aviso", "Por favor selecciona una imagen antes de subirla.");
@@ -63,7 +65,7 @@ export default function SubirFotoPerfilScreen({ route, navigation }) {
             
             if (response) {
                 Alert.alert("Éxito", "Foto de perfil subida correctamente.", [
-                    { text: "OK", onPress: () => navigation.replace("Microempresa", { id }) }
+                    { text: "OK", onPress: () => navigation.goBack() }
                 ]);
             }
         } catch (error) {
@@ -74,24 +76,31 @@ export default function SubirFotoPerfilScreen({ route, navigation }) {
         }
     };
 
-    // ✅ FUNCIÓN PARA OMITIR LA SUBIDA Y PASAR A LA SIGUIENTE PANTALLA
-    const handleSkip = () => {
-        navigation.replace("Microempresa", { id });
-    };
-
     return (
-        <View style={styles.container}>
-            <Text style={styles.title}>{modo === "crear" ? "Subir" : "Editar"} Foto de Perfil</Text>
+        <View style={[styles.container, { backgroundColor: theme.background }]}>  
+            <Text style={[styles.title, { color: theme.text }]}>
+                {modo === "crear" ? "Subir" : "Editar"} Foto de Perfil
+            </Text>
             
             {image ? (
                 <Image source={{ uri: image }} style={styles.image} />
             ) : (
-                <Text style={styles.placeholder}>No hay imagen seleccionada</Text>
+                <Text style={[styles.placeholder, { color: theme.text }]}>No hay imagen seleccionada</Text>
             )}
             
-            <Button title="Seleccionar Imagen" onPress={handlePickImage} />
-            <Button title="Subir Imagen" onPress={handleUploadImage} disabled={loading} />
-            <Button title="Omitir" onPress={handleSkip} color="gray" />
+            <TouchableOpacity style={styles.button} onPress={handlePickImage}>
+                <Text style={styles.buttonText}>Seleccionar Imagen</Text>
+            </TouchableOpacity>
+            <TouchableOpacity 
+                style={[styles.button, loading && styles.buttonDisabled]} 
+                onPress={handleUploadImage} 
+                disabled={loading}
+            >
+                <Text style={styles.buttonText}>Subir Imagen</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={[styles.button, styles.cancelButton]} onPress={() => navigation.goBack()}>
+                <Text style={styles.buttonText}>Cancelar</Text>
+            </TouchableOpacity>
         </View>
     );
 }
@@ -102,7 +111,6 @@ const styles = StyleSheet.create({
         alignItems: "center",
         justifyContent: "center",
         padding: 20,
-        backgroundColor: "#fff",
     },
     title: {
         fontSize: 20,
@@ -110,17 +118,35 @@ const styles = StyleSheet.create({
         marginBottom: 20,
     },
     image: {
-        width: 200,
-        height: 200,
-        borderRadius: 100,
+        width: 150,
+        height: 150,
+        borderRadius: 75,
         marginBottom: 20,
     },
     placeholder: {
         fontSize: 16,
-        color: "gray",
         marginBottom: 20,
     },
+    button: {
+        backgroundColor: "#007BFF",
+        paddingVertical: 12,
+        paddingHorizontal: 20,
+        borderRadius: 8,
+        marginVertical: 10,
+    },
+    buttonText: {
+        color: "#FFF",
+        fontSize: 16,
+        fontWeight: "bold",
+    },
+    cancelButton: {
+        backgroundColor: "gray",
+    },
+    buttonDisabled: {
+        opacity: 0.5,
+    },
 });
+
 
 
 

@@ -81,7 +81,7 @@ export default function SubirImagenesScreen({ route, navigation }) {
         {
           text: "OK",
           onPress: () => {
-            navigation.navigate("Microempresa", { id });
+            navigation.goBack();
           }
         }
       ]);
